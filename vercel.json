@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/suggested-references.ts": {
+      "maxDuration": 60
+    }
+  }
+}

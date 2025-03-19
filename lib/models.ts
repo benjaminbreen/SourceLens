@@ -78,7 +78,7 @@ export const models: ModelConfig[] = [
 
 export const DEFAULT_MODEL_ID = 'gpt-4o-mini';
 export const COMPONENT_DEFAULT_MODELS: Record<string, string> = {
-  'references': 'claude-sonnet',
+  'references': 'claude-haiku',
   // Add other component-specific defaults as needed
 };
 
@@ -89,7 +89,7 @@ export function getModelsByProvider(provider: 'anthropic' | 'openai' | 'google')
 }
 
 export const LEGACY_MODEL_MAPPING: Record<string, string> = {
-  'claude': 'claude-sonnet',
+  'claude': 'claude-haiku',
   'gpt': 'gpt-4o-mini'
 };
 

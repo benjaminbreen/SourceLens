@@ -4,6 +4,7 @@ import { OpenAI } from 'openai';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { getModelById } from '@/lib/models';
 
+
 // Configure API clients
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -12,6 +13,29 @@ const openai = new OpenAI({
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+//  timeout handler function 
+async function fetchWithTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timer: NodeJS.Timeout;
+  
+  // Create a promise that rejects after timeout
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`Operation timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+  
+  // Race the original promise against the timeout
+  try {
+    const result = await Promise.race([promise, timeoutPromise]);
+    clearTimeout(timer);
+    return result;
+  } catch (error) {
+    clearTimeout(timer);
+    throw error;
+  }
+}
+
 
 // Define Reference interface
 export interface Reference {
@@ -38,7 +62,7 @@ export default async function handler(
       source, 
       metadata, 
       perspective = '',
-      modelId = 'claude-sonnet', // Default to claude-sonnet
+      modelId = 'claude-haiku', // Default to claude-haiku
     } = req.body;
     
     // Validate input
@@ -53,13 +77,13 @@ export default async function handler(
     let rawPrompt = prompt;
     let rawResponse = '';
     
-    // Use Claude Sonnet by default - simpler approach
+    // Use Claude haiku by default - simpler approach
     let model;
     try {
       model = getModelById(modelId);
     } catch (error) {
-      console.warn(`Model ID ${modelId} not found, using claude-sonnet`);
-      model = getModelById('claude-sonnet');
+      console.warn(`Model ID ${modelId} not found, using claude-haiku`);
+      model = getModelById('claude-haiku');
     }
     
     let references: Reference[] = [];
@@ -69,13 +93,16 @@ export default async function handler(
       
       if (model.provider === 'anthropic') {
         // Use Anthropic (Claude)
-        const response = await anthropic.messages.create({
-          model: model.apiModel,
-          max_tokens: 1500,
-          system: "You are a JSON API that returns valid JSON only, with no text outside the JSON.",
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.3,
-        });
+        const response = await fetchWithTimeout(
+          anthropic.messages.create({
+            model: model.apiModel,
+            max_tokens: 800, // Reduced for speed
+            system: "You are a JSON API that returns valid JSON only, with no text outside the JSON.",
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.3,
+          }),
+          15000 // 15 second timeout
+        );
         
         rawResponse = response.content[0]?.type === 'text' 
           ? response.content[0].text 
@@ -98,7 +125,7 @@ export default async function handler(
             model: 'gpt-4o',
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.3,
-            max_tokens: 1500,
+            max_tokens: 1000,
             response_format: { type: "json_object" },
           });
           
@@ -112,7 +139,7 @@ export default async function handler(
           model: model.apiModel,
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.3,
-          max_tokens: 1500,
+          max_tokens: 1000,
           response_format: { type: "json_object" },
         });
         
@@ -210,7 +237,9 @@ function buildReferencesPrompt(
   metadata: any, 
   perspective: string
 ): string {
-  return `Generate 5 highly relevant scholarly references for understanding this primary source.
+  const sourceExcerpt = source.length > 1000 ? source.substring(0, 1000) + '...' : source;
+
+  return `Generate 4 highly relevant scholarly references for understanding this primary source.
 
 SOURCE DATE: ${metadata.date}
 SOURCE AUTHOR: ${metadata.author}
@@ -227,12 +256,12 @@ Return a JSON object with this exact structure:
     {
       "citation": "Full citation in Chicago style",
       "type": "book" | "journal" | "website" | "other",
-      "relevance": "1-2 sentences explaining why this reference is relevant",
-      "reliability": "1 sentence assessing reliability (peer-review status, age, publisher reputation)",
-      "sourceQuote": "A quote from the primary source this reference contextualizes",
+      "relevance": "1 sentence explaining why this reference is relevant",
+      "reliability": "1 sentence assessing reliability (peer-review status, if its out of date (prior to 1980 may be an issue), what sources it uses)",
+      "sourceQuote": "BRIEF quote from the primary source this reference contextualizes",
       "importance": number from 1-5 (5 = most important)
     }
-    // 4 more references
+    // 3 more references
   ]
 }
 

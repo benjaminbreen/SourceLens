@@ -59,8 +59,8 @@ export default function ReferencesDisplay() {
   // Set preferred model for references on component mount (only once)
   useEffect(() => {
     if (!hasSetModelRef.current && (!llmModel || llmModel === DEFAULT_MODEL_ID)) {
-      console.log("Setting references-specific model:", COMPONENT_DEFAULT_MODELS?.['references'] || 'claude-sonnet');
-      setLLMModel(COMPONENT_DEFAULT_MODELS?.['references'] || 'claude-sonnet');
+      console.log("Setting references-specific model:", COMPONENT_DEFAULT_MODELS?.['references'] || 'claude-haiku');
+      setLLMModel(COMPONENT_DEFAULT_MODELS?.['references'] || 'claude-haiku');
       hasSetModelRef.current = true;
     }
   }, [llmModel, setLLMModel]);
@@ -177,7 +177,7 @@ export default function ReferencesDisplay() {
           source: sourceContent,
           metadata: metadata,
           perspective: perspective,
-          modelId: 'claude-sonnet' // Always use Claude Sonnet for references
+          modelId: 'claude-haiku' // Always use Claude Sonnet for references
         }),
       });
       
@@ -286,14 +286,16 @@ Return the same structure with updated citation field in ${citationStyle.toUpper
   };
   
   // Process citation text to convert asterisks to proper markdown for italics
-  const processCitation = (citation: string = '') => {
-    // Convert *Book Title* to _Book Title_ for proper markdown italics
-    // and ensure quotation marks are properly displayed
-    return citation
-      .replace(/\*(.*?)\*/g, "_$1_")
-      .replace(/"/g, '"')
-      .replace(/"/g, '"');
-  };
+const processCitation = (citation: string = '') => {
+  return citation
+    // Convert *Book Title* to _Book Title_ for markdown italics
+    .replace(/\*(.*?)\*/g, "_$1_")
+    // Convert "Book Title" to _Book Title_ for markdown italics
+    .replace(/"([^"]+)"/g, "_$1_")
+    // Handle smart quotes if needed
+    .replace(/"/g, '"')
+    .replace(/"/g, '"');
+};
   
   // Copy citation to clipboard
   const copyToClipboard = (text: string) => {
