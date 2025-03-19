@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/suggested-references.ts": {
+    "pages/api/suggested-references.ts": {
       "maxDuration": 60
     }
   }
