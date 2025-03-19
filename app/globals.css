@@ -1,26 +1,96 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Colors */
+  --color-primary: #8B5A2B;
+  --color-secondary: #D2B48C;
+  --color-accent: #A0522D;
+  --color-light: #F5F5DC;
+  --color-dark: #4A3728;
+  --color-parchment-light: #FFFCEB;
+  --color-parchment-dark: #F3E6C4;
+  --color-ink: #2B1F10;
+  
+  /* Fonts */
+  --font-serif: 'EB Garamond', 'Lora', serif;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.glow-effect {
+  box-shadow: 0 0 15px 6px rgba(255, 200, 0, 0.5);
+  transition: box-shadow 0.5s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.glow-effect:hover {
+  box-shadow: 0 0 12px 6px rgba(255, 170, 0, 0.9);
+    transform: scale(1) rotate(5deg);
+      transition: transform 0.5s ease;
+        transition: rotate 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.animation-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Source document styles */
+.source-document {
+  font-family: var(--font-serif);
+  line-height: 1.6;
+}
+
+.source-document p {
+  margin-bottom: 1rem;
+}
+
+.source-document h1, .source-document h2, .source-document h3 {
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Analysis panel styles */
+.analysis-panel {
+  font-family: var(--font-sans);
+}
+
+.analysis-panel h3 {
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.analysis-panel p {
+  margin-bottom: 0.75rem;
 }
