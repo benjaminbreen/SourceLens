@@ -15,23 +15,26 @@ const anthropic = new Anthropic({
 });
 
 //  timeout handler function 
-async function fetchWithTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
-  let timer: NodeJS.Timeout;
+async function fetchWithTimeout<T>(promise: Promise<T>, timeout: number): Promise<T> {
+  // Initialize timer to undefined initially
+  let timer: NodeJS.Timeout | undefined = undefined;
   
   // Create a promise that rejects after timeout
   const timeoutPromise = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
-      reject(new Error(`Operation timed out after ${timeoutMs}ms`));
-    }, timeoutMs);
+      reject(new Error(`Operation timed out after ${timeout}ms`));
+    }, timeout);
   });
   
   // Race the original promise against the timeout
   try {
     const result = await Promise.race([promise, timeoutPromise]);
-    clearTimeout(timer);
+    // Only clear the timeout if it was set
+    if (timer) clearTimeout(timer);
     return result;
   } catch (error) {
-    clearTimeout(timer);
+    // Only clear the timeout if it was set
+    if (timer) clearTimeout(timer);
     throw error;
   }
 }
