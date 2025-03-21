@@ -1,6 +1,6 @@
 // components/ui/StrategyDeck.tsx
 // A minimalist card deck component that reveals creative research prompts
-// Provides a deck of strategy cards that can be drawn and displayed with animations
+// Provides a deck of strategy cards that can be drawn, displayed with animations, and dragged to input fields
 
 'use client';
 
@@ -18,6 +18,7 @@ export default function StrategyDeck({ className = '' }: StrategyDeckProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [currentSymbol, setCurrentSymbol] = useState('🜇');
   const [isClosing, setIsClosing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   
   const cardRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -80,6 +81,9 @@ export default function StrategyDeck({ className = '' }: StrategyDeckProps) {
   useEffect(() => {
     return () => {
       document.body.classList.remove('modal-open');
+      
+      // Remove global drag event listeners when unmounting
+      document.removeEventListener('dragend', handleGlobalDragEnd);
     };
   }, []);
 
@@ -91,6 +95,18 @@ export default function StrategyDeck({ className = '' }: StrategyDeckProps) {
       document.body.classList.remove('modal-open');
     }
   }, [isCardOpen]);
+
+  // Add global drag end event handler
+  useEffect(() => {
+    document.addEventListener('dragend', handleGlobalDragEnd);
+    return () => {
+      document.removeEventListener('dragend', handleGlobalDragEnd);
+    };
+  }, []);
+
+  const handleGlobalDragEnd = () => {
+    setIsDragging(false);
+  };
 
   const drawCard = () => {
     if (isAnimating) return;
@@ -132,6 +148,26 @@ export default function StrategyDeck({ className = '' }: StrategyDeckProps) {
     }, 300);
   };
 
+  // Drag handlers
+  const handleDragStart = (e: React.DragEvent) => {
+    // Set dragged content
+    e.dataTransfer.setData('text/plain', currentCard);
+    e.dataTransfer.effectAllowed = 'copy';
+    setIsDragging(true);
+    
+    // Create and use a drag image (optional)
+    if (cardRef.current) {
+      try {
+        // For browsers that support setDragImage
+        const rect = cardRef.current.getBoundingClientRect();
+        e.dataTransfer.setDragImage(cardRef.current, rect.width / 2, rect.height / 2);
+      } catch (err) {
+        // Fallback for browsers that don't support setDragImage
+        console.log("Could not set drag image, using default");
+      }
+    }
+  };
+
   return (
     <div className={`relative flex items-center ${className}`}>
       {/* Card deck */}
@@ -159,7 +195,7 @@ export default function StrategyDeck({ className = '' }: StrategyDeckProps) {
         </div>
       </button>
 
-      {/* Drawn card */}
+      {/* Drawn card - now draggable */}
       {isCardDrawn && (
         <div 
           ref={cardRef}
@@ -167,12 +203,14 @@ export default function StrategyDeck({ className = '' }: StrategyDeckProps) {
             isAnimating 
               ? 'opacity-0 scale-95 -translate-y-1 rotate-12' 
               : 'opacity-100 scale-100 -translate-y-2 rotate-0 hover:-translate-y-3'
-          } animate-in fade-in slide-in-from-top-4 duration-500`}
+          } ${isDragging ? 'opacity-50' : 'opacity-100'} animate-in fade-in slide-in-from-top-4 duration-500 cursor-move`}
           onClick={openCard}
+          draggable
+          onDragStart={handleDragStart}
+          onDragEnd={() => setIsDragging(false)}
           style={{
             transformOrigin: 'left center',
             filter: 'drop-shadow(0 10px 8px rgba(0, 0, 0, 0.15)) drop-shadow(0 4px 3px rgba(0, 0, 0, 0.25))',
-            cursor: 'pointer'
           }}
         >
           <div className="relative h-full w-full">
@@ -181,14 +219,15 @@ export default function StrategyDeck({ className = '' }: StrategyDeckProps) {
               src="/card.png" 
               alt="Strategy card" 
               width={144} 
-              height={80} 
-              className="object-cover"
+              height={80}
+              className="object-cover select-none pointer-events-none"
+              draggable={false}
             />
-            <span className="text-[10px] text-slate-200/80 italic leading-tight">
-              Take a card
+            <span className="text-[10px] text-slate-200/80 italic leading-tight select-none pointer-events-none">
+              {isDragging ? 'Drop in a field...' : 'Drag or click'}
             </span>
             {/* Card text overlay */}
-            <div className="absolute inset-0 flex items-center justify-center px-3 py-2">
+            <div className="absolute inset-0 flex items-center justify-center px-3 py-2 select-none pointer-events-none">
               <span className="text-[4px] text-slate-700 font-sans leading-tight line-clamp-2">
                 {currentCard}
               </span>

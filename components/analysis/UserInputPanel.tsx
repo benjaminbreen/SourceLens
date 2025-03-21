@@ -25,62 +25,92 @@ export default function UserInputPanel() {
     setRawPrompt,
     setRawResponse,
     setCounterNarrative,
-    setRoleplayMode
+    setRoleplayMode,
+    detailedAnalysisLoaded,
+    setDetailedAnalysisLoaded,
   } = useAppStore();
   
   const [showPerspectiveInput, setShowPerspectiveInput] = useState(false);
   const [perspectiveInput, setPerspectiveInput] = useState('');
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isCardDropped, setIsCardDropped] = useState(false);
+  const [cardText, setCardText] = useState('');
+  const [analysisType, setAnalysisType] = useState<'basic' | 'detailed'>('basic');
+
 
   const handlePerspectiveSubmit = () => {
     setPerspective(perspectiveInput);
     setShowPerspectiveInput(false);
     // Don't trigger reanalysis here - let the analysis page handle it
   };
-  
-  // Handler for generating detailed analysis
-  const handleDetailedAnalysis = async () => {
-    if (isLoading || !initialAnalysis) return;
-    
-    setLoading(true);
-    
-    try {
-      const response = await fetch('/api/detailed-analysis', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          source: sourceContent,
-          metadata: metadata,
-          perspective: perspective,
-          modelId: llmModel  // Updated to use modelId instead of model
-        }),
-      });
+
+  const handlePerspectiveWithCardSubmit = () => {
+    if (cardText) {
+      // Add explanatory text for the LLM while preserving the card text for display
+      const llmPerspective = `Here is a koan-like suggestion to encourage creativity, experimentation, and factually-grounded perspective-taking when considering this source: ${cardText}`;
       
-      if (!response.ok) {
-        throw new Error(`API returned status ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      // Set the detailed analysis
-      setDetailedAnalysis(data.analysis);
-      
-      // Store raw data for transparency
-      setRawPrompt(data.rawPrompt);
-      setRawResponse(data.rawResponse);
-      
-      // Switch to analysis panel to show the result
-      setActivePanel('analysis');
-      
-    } catch (error) {
-      console.error("Detailed analysis error:", error);
-      alert("Error generating detailed analysis. Please try again.");
-    } finally {
-      setLoading(false);
+      setPerspective(llmPerspective);
+      setShowPerspectiveInput(false);
+      setIsCardDropped(false);
+      setPerspectiveInput('');
+      setCardText('');
     }
   };
   
+  // Handler for generating detailed analysis
+  // Handler for generating detailed analysis
+const handleDetailedAnalysis = async () => {
+  if (isLoading || !initialAnalysis) return;
+  
+  // If detailed analysis is already loaded, just switch panels
+  if (detailedAnalysisLoaded) {
+    setActivePanel('detailed-analysis');
+    return;
+  }
+  
+  setLoading(true);
+    
+  try {
+    const response = await fetch('/api/detailed-analysis', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        source: sourceContent,
+        metadata: metadata,
+        perspective: perspective,
+        modelId: llmModel
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API returned status ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Set the detailed analysis
+    setDetailedAnalysis(data.analysis);
+    
+    // Store raw data for transparency
+    setRawPrompt(data.rawPrompt);
+    setRawResponse(data.rawResponse);
+    
+    // Mark that detailed analysis has been loaded
+    setDetailedAnalysisLoaded(true);
+    
+    // Switch to detailed-analysis panel to show the result
+    setActivePanel('detailed-analysis');
+    
+  } catch (error) {
+    console.error("Detailed analysis error:", error);
+    alert("Error generating detailed analysis. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
   // Handler for generating counter-narrative
   const handleCounterNarrative = async () => {
     if (isLoading || !initialAnalysis) return;
@@ -151,29 +181,88 @@ export default function UserInputPanel() {
 
   return (
     <div className="space-y-4">
+      
       {/* Analysis Perspective */}
       <div>
         <h3 className="font-medium mb-2">Analysis Perspective</h3>
         
         {showPerspectiveInput ? (
           <div className="space-y-2">
-            <input
-              type="text"
-              className="w-full p-2 border border-slate-200 rounded focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20"
-              placeholder="E.g., Marxist analysis, feminist reading..."
-              value={perspectiveInput}
-              onChange={(e) => setPerspectiveInput(e.target.value)}
-            />
+            {isCardDropped ? (
+              <div className="px-4 py-3 bg-amber-50 border border-amber-200 rounded-md">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-amber-800 mb-1">
+                      **Creative strategy card enabled**
+                    </p>
+                    <p className="text-sm text-amber-700">{cardText}</p>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setIsCardDropped(false);
+                      setCardText('');
+                    }}
+                    className="text-amber-600 hover:text-amber-800 transition-colors"
+                    aria-label="Remove card"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="relative">
+                <input
+                  type="text"
+                  className={`w-full p-2 border ${
+                    isDragOver ? 'border-amber-400 bg-amber-50/30' : 'border-slate-200'
+                  } rounded focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 transition-colors`}
+                  placeholder="E.g., Marxist analysis, feminist reading..."
+                  value={perspectiveInput}
+                  onChange={(e) => setPerspectiveInput(e.target.value)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const droppedText = e.dataTransfer.getData('text/plain');
+                    if (droppedText) {
+                      setIsCardDropped(true);
+                      setCardText(droppedText);
+                      setPerspectiveInput('');
+                    }
+                    setIsDragOver(false);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(false);
+                  }}
+                />
+                {isDragOver && (
+                  <div className="absolute inset-0 flex items-center justify-center text-amber-600 pointer-events-none">
+                    <span className="text-sm bg-amber-50 px-2 py-1 rounded shadow-sm">Drop card here</span>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="flex space-x-2">
               <button
-                onClick={handlePerspectiveSubmit}
+                onClick={isCardDropped ? handlePerspectiveWithCardSubmit : handlePerspectiveSubmit}
                 className="px-3 py-1 bg-amber-700 text-white text-sm rounded"
-                disabled={!perspectiveInput.trim()}
+                disabled={!isCardDropped && !perspectiveInput.trim()}
               >
                 Apply
               </button>
               <button
-                onClick={() => setShowPerspectiveInput(false)}
+                onClick={() => {
+                  setShowPerspectiveInput(false);
+                  setIsDragOver(false);
+                  setIsCardDropped(false);
+                  setCardText('');
+                }}
                 className="px-3 py-1 bg-slate-200 text-slate-700 text-sm rounded"
               >
                 Cancel
@@ -183,10 +272,34 @@ export default function UserInputPanel() {
         ) : (
           <div 
             onClick={() => setShowPerspectiveInput(true)}
-            className="p-2 border border-slate-200 rounded flex justify-between items-center cursor-pointer hover:bg-slate-50"
+            className={`p-2 border ${
+              isDragOver ? 'border-amber-400 bg-amber-50/30' : 'border-slate-200'
+            } rounded flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors`}
+            onDrop={(e) => {
+              e.preventDefault();
+              const droppedText = e.dataTransfer.getData('text/plain');
+              if (droppedText) {
+                setIsCardDropped(true);
+                setCardText(droppedText);
+                setShowPerspectiveInput(true);
+              }
+              setIsDragOver(false);
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragOver(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              setIsDragOver(false);
+            }}
           >
             <span className="text-sm">
-              {perspective ? perspective : 'Default (no specific perspective)'}
+              {perspective && !perspective.includes('koan-like suggestion') 
+                ? perspective 
+                : perspective && perspective.includes('koan-like suggestion')
+                  ? '**Creative strategy card enabled**'
+                  : 'Default (no specific perspective)'}
             </span>
             <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -202,28 +315,33 @@ export default function UserInputPanel() {
       <div className="space-y-1">
         <h3 className="font-medium mb-2">Analysis Tools</h3>
         
-        <button
-          onClick={() => setActivePanel('analysis')}
-          className={`w-full text-left p-2 rounded ${
-            activePanel === 'analysis' 
-              ? 'bg-amber-700 text-white' 
-              : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
-          }`}
-        >
-          Basic Analysis
-        </button>
-        
-        <button
-          onClick={handleDetailedAnalysis}
-          disabled={isLoading || !initialAnalysis}
-          className={`w-full text-left p-2 rounded ${
-            isLoading || !initialAnalysis
-              ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
-              : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
-          }`}
-        >
-          Generate Detailed Analysis
-        </button>
+     <button
+       onClick={() => setActivePanel('analysis')}
+       className={`w-full text-left p-2 rounded ${
+         activePanel === 'analysis' 
+           ? 'bg-amber-700 text-white' 
+           : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
+       }`}
+     >
+       Basic Analysis
+     </button>
+
+
+     <button
+       onClick={handleDetailedAnalysis}
+       disabled={isLoading || !initialAnalysis}
+       className={`w-full text-left p-2 rounded ${
+         activePanel === 'detailed-analysis'  // Changed this line
+           ? 'bg-amber-700 text-white'
+           : isLoading || !initialAnalysis
+           ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+           : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
+       }`}
+     >
+       {detailedAnalysisLoaded && activePanel !== 'detailed-analysis'  // toggle detailed
+         ? 'Show Detailed Analysis' 
+         : 'Generate Detailed Analysis'}
+     </button>
         
         <button
           onClick={handleCounterNarrative}
@@ -240,17 +358,31 @@ export default function UserInputPanel() {
         </button>
 
         <button
-  onClick={handleSuggestReferences}
+          onClick={handleSuggestReferences}
+          disabled={isLoading || !initialAnalysis}
+          className={`w-full text-left p-2 rounded ${
+            activePanel === 'references'
+              ? 'bg-amber-700 text-white'
+              : isLoading || !initialAnalysis
+              ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
+          }`}
+        >
+          Suggest References
+        </button>
+
+        <button
+  onClick={() => setActivePanel('extract-info')}
   disabled={isLoading || !initialAnalysis}
   className={`w-full text-left p-2 rounded ${
-    activePanel === 'references'
+    activePanel === 'extract-info'
       ? 'bg-amber-700 text-white'
       : isLoading || !initialAnalysis
       ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
       : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
   }`}
 >
-  Suggest References
+  Extract Information
 </button>
         
         <button

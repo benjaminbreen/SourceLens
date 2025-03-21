@@ -30,12 +30,17 @@ export default async function handler(
           content: `Extract document metadata from the provided text. 
           Return ONLY a JSON object with these fields:
           - date: the most likely publication date found in ISO format (YYYY-MM-DD) or empty string if uncertain
-          - author: the most likely author name or empty string if uncertain
+          - author: the most likely author name or empty string if uncertain. If the first name is abbreviated, expand it to the most likely result (i.e. Wm--> William)
           - title: the most likely document title or empty string if uncertain
           - summary: a VERY SHORT 5-6 word summary of the document content
           - documentEmoji: a single emoji that creatively represents the document's content, theme, or time period
+          - documentType: the type of document (e.g., Letter, Diary, Speech, etc.) or empty string if uncertain
+          - genre: the literary or historical genre of the document or empty string if uncertain
+          - placeOfPublication: where the document was created or published (if evident) or empty string if uncertain
+          - academicSubfield: what academic fields might study this document or empty string if uncertain
+          - tags: an array of 3-5 keyword tags related to the document's content and context
           - researchValue: a brief 1-2 sentence description of what this document might be useful for researching
-          Be conservative - only include information you're confident about based on the text.`
+          `
         },
         {
           role: 'user',
@@ -43,7 +48,7 @@ export default async function handler(
         }
       ],
       response_format: { type: "json_object" },
-      temperature: 0.3,
+      temperature: 0.4,
     });
     
     // Parse the response

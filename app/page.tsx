@@ -9,7 +9,7 @@ import Image from 'next/image';
 import HamburgerMenu from '@/components/ui/HamburgerMenu';
 import AboutModal from '@/components/ui/AboutModal';
 import FAQModal from '@/components/ui/FAQModal';
-import { useAppStore, Metadata } from '@/lib/store';
+import { useAppStore, Metadata, ExtractInfoConfig } from '@/lib/store';
 
 
 export default function Home() {
@@ -49,6 +49,39 @@ const [isExtractingMetadata, setIsExtractingMetadata] = useState(false);
 const [showDemoOptions, setShowDemoOptions] = useState(false);
 const [selectedDemo, setSelectedDemo] = useState<number | null>(null);
 const [disableMetadataDetection, setDisableMetadataDetection] = useState(false);
+const [useAIVision, setUseAIVision] = useState(false);
+
+const handleTextAreaDragOver = (e: React.DragEvent<HTMLTextAreaElement>) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+   // Check if the dragged item is a file
+  if (e.dataTransfer.types.includes('Files')) {
+    // Switch to file upload tab
+    setActiveTab('file');
+    
+    // Add visual cue that we're switching tabs
+    e.currentTarget.classList.add('border-amber-500', 'bg-amber-50/50');
+    
+    // Show a temporary message
+    const oldPlaceholder = e.currentTarget.placeholder;
+    e.currentTarget.placeholder = "Switching to file upload...";
+    
+    // Reset the placeholder after a short delay
+    setTimeout(() => {
+      if (e.currentTarget) {
+        e.currentTarget.placeholder = oldPlaceholder;
+        e.currentTarget.classList.remove('border-amber-500', 'bg-amber-50/50');
+      }
+    }, 800);
+  }
+};
+
+// Add this to prevent default behavior when dragging leaves
+const handleTextAreaDragLeave = (e: React.DragEvent<HTMLTextAreaElement>) => {
+  e.preventDefault();
+  e.currentTarget.classList.remove('border-amber-500', 'bg-amber-50/50');
+};
 
 const handleTextPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
   const pastedText = e.clipboardData.getData('text');
@@ -170,7 +203,7 @@ const applyDetectedMetadata = () => {
       newMetadata.researchGoals = detectedMetadata.researchValue;
     }
     
-    // Add the new fields with null checks
+    // Add optional fields with null checks
     if (detectedMetadata.title) {
       newMetadata.title = detectedMetadata.title;
     }
@@ -183,6 +216,35 @@ const applyDetectedMetadata = () => {
       newMetadata.documentEmoji = detectedMetadata.documentEmoji;
     }
     
+    // Add other potential metadata fields
+    if (detectedMetadata.placeOfPublication) {
+      newMetadata.placeOfPublication = detectedMetadata.placeOfPublication;
+    }
+    
+    if (detectedMetadata.genre) {
+      newMetadata.genre = detectedMetadata.genre;
+    }
+    
+    if (detectedMetadata.documentType) {
+      newMetadata.documentType = detectedMetadata.documentType;
+    }
+    
+    if (detectedMetadata.academicSubfield) {
+      newMetadata.academicSubfield = detectedMetadata.academicSubfield;
+    }
+    
+   if (detectedMetadata.tags) {
+     newMetadata.tags = Array.isArray(detectedMetadata.tags) 
+       ? detectedMetadata.tags 
+       : typeof detectedMetadata.tags === 'string'
+         ? detectedMetadata.tags.split(',').map((tag: string) => tag.trim())
+         : [];
+   }
+    
+    if (detectedMetadata.fullCitation) {
+      newMetadata.fullCitation = detectedMetadata.fullCitation;
+    }
+    
     return newMetadata;
   });
   
@@ -190,6 +252,7 @@ const applyDetectedMetadata = () => {
   setShowMetadataPrompt(false);
 };
 
+// file processing function
 const processFile = async (file: File) => {
   setFileError(null);
   
@@ -233,7 +296,11 @@ const processFile = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
     
+    // Add the AI Vision preference
+    formData.append('useAIVision', useAIVision.toString());
+    
     console.log("Sending file to API:", file.name, "type:", file.type);
+    console.log("Using AI Vision:", useAIVision ? "PRIMARY" : "FALLBACK");
     
     const response = await fetch('/api/upload', {
       method: 'POST',
@@ -261,17 +328,17 @@ const processFile = async (file: File) => {
     // Switch to text tab to show the extracted content
     setActiveTab('text');
     
-} catch (error) {
-  console.error('Error processing file:', error);
-  // Fix the type error by properly checking the error type
-  setFileError(
-    error instanceof Error 
-      ? error.message 
-      : 'Failed to process file. Please try again or use text input instead.'
-  );
-} finally {
-  setUploadingFile(false);
-}
+  } catch (error) {
+    console.error('Error processing file:', error);
+    // Fix the type error by properly checking the error type
+    setFileError(
+      error instanceof Error 
+        ? error.message 
+        : 'Failed to process file. Please try again or use text input instead.'
+    );
+  } finally {
+    setUploadingFile(false);
+  }
 };
 
 const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -280,17 +347,25 @@ const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     processFile(files[0]);
   }
 };
- // Replace the current handleSubmit function in app/page.tsx with this one
+
+// handle submit function, including metadata
+
 const handleSubmit = () => {
   if (!formValid) return;
   
   // Create a final metadata object that includes all fields
   const finalMetadata = {
     ...metadata,
-    // Add the optional fields safely
+    // Include all optional fields from detected metadata if not present in user input
     title: metadata.title || detectedMetadata?.title,
-    summary: detectedMetadata?.summary,
-    documentEmoji: detectedMetadata?.documentEmoji
+    summary: metadata.summary || detectedMetadata?.summary,
+    documentEmoji: metadata.documentEmoji || detectedMetadata?.documentEmoji,
+    placeOfPublication: metadata.placeOfPublication || detectedMetadata?.placeOfPublication,
+    genre: metadata.genre || detectedMetadata?.genre,
+    documentType: metadata.documentType || detectedMetadata?.documentType,
+    academicSubfield: metadata.academicSubfield || detectedMetadata?.academicSubfield,
+    tags: metadata.tags || detectedMetadata?.tags,
+    fullCitation: metadata.fullCitation || detectedMetadata?.fullCitation
   };
   
   setSourceContent(textInput);
@@ -300,19 +375,20 @@ const handleSubmit = () => {
 };
 
   // Load demo content
-  const loadDemoContent = (index: number) => {
-
-      setDisableMetadataDetection(true);
-
+const loadDemoContent = (index: number) => {
+  setDisableMetadataDetection(true);
   setSelectedDemo(index);
   setTextInput(demoTexts[index].text);
   setLocalMetadata(demoTexts[index].metadata);
+  
+  // Set the extract info configuration based on demo selection
+  useAppStore.getState().setExtractInfoConfig(demoExtractConfigs[index]);
   
   // Hide the demo options after selection
   setTimeout(() => {
     setShowDemoOptions(false);
     
-    // Re-enable metadata detection after a delay to ensure the demo content is fully loaded
+    // Re-enable metadata detection after a delay
     setTimeout(() => {
       setDisableMetadataDetection(false);
     }, 1000);
@@ -389,7 +465,15 @@ Now we are engaged in a great civil war, testing whether that nation, or any nat
       date: '1863',
       author: 'Abraham Lincoln',
       researchGoals: 'Understand the historical context and in particular, who Lincoln was drawing on, referencing, and addressing himself to.',
-      additionalInfo: 'Delivered during the American Civil War at the dedication of the Soldiers\' National Cemetery in Gettysburg, Pennsylvania.'
+      additionalInfo: 'Delivered during the American Civil War at the dedication of the Soldiers\' National Cemetery in Gettysburg, Pennsylvania.',
+      title: 'Gettysburg Address',
+      documentEmoji: '🎩',
+      documentType: 'Speech',
+      genre: 'Political Oratory',
+      placeOfPublication: 'Gettysburg, Pennsylvania',
+      academicSubfield: 'Political History',
+      tags: ['Civil War', 'American History', 'Presidential Speech'],
+      summary: 'A concise dedication honoring Union soldiers'
     }
   },
   // Sumerian tablet
@@ -538,6 +622,53 @@ Dearest Mrs. Nicholson, Goodnight`,
     }
   }
 ];
+
+const demoExtractConfigs: Record<number, ExtractInfoConfig> = {
+  0: { // Gettysburg Address
+    listType: "What people or groups are mentioned in Lincoln's speech?",
+    fields: [
+      "Name or group mentioned",
+      "Context in which they appear", 
+      "Significance to Lincoln's argument",
+      "Line number or paragraph where mentioned"
+    ]
+  },
+  1: { // Ancient Complaint
+    listType: "What are Nanni's specific complaints?",
+    fields: [
+      "Specific complaints",
+      "Severity level in context of Sumerian society",
+      "Relevent quote in source",
+    ]
+  },
+  2: { // Thomas Mun
+    listType: "What countries does Mun mention in this source?",
+    fields: [
+      "What continent is the country on?",
+      "What is Mun's opinion toward the country?",
+      "What trade goods does he mention the country having?",
+      "Specifically where in Mun's text is country mentioned?"
+    ]
+  },
+  3: { // Spanish Inquisition
+    listType: "What religious or spiritual practices and substances are mentioned?",
+    fields: [
+      "Name of practice or substance",
+      "How is it characterized by the author in Spanish?",
+      "English translation of the Spanish?",
+      "Larger social context"
+    ]
+  },
+  4: { // Virginia Woolf letter
+    listType: "What literary references or metaphors does Woolf use?",
+    fields: [
+      "Reference or metaphor used?",
+      "Emotional valence?",
+      "Connection to Orlando (the novel)?",
+      "Connection to Woolf's life at the time?"
+    ]
+  }
+};
   
   return (
   <main className="min-h-screen flex flex-col bg-slate-200/90 overflow-x-hidden overflow-y-auto">
@@ -575,7 +706,7 @@ Dearest Mrs. Nicholson, Goodnight`,
       </div>
 
       {/* Hero content */}
-      <div className="relative z-10 max-w-2xl mx-auto px-3 flex flex-col justify-center items-center text-center" 
+      <div className="relative z-10 max-w-2xl mx-auto px-2 flex flex-col justify-center items-center text-center" 
            style={{ height: '50%', paddingTop: '0px' }}>
         <h1 
           className={`font-serif font-bold text-white/90 mb-1 transition-all duration-1000 transform md:text-6xl ${
@@ -621,6 +752,13 @@ Dearest Mrs. Nicholson, Goodnight`,
         >
           Beginner's Guide
         </button>
+<button
+    onClick={() => router.push('/library')}
+    className="px-3 py-1 bg-purple-400/30 backdrop-blur cursor-pointer hover:bg-purple-800/40 hover:scale-102 transition-all duration-300 ease-in-out rounded-lg text-white text-sm font-bold border border-white/20 hover:border-white/40 shadow-xl hover:shadow-2xl"
+  >
+    Library
+  </button>
+
       </div>
       </div>
     </div>
@@ -883,24 +1021,57 @@ Dearest Mrs. Nicholson, Goodnight`,
                   File Upload
                 </button>
               </div>
+
+
               
-            
+              {/* AI Vision toggle - Add this after your file drop zone */}
+{activeTab === 'file' && (
+  <div className="flex items-center bg-indigo-50 p-4 rounded-md border border-indigo-100 mt-3">
+    <label className="flex items-center cursor-pointer">
+      <div className="relative">
+        <input
+          type="checkbox"
+          className="sr-only"
+          checked={useAIVision}
+          onChange={() => setUseAIVision(!useAIVision)}
+          disabled={uploadingFile}
+        />
+        <div className={`block w-14 h-8 rounded-full ${useAIVision ? 'bg-indigo-600' : 'bg-gray-300'} transition-colors duration-300`}></div>
+        <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 ${useAIVision ? 'translate-x-6' : 'translate-x-0'}`}></div>
+      </div>
+      <div className="ml-3">
+        <span className="text-sm font-medium text-gray-900">Use AI Vision to extract text or analyze an image</span>
+        <p className="text-xs text-slate-600 mt-1">
+          {useAIVision 
+            ? "Claude's AI Vision technology will be used to extract text from your file"
+            : "Traditional OCR will be tried first, with AI Vision used only as a fallback if needed"}
+        </p>
+      </div>
+    </label>
+  </div>
+)}
+
              {/* Text input */}
-{activeTab === 'text' && (
-  <div>
-    <textarea
-      className="w-full h-64 p-4 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all"
-      placeholder="Paste or type your primary source text here..."
-      value={textInput}
-      onChange={(e) => setTextInput(e.target.value)}
-      onPaste={handleTextPaste}
-    />
+              {activeTab === 'text' && (
+                <div>
+                  <textarea
+                    className="w-full h-64 p-4 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all"
+                    placeholder="Paste or type your primary source text here..."
+                    value={textInput}
+                    onChange={(e) => setTextInput(e.target.value)}
+                    onPaste={handleTextPaste}
+                    onDragOver={handleTextAreaDragOver}
+                    onDragLeave={handleTextAreaDragLeave}
+
+                  />
+
+
     
     <p className="mt-3 text-slate-500 text-xs font-medium">
       After uploading a source, analyze it or select one of the specialized options below.
     </p>
     
-    <div className="mt-3 grid grid-cols-4 gap-3">
+    <div className="mt-3 grid grid-cols-5 gap-2">
       {/* Detailed Analysis Button */}
       <button className=" bg-white border border-amber-200 shadow-sm text-slate-700 py-3 px-2 rounded-lg hover:bg-gradient-to-b hover:from-white hover:to-amber-50 hover:scale-[1.02] hover:shadow-lg transition-colors transition-shadow transition-transform duration-300 ease-in-out flex flex-col items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed group "
         onClick={() => {
@@ -922,6 +1093,29 @@ Dearest Mrs. Nicholson, Goodnight`,
         <span className="text-sm font-medium group-hover:text-amber-900 transition-colors duration-300">Detailed Analysis</span>
       </button>
 
+      {/* Extract Info Button */}
+<button 
+  className="bg-white border border-emerald-200 shadow-sm text-slate-700 py-3 px-2 rounded-lg hover:bg-gradient-to-b hover:from-white hover:to-emerald-50 hover:scale-[1.02] hover:shadow-lg transition-colors transition-shadow transition-transform duration-300 ease-in-out flex flex-col items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed group"
+  onClick={() => {
+    if (formValid) {
+      setSourceContent(textInput);
+      setMetadata(metadata);
+      setLoading(true);
+      setActivePanel('extract-info');
+      router.push('/analysis');
+    }
+  }}
+  disabled={!formValid}
+>
+  <div className="flex items-center justify-center h-8 w-8 bg-emerald-100 text-emerald-700 group-hover:bg-emerald-200 group-hover:text-emerald-800 group-hover:shadow-[0_0_10px_rgba(5,150,105,0.3)] rounded-full mb-1.5 transition-all duration-300">
+    <svg className="w-4 h-4 transform group-active:scale-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M19 13l-4 4m0 0l-4-4m4 4V7" />
+    </svg>
+  </div>
+  <span className="text-sm font-medium group-hover:text-emerald-900 transition-colors duration-300">Extract Info</span>
+</button>
+
+    
       {/* References Button */}
     <button 
       className="bg-white border border-amber-400/90 shadow-sm text-slate-700 py-3 px-2 rounded-lg hover:bg-gradient-to-b hover:from-white hover:to-amber-50/80 hover:scale-[1.02] hover:shadow-lg transition-colors transition-shadow transition-transform duration-300 ease-in-out flex flex-col items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed group" 

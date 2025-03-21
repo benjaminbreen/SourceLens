@@ -9,6 +9,8 @@ import { useAppStore, Reference as StoreReference } from '@/lib/store';
 import LLMTransparency from '../ui/LLMTransparency';
 import ReactMarkdown from 'react-markdown';
 import { COMPONENT_DEFAULT_MODELS, DEFAULT_MODEL_ID } from '@/lib/models';
+import SaveToLibraryButton from '../library/SaveToLibraryButton';
+import { useRouter } from 'next/navigation';
 
 // Reference interface matching API return type
 interface ReferenceItem {
@@ -55,6 +57,7 @@ export default function ReferencesDisplay() {
   const hasSetModelRef = useRef(false);
   const hasGeneratedRef = useRef(false);
   const sortedRefsRef = useRef(false);
+  const router = useRouter();
 
   // Set preferred model for references on component mount (only once)
   useEffect(() => {
@@ -386,6 +389,17 @@ const processCitation = (citation: string = '') => {
             </svg>
             Suggested References
           </h2>
+
+           <button
+      onClick={() => router.push('/library')}
+      className="text-sm text-amber-600 hover:text-amber-800 flex items-center gap-1 transition-colors"
+    >
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg>
+      View Library
+    </button>
+ 
           
           <div className="flex gap-2">
             {/* Style dropdown */}
@@ -523,6 +537,27 @@ const processCitation = (citation: string = '') => {
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
   </svg>
 </a>
+
+{/* Add the SaveToLibraryButton component here */}
+  <SaveToLibraryButton
+    type="reference"
+    data={{
+      citation: reference.citation,
+      url: reference.url,
+      type: reference.type,
+      relevance: reference.relevance,
+      reliability: reference.reliability,
+      sourceQuote: reference.sourceQuote,
+      importance: reference.importance,
+      sourceName: metadata?.author ? `${metadata.author} (${metadata.date})` : 'Unknown source',
+      sourceAuthor: metadata?.author || 'Unknown',
+      sourceDate: metadata?.date || 'Unknown date',
+    }}
+    iconOnly
+    variant="text"
+    size="md"
+    className="p-1.5 text-amber-600 hover:text-amber-800 rounded-full hover:bg-amber-50 transition-colors"
+  />
                    
                    <button
                      className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors"
@@ -617,10 +652,7 @@ const processCitation = (citation: string = '') => {
         )}
       </div>
       
-      {/* Transparency section */}
-      <div className="border-t border-slate-200 p-4 bg-white">
-        <LLMTransparency rawPrompt={rawPrompt} rawResponse={rawResponse} />
-      </div>
+     
     </div>
   );
 }

@@ -18,6 +18,13 @@ export interface Metadata {
   title?: string;
    summary?: string;
   documentEmoji?: string;
+  placeOfPublication?: string;
+  genre?: string;
+  documentType?: string;
+  academicSubfield?: string;
+  tags?: string[] | string;
+  fullCitation?: string;
+
 }
 
 export interface AnalysisResult {
@@ -42,6 +49,15 @@ export interface Reference {
   importance: number; // 1-5 ranking
 }
 
+
+
+export interface ExtractInfoConfig {
+  listType: string;
+  fields: string[];
+  format?: 'list' | 'table';
+}
+
+
 interface AppState {
   // Source and metadata
   sourceContent: string;
@@ -50,8 +66,11 @@ interface AppState {
   metadata: Metadata | null;
   perspective: string;
   referencesModel: string;
+  extractInfoConfig: ExtractInfoConfig | null;
+setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
   
   // Analysis results
+    detailedAnalysisLoaded: boolean;
   initialAnalysis: AnalysisResult | null;
   detailedAnalysis: string | null;
   counterNarrative: string | null;
@@ -64,7 +83,7 @@ interface AppState {
   
   // UI state
   isLoading: boolean;
- activePanel: 'analysis' | 'counter' | 'roleplay' | 'references';
+ activePanel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info';
   showMetadataModal: boolean;
   rawPrompt: string | null;
   rawResponse: string | null;
@@ -84,13 +103,16 @@ interface AppState {
   addMessage: (message: Omit<ConversationMessage, 'timestamp'>) => void;
   clearConversation: () => void;
   setLoading: (loading: boolean) => void;
- setActivePanel: (panel: 'analysis' | 'counter' | 'roleplay' | 'references') => void;
+ setActivePanel: (panel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info') => void;
   setShowMetadataModal: (show: boolean) => void;
   setRawPrompt: (prompt: string | null) => void;
   setRawResponse: (response: string | null) => void;
   setLLMModel: (model: string) => void;
   resetState: () => void;
    setReferencesModel: (model: string) => void; 
+    setDetailedAnalysisLoaded: (loaded: boolean) => void;
+  resetDetailedAnalysisLoaded: () => void;
+
 }
 
 const initialState = {
@@ -113,6 +135,10 @@ const initialState = {
   rawResponse: null,
   llmModel: DEFAULT_MODEL_ID,
   referencesModel: 'claude-sonnet', 
+  detailedAnalysisLoaded: false,
+
+   extractInfoConfig: null,
+   
 };
 
 export const useAppStore = create<AppState>((set) => ({
@@ -131,7 +157,11 @@ export const useAppStore = create<AppState>((set) => ({
   setInitialAnalysis: (analysis) => set({ initialAnalysis: analysis }),
   
   setDetailedAnalysis: (analysis) => set({ detailedAnalysis: analysis }),
-  
+
+  setDetailedAnalysisLoaded: (loaded) => set({ detailedAnalysisLoaded: loaded }),
+
+  resetDetailedAnalysisLoaded: () => set({ detailedAnalysisLoaded: false }),
+
   setCounterNarrative: (narrative) => set({ counterNarrative: narrative }),
 
   setReferencesModel: (model) => set({ referencesModel: model }),
@@ -164,6 +194,8 @@ export const useAppStore = create<AppState>((set) => ({
   setRawResponse: (response) => set({ rawResponse: response }),
   
   setLLMModel: (model) => set({ llmModel: model }),
+  
+  setExtractInfoConfig: (config) => set({ extractInfoConfig: config }),
   
   resetState: () => set(initialState)
 }));

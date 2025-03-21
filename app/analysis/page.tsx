@@ -1,4 +1,6 @@
 // app/analysis/page.tsx
+// Optimized to prevent duplicate analysis requests and unnecessary re-fetching
+
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
@@ -14,6 +16,8 @@ export default function AnalysisPage() {
     metadata, 
     initialAnalysis, 
     setInitialAnalysis,
+    detailedAnalysis,
+    setDetailedAnalysis,
     isLoading,
     setLoading,
     llmModel,
@@ -22,7 +26,9 @@ export default function AnalysisPage() {
     setRawResponse,
     activePanel,
     roleplayMode,
-    setRoleplayMode
+    setRoleplayMode,
+    detailedAnalysisLoaded,
+    setDetailedAnalysisLoaded
   } = useAppStore();
   
   // Track state to control when to fetch analysis
@@ -66,15 +72,17 @@ export default function AnalysisPage() {
     
     // If model or perspective changed and we have source content, trigger reanalysis
     // But only if we're not in references or roleplay mode
-    if ((isModelChange || isPerspectiveChange) && sourceContent && metadata && 
-        activePanel !== 'references' && activePanel !== 'roleplay') {
+    if ((isModelChange || isPerspectiveChange) && sourceContent && metadata) {
       console.log(`Setting up reanalysis due to ${isModelChange ? 'model' : 'perspective'} change`);
       // Clear current analysis
       setInitialAnalysis(null);
+      // Also clear detailed analysis and reset the loaded flag
+      setDetailedAnalysis(null);
+      setDetailedAnalysisLoaded(false);
       // Flag that we should fetch new analysis
       setShouldFetchAnalysis(true);
     }
-  }, [llmModel, perspective, sourceContent, metadata, initialAnalysis, activePanel]);
+  }, [llmModel, perspective, sourceContent, metadata, initialAnalysis, activePanel, setDetailedAnalysis, setDetailedAnalysisLoaded]);
   
   
   // Handle the actual analysis fetching
@@ -176,14 +184,22 @@ export default function AnalysisPage() {
     };
     
     fetchAnalysis();
-  }, [shouldFetchAnalysis, sourceContent, metadata, llmModel, perspective]);
+  }, [shouldFetchAnalysis, sourceContent, metadata, llmModel, perspective, setInitialAnalysis, setRawPrompt, setRawResponse]);
+  
+  // Track when detailed analysis is loaded from specific panel requests (not on model change)
+  useEffect(() => {
+    if (detailedAnalysis && !detailedAnalysisLoaded) {
+      setDetailedAnalysisLoaded(true);
+      console.log('Detailed analysis is now loaded and cached');
+    }
+  }, [detailedAnalysis, detailedAnalysisLoaded, setDetailedAnalysisLoaded]);
   
   // Redirect to home if no source content
   useEffect(() => {
     if (!sourceContent && !isLoading) {
       router.push('/');
     }
-  }, [sourceContent, isLoading]);
+  }, [sourceContent, isLoading, router]);
 
   return <MainLayout />;
 }
