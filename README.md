@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📚 SourceLens
 
-## Getting Started
+### Created in 2025 by Benjamin Breen, Associate Professor of History, UC Santa Cruz, with most of the code written by Claude Sonnet 3.7
 
-First, run the development server:
+SourceLens is an AI-powered platform for analyzing, annotating, and interpreting primary sources. Designed with historians, students, and researchers in mind, it offers tools for deep reading, metadata extraction, contextual analysis, and more.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+I am a beginning coder and relied extensively on Anthropic's Claude Sonnet 3.7 to write this code, while also learning about the tech stack and architecture from OpenAI's o1 model. Thank you to those who made these tools possible. 
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔎 Key Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Contextual and thematic analysis of historical texts using LLMs  
+- Inline citation parsing and clickable reference links  
+- Counter-narrative generation and author roleplay tools  
+- OCR cleanup and formatting for archival sources  
+- Personal library for saving, tagging, and retrieving insights
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 📰 Background & Philosophy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+SourceLens was created to explore how generative AI might augment — rather than replace — the work of historians. For reflections on the project and its origins, see:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [📄 *The leading AI models are now good historians*](https://resobscura.substack.com/p/the-leading-ai-models-are-now-very)  
+- [📄 *How to use generative AI for historical research*](https://resobscura.substack.com/p/generative-ai-for-historical-research)
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛠️ Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js](https://nextjs.org/)  
+- [React](https://react.dev/)  
+- [Tailwind CSS](https://tailwindcss.com/)  
+- [shadcn/ui](https://ui.shadcn.com/)  
+- [OpenAI API](https://platform.openai.com/)  
+- [TypeScript](https://www.typescriptlang.org/)
+
+---
+
+## 📬 Contact
+
+For questions, collaborations, or press inquiries:
+
+- [Faculty profile](https://humanities.ucsc.edu/academics/faculty/index.php?uid=bebreen)  
+- Email: [bebreen@ucsc.edu](mailto:bebreen@ucsc.edu)
+
+ ---
+ ## 🚧 Status
+
+SourceLens is in **active development**. This UI is a work-in-progress snapshot and will change substantially as I develop it to be a standalone, functional tool rather than a pet project.
+- 
+
+© 2025 Benjamin Breen. Licensed under CC BY-NC 4.0. Commercial use prohibited without written permission.
