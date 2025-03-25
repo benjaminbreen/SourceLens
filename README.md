@@ -31,10 +31,11 @@ SourceLens was created to explore how generative AI might augment — rather tha
 
 - [Next.js](https://nextjs.org/)  
 - [React](https://react.dev/)  
-- [Tailwind CSS](https://tailwindcss.com/)  
-- [shadcn/ui](https://ui.shadcn.com/)  
-- [OpenAI API](https://platform.openai.com/)  
+- [Tailwind CSS](https://tailwindcss.com/)   
 - [TypeScript](https://www.typescriptlang.org/)
+- And the LLM APIs of Google, Anthropic, and OpenAI
+  
+  SourceLens currently defaults to Gemini Flash 2.0 Lite because of its low price and speed.
 
 ---
 
