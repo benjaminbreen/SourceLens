@@ -1,6 +1,8 @@
 // pages/api/upload.ts
-// Enhanced API for handling large PDFs with chunking, improved text extraction,
-// and multi-page AI Vision support for files up to 300 pages / 20MB
+// Optimized file processing with intelligent fallbacks:
+// - PDF processing with multiple layers: pdf-lib/pdf-parse → command-line tools → Gemini/Claude vision
+// - Image OCR using Gemini Flash with automatic Claude Vision fallback
+// - Handles text, PDF, images, and cleaned-up document handling with efficient error management
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { IncomingForm } from 'formidable';
@@ -8,27 +10,27 @@ import fs from 'fs';
 import path from 'path';
 import util from 'util';
 import { exec as execCallback } from 'child_process';
+import { PDFDocument } from 'pdf-lib';
 import pdfParse from 'pdf-parse';
 import { cleanOcrText } from '@/lib/text-processing/cleanOcrText';
 import os from 'os';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Anthropic } from '@anthropic-ai/sdk';
 
-// Configure Anthropic client for Claude Vision
+// Configure API clients
+const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
 // Minimum text length to be considered successful extraction
-const MIN_TEXT_LENGTH = 100;
+const MIN_TEXT_LENGTH = 500;
 
 // Maximum PDF size in bytes (20MB)
 const MAX_PDF_SIZE = 20 * 1024 * 1024;
 
 // Maximum PDF pages to process
-const MAX_PDF_PAGES = 300;
-
-// Maximum pages to process with Claude Vision
-const MAX_CLAUDE_VISION_PAGES = 20;
+const MAX_PDF_PAGES = 400;
 
 // Convert exec to Promise-based
 const exec = util.promisify(execCallback);
@@ -37,10 +39,19 @@ const exec = util.promisify(execCallback);
 export const config = {
   api: {
     bodyParser: false,
-    // Increase timeout for larger files
     responseLimit: false,
   },
 };
+
+
+interface TextContent {
+  items: Array<{
+    str: string;
+    transform: number[];
+    // Add other properties if needed
+  }>;
+  // Add other properties if needed
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -56,14 +67,14 @@ export default async function handler(
   
   try {
     // Create a temp directory for processing files
-    tempDir = path.join(os.tmpdir(), `pdf-process-${Date.now()}`);
+    tempDir = path.join(os.tmpdir(), `file-process-${Date.now()}`);
     fs.mkdirSync(tempDir, { recursive: true });
     console.log(`Created temp directory: ${tempDir}`);
     
-    // Parse the form with increased file size limit (20MB)
+    // Parse the form with increased file size limit
     const form = new IncomingForm({
       keepExtensions: true,
-      maxFileSize: MAX_PDF_SIZE, // 20MB limit
+      maxFileSize: MAX_PDF_SIZE,
       uploadDir: tempDir,
       multiples: false,
     });
@@ -79,9 +90,30 @@ export default async function handler(
       });
     });
     
+       function getSupportedMediaType(mimeType: string): "image/jpeg" | "image/png" | "image/gif" | "image/webp" {
+  // Check if the mimeType is one of the supported types
+  if (
+    mimeType === "image/jpeg" || 
+    mimeType === "image/png" || 
+    mimeType === "image/gif" || 
+    mimeType === "image/webp"
+  ) {
+    return mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+  }
+  
+  // Default to image/jpeg if the provided type isn't supported
+  return "image/jpeg";
+}
+
     // Check if we should use AI Vision as the primary method
     const useAIVision = fields.useAIVision && fields.useAIVision[0] === 'true';
     console.log(`AI Vision preference: ${useAIVision ? 'PRIMARY' : 'FALLBACK'}`);
+    
+    // Get the selected AI Vision model
+    const visionModel = fields.visionModel 
+      ? fields.visionModel[0] 
+      : 'gemini-2.0-flash';
+    console.log(`Selected AI Vision model: ${visionModel}`);
     
     // Get the file object
     let fileObj: any = files.file;
@@ -116,16 +148,13 @@ export default async function handler(
     
     console.log(`Processing file: ${originalFilename} (type: ${mimeType}, size: ${Math.round(fileSize / 1024)} KB)`);
     
-    // First response for large files to show progress
-    if (fileSize > 5 * 1024 * 1024) { // Files over 5MB
-      // Send initial status - this won't be used on the client side
-      // but helps with keeping the connection alive
+    // Send initial status for large files
+    if (fileSize > 5 * 1024 * 1024) {
       res.writeHead(202, {
         'Content-Type': 'application/json',
         'Transfer-Encoding': 'chunked'
       });
       
-      // Send progress update
       res.write(JSON.stringify({
         status: 'processing',
         message: `Processing large file (${Math.round(fileSize / (1024 * 1024))} MB), please wait...`,
@@ -137,353 +166,416 @@ export default async function handler(
     let processingMethod = '';
     let pageCount = 0;
     
-    // If it's a PDF, get page count first to inform processing approach
+    // Process based on file type
     if (mimeType.includes('pdf') || fileExtension === '.pdf') {
+      console.log('Processing as PDF');
+      const pdfBuffer = fs.readFileSync(filePath);
+      
       try {
-        const pdfBuffer = fs.readFileSync(filePath);
-        const pdfData = await pdfParse(pdfBuffer, { max: 1 }); // Just parse metadata
-        pageCount = pdfData.numpages || 0;
-        console.log(`PDF has ${pageCount} pages`);
-        
-        // Check if PDF exceeds maximum page count
-        if (pageCount > MAX_PDF_PAGES) {
-          return res.status(400).json({
-            message: `PDF has too many pages (${pageCount}). Maximum allowed is ${MAX_PDF_PAGES} pages.`,
-            error: 'TOO_MANY_PAGES'
-          });
-        }
-      } catch (metadataErr) {
-        console.warn('Could not determine PDF page count:', metadataErr);
-        // Continue processing without page count information
-      }
-    }
-    
-    // If AI Vision is selected as primary method, use it directly
-    if (useAIVision) {
-      try {
-        console.log('Using Claude Vision as primary method');
-        
-        // For PDFs with Claude Vision, process multiple pages if needed
-        if (mimeType.includes('pdf') || fileExtension === '.pdf') {
-          if (pageCount > 1) {
-            // Process multiple pages with Claude Vision
-            const pagesToProcess = Math.min(pageCount, MAX_CLAUDE_VISION_PAGES);
-            console.log(`Processing ${pagesToProcess} pages of PDF with Claude Vision`);
+        // Try to get page count first
+        try {
+          const pdfDoc = await PDFDocument.load(pdfBuffer);
+          pageCount = pdfDoc.getPageCount();
+          console.log(`PDF has ${pageCount} pages (via pdf-lib)`);
+          
+          if (pageCount > MAX_PDF_PAGES) {
+            return res.status(400).json({
+              message: `PDF has too many pages (${pageCount}). Maximum allowed is ${MAX_PDF_PAGES} pages.`,
+              error: 'TOO_MANY_PAGES'
+            });
+          }
+        } catch (err) {
+          console.warn('Could not get page count with pdf-lib, trying pdf-parse:', err);
+          try {
+            const data = await pdfParse(pdfBuffer, { max: 1 });
+            pageCount = data.numpages || 0;
+            console.log(`PDF has ${pageCount} pages (via pdf-parse)`);
             
-            // Send progress update
-            if (fileSize > 5 * 1024 * 1024) {
+            if (pageCount > MAX_PDF_PAGES) {
+              return res.status(400).json({
+                message: `PDF has too many pages (${pageCount}). Maximum allowed is ${MAX_PDF_PAGES} pages.`,
+                error: 'TOO_MANY_PAGES'
+              });
+            }
+          } catch {
+            console.warn('Could not determine page count');
+            // Continue without page count
+          }
+        }
+        
+        // Try extraction methods in order of preference
+        
+        // Status update for large files
+        if (fileSize > 5 * 1024 * 1024 && !res.writableEnded) {
+          res.write(JSON.stringify({
+            status: 'processing',
+            message: 'Extracting text from PDF...',
+            progress: 20
+          }));
+        }
+        
+        // LAYER 1: Try command-line tools first
+        console.log('LAYER 1: Trying command-line extraction tools...');
+        let hasExtractedText = false;
+        
+        try {
+          // Try pdftotext (part of poppler-utils)
+          const tempPdfPath = path.join(tempDir, 'temp.pdf');
+          const tempTextPath = path.join(tempDir, 'output.txt');
+          
+          fs.writeFileSync(tempPdfPath, pdfBuffer);
+          
+          await exec(`pdftotext -layout "${tempPdfPath}" "${tempTextPath}"`);
+          
+          if (fs.existsSync(tempTextPath)) {
+            content = fs.readFileSync(tempTextPath, 'utf-8');
+            processingMethod = 'pdftotext-command';
+            hasExtractedText = true;
+            
+            console.log(`pdftotext extracted ${content.length} characters`);
+            
+            // Clean up temporary files
+            try {
+              fs.unlinkSync(tempPdfPath);
+              fs.unlinkSync(tempTextPath);
+            } catch (e) {
+              console.warn('Error cleaning up temp files:', e);
+            }
+          }
+        } catch (e) {
+          console.warn('pdftotext extraction failed:', e);
+        }
+        
+        // LAYER 2: Try pdf-parse if command-line tools failed
+        if (!hasExtractedText) {
+          console.log('Command-line tools unavailable or failed, trying pdf-parse...');
+          
+          if (fileSize > 5 * 1024 * 1024 && !res.writableEnded) {
+            res.write(JSON.stringify({
+              status: 'processing',
+              message: 'Trying alternative PDF extraction...',
+              progress: 30
+            }));
+          }
+          
+          try {
+            // Custom renderer for better text extraction
+            const renderOptions = {
+              normalizeWhitespace: true,
+              disableCombineTextItems: false
+            };
+            
+            const data = await pdfParse(pdfBuffer, {
+              pagerender: function(pageData) {
+                return pageData.getTextContent(renderOptions)
+                  .then(function(textContent: TextContent) {
+                    let lastY: number | undefined, text = '';
+                    const items = textContent.items;
+                    
+                    // Sort by y position then x to maintain reading order
+                    items.sort(function(a, b) {
+                      if (a.transform[5] !== b.transform[5]) {
+                        return b.transform[5] - a.transform[5]; // Sort by y position (reversed)
+                      }
+                      return a.transform[4] - b.transform[4]; // Then by x position
+                    });
+                    
+                    // Process text with better layout preservation
+                    for (let i = 0; i < items.length; i++) {
+                      const item = items[i];
+                      
+                      // Start a new line if y position changes significantly
+                      if (lastY !== undefined && Math.abs(lastY - item.transform[5]) > 5) {
+                        text += '\n';
+                      } else if (i > 0 && items[i-1].str.slice(-1) !== ' ' && item.str[0] !== ' ') {
+                        // Add space between words on same line if needed
+                        text += ' ';
+                      }
+                      
+                      text += item.str;
+                      lastY = item.transform[5];
+                    }
+                    
+                    return text;
+                  });
+              }
+            });
+            
+            const extractedText = data.text.replace(/\s+/g, ' ')
+                                         .replace(/(\n\s*){3,}/g, '\n\n')
+                                         .trim();
+            
+            content = extractedText;
+            processingMethod = 'optimized-pdf-parse';
+            hasExtractedText = true;
+            
+            console.log(`pdf-parse extracted ${content.length} characters`);
+          } catch (e) {
+            console.warn('pdf-parse extraction failed:', e);
+          }
+        }
+        
+        // LAYER 3: Try AI-based extraction if needed
+        if ((hasExtractedText && content.length < MIN_TEXT_LENGTH) || useAIVision) {
+          console.log('Direct extraction insufficient or AI Vision requested');
+          
+          if (fileSize > 5 * 1024 * 1024 && !res.writableEnded) {
+            res.write(JSON.stringify({
+              status: 'processing',
+              message: 'Using AI for enhanced PDF processing...',
+              progress: 50
+            }));
+          }
+          
+       
+
+          // Try Gemini Flash first
+          try {
+            const modelName = "gemini-2.0-flash";
+            const model = googleAI.getGenerativeModel({ model: modelName });
+            
+            const prompt = "Extract all text content from this PDF document, which is a public domain historical source. Preserve paragraph structure, headings, and formatting. Include all text without summarization or modification.";
+            
+            const result = await model.generateContent({
+              contents: [
+                {
+                  role: "user",
+                  parts: [
+                    { text: prompt },
+                    { 
+                      inlineData: {
+                        mimeType: "application/pdf",
+                        data: pdfBuffer.toString('base64')
+                      }
+                    }
+                  ]
+                }
+              ],
+              generationConfig: {
+                temperature: 0.1,
+                maxOutputTokens: 8192,
+              }
+            });
+            
+            const geminiContent = result.response.text();
+            console.log(`Gemini extracted ${geminiContent.length} characters from PDF`);
+            
+            if (geminiContent.length > content.length) {
+              content = geminiContent;
+              processingMethod = `gemini-native-pdf-${modelName}`;
+            } else if (content.length > 0) {
+              console.log(`Keeping direct extraction as it's better (${content.length} > ${geminiContent.length} chars)`);
+            } else {
+              content = geminiContent;
+              processingMethod = `gemini-native-pdf-${modelName}`;
+            }
+          } catch (geminiErr) {
+            console.error('Gemini PDF processing error:', geminiErr);
+            // Fall back to Claude Vision if Gemini fails or content still insufficient
+          }
+          
+          // Fall back to Claude Vision if needed
+          if (content.length < MIN_TEXT_LENGTH) {
+            console.log('Using Claude Vision for first page OCR as fallback');
+            
+            if (fileSize > 5 * 1024 * 1024 && !res.writableEnded) {
               res.write(JSON.stringify({
                 status: 'processing',
-                message: `Processing ${pagesToProcess} pages of PDF with AI Vision...`,
-                progress: 30
+                message: 'Using Claude Vision for detailed OCR...',
+                progress: 75
               }));
             }
             
-            const claudeResult = await processPdfWithClaudeVision(filePath, tempDir, pagesToProcess);
-            content = claudeResult.text;
-            processingMethod = claudeResult.method;
-          } else {
-            // Single page PDF
-            const claudeResult = await processWithClaudeVision(filePath, mimeType);
-            content = claudeResult.text;
-            processingMethod = claudeResult.method;
-          }
-        } else {
-          // Non-PDF file with Claude Vision
-          const claudeResult = await processWithClaudeVision(filePath, mimeType);
-          content = claudeResult.text;
-          processingMethod = claudeResult.method;
-        }
-      } catch (error) {
-        console.error('Claude Vision processing failed:', error);
-        content = '[AI Vision processing failed - please try standard processing]';
-        processingMethod = 'claude-vision-failed';
-      }
-    } else {
-      // Process based on file type with standard methods
-      if (mimeType.includes('pdf') || fileExtension === '.pdf') {
-        console.log('Processing as PDF');
-        
-        // Handle large PDFs with chunked processing
-        if (pageCount > 50 || fileSize > 5 * 1024 * 1024) {
-          console.log('Large PDF detected, using chunked processing');
-          
-          // Send progress update
-          if (fileSize > 5 * 1024 * 1024) {
-            res.write(JSON.stringify({
-              status: 'processing',
-              message: 'Processing large PDF in chunks...',
-              progress: 40
-            }));
-          }
-          
-          try {
-            // For large PDFs, we extract text in chunks to prevent memory issues
-            const maxPagesPerChunk = 20;
-            let allText = '';
-            
-            // Calculate total chunks for progress reporting
-            const totalChunks = Math.ceil(pageCount / maxPagesPerChunk);
-            
-            for (let i = 1; i <= pageCount; i += maxPagesPerChunk) {
-              const endPage = Math.min(i + maxPagesPerChunk - 1, pageCount);
-              console.log(`Processing pages ${i} to ${endPage}`);
+            try {
+              // Convert first page to image
+              const poppler = await checkPoppler();
               
-              // Send progress update
-              if (fileSize > 5 * 1024 * 1024) {
-                const currentChunk = Math.ceil(i / maxPagesPerChunk);
-                const progress = 40 + Math.round((currentChunk / totalChunks) * 50);
+              if (poppler.available) {
+                const pdfFilename = path.basename(filePath, '.pdf');
+                const outputPath = path.join(tempDir, `${pdfFilename}-page1`);
+                await exec(`${poppler.command} -png -r 300 -f 1 -l 1 "${filePath}" "${outputPath}"`);
                 
-                res.write(JSON.stringify({
-                  status: 'processing',
-                  message: `Processing pages ${i} to ${endPage} of ${pageCount}...`,
-                  progress: progress
-                }));
-              }
-              
-              try {
-                // Try standard PDF text extraction first for this chunk
-                const chunkText = await extractPdfTextRange(filePath, i, endPage);
+                const imageFiles = fs.readdirSync(tempDir)
+                  .filter(file => file.startsWith(`${pdfFilename}-page1`) && file.endsWith('.png'))
+                  .map(file => path.join(tempDir, file));
                 
-                // Check if we got meaningful text
-                if (chunkText && chunkText.length > MIN_TEXT_LENGTH) {
-                  allText += chunkText + "\n\n";
-                  continue; // Move to next chunk if successful
-                }
-                
-                // If text extraction wasn't successful, fall back to OCR
-                console.log(`Standard extraction for pages ${i}-${endPage} yielded insufficient text, trying OCR`);
-                const ocrResult = await processPdfPagesWithOcr(filePath, tempDir, i, endPage);
-                allText += ocrResult.text + "\n\n";
-              } catch (chunkErr) {
-                console.warn(`Error extracting text from pages ${i}-${endPage}:`, chunkErr);
-                
-                // Fall back to OCR for this chunk if text extraction fails
-                try {
-                  const ocrResult = await processPdfPagesWithOcr(filePath, tempDir, i, endPage);
-                  allText += ocrResult.text + "\n\n";
-                } catch (ocrErr) {
-                  console.error(`OCR fallback also failed for pages ${i}-${endPage}:`, ocrErr);
+                if (imageFiles.length > 0) {
+                  const imageBuffer = fs.readFileSync(imageFiles[0]);
+                  const base64Image = imageBuffer.toString('base64');
+
+                  const response = await anthropic.messages.create({
+                    model: 'claude-3-5-haiku-latest',
+                    max_tokens: 8000,
+                    temperature: 0.1,
+                    system: "Extract ALL text visible in the image with perfect formatting, including paragraph breaks. Include all text, tables, captions, headers, footers, and page numbers.",
+                    messages: [
+                      {
+                        role: 'user',
+                        content: [
+                          {
+                            type: 'text',
+                            text: 'Extract ALL text from this document page, maintaining formatting as much as possible. Just give me the raw extracted text with no commentary.'
+                          },
+                          {
+                            type: 'image',
+                            source: {
+                              type: 'base64',
+                              media_type: getSupportedMediaType(mimeType || ''),
+                              data: base64Image
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  });
                   
-                  // Try Claude Vision as last resort for this chunk if text is too short
-                  if (useAIVision || allText.length < MIN_TEXT_LENGTH) {
-                    try {
-                      // Process a single page with Claude Vision as sample
-                      const samplePage = Math.floor((i + endPage) / 2); // Middle page as sample
-                      console.log(`Trying Claude Vision for sample page ${samplePage} from chunk ${i}-${endPage}`);
-                      
-                      const claudeResult = await processSinglePageWithClaudeVision(filePath, tempDir, samplePage);
-                      allText += `[Sample from pages ${i}-${endPage}]:\n${claudeResult.text}\n\n`;
-                    } catch (claudeErr) {
-                      console.error(`Claude Vision sampling also failed for pages ${i}-${endPage}:`, claudeErr);
-                      allText += `[PDF processing failed for pages ${i}-${endPage}]\n\n`;
+                  const claudeText = response.content[0]?.type === 'text' ? response.content[0].text : '';
+                  console.log(`Claude Vision extracted ${claudeText.length} characters from first page`);
+                  
+                  // Only use Claude Vision if it gives better results or if we have very little content
+                  if (claudeText.length > content.length || content.length < MIN_TEXT_LENGTH / 2) {
+                    let claudeContent = claudeText;
+                    if (pageCount > 1) {
+                      claudeContent += `\n\n[Note: This is only the first page of a ${pageCount}-page document. The remaining pages were not processed.]`;
                     }
-                  } else {
-                    allText += `[PDF processing failed for pages ${i}-${endPage}]\n\n`;
+                    
+                    content = claudeContent;
+                    processingMethod = 'claude-vision-first-page';
+                    console.log(`Using Claude Vision output (${claudeText.length} chars)`);
+                  }
+                  
+                  // Clean up temporary image
+                  try {
+                    fs.unlinkSync(imageFiles[0]);
+                  } catch (err) {
+                    console.warn(`Error deleting temporary image: ${imageFiles[0]}`, err);
                   }
                 }
-              }
-            }
-            
-            content = allText;
-            processingMethod = 'pdf-chunked-processing';
-          } catch (chunkedErr) {
-            console.error('Chunked PDF processing failed:', chunkedErr);
-            
-            // Fall back to standard processing if chunked approach fails
-            content = '[Chunked PDF processing failed, trying standard approach...]';
-            processingMethod = 'chunked-pdf-error';
-            
-            // Continue to standard processing below
-          }
-        }
-        
-        // If content is still empty (chunked processing failed or wasn't needed),
-        // try standard PDF processing
-        if (!content) {
-          // Send progress update
-          if (fileSize > 5 * 1024 * 1024) {
-            res.write(JSON.stringify({
-              status: 'processing',
-              message: 'Trying standard PDF extraction...',
-              progress: 70
-            }));
-          }
-          
-          // Try standard PDF text extraction first
-          try {
-            const pdfBuffer = fs.readFileSync(filePath);
-            const pdfData = await pdfParse(pdfBuffer);
-            content = pdfData.text || '';
-            
-            console.log(`PDF text extraction complete, content length: ${content.length}`);
-            
-            // If we got meaningful text, use it
-            if (content.length > MIN_TEXT_LENGTH) {
-              processingMethod = 'pdf-parse';
-            } else {
-              // Otherwise, fall back to OCR
-              console.log(`PDF text extraction yielded minimal results (${content.length} chars), falling back to OCR`);
-              
-              // Send progress update
-              if (fileSize > 5 * 1024 * 1024) {
-                res.write(JSON.stringify({
-                  status: 'processing',
-                  message: 'Trying OCR...',
-                  progress: 80
-                }));
-              }
-              
-              const ocrResult = await processPdfWithOcr(filePath, tempDir);
-              
-              if (ocrResult.text.length > content.length) {
-                content = ocrResult.text;
-                processingMethod = ocrResult.method;
-                console.log(`OCR improved text extraction, new content length: ${content.length}`);
               } else {
-                processingMethod = 'pdf-parse-minimal';
+                console.log('Poppler not available, cannot convert PDF page for Claude Vision');
               }
-              
-              // If still below threshold, try Claude Vision
-              if (content.length < MIN_TEXT_LENGTH) {
-                console.log(`Standard OCR yielded minimal results (${content.length} chars), trying Claude Vision`);
-                
-                // Send progress update
-                if (fileSize > 5 * 1024 * 1024) {
-                  res.write(JSON.stringify({
-                    status: 'processing',
-                    message: 'Trying AI Vision as last resort...',
-                    progress: 90
-                  }));
-                }
-                
-                // Process multiple pages with Claude Vision
-                const pagesToProcess = Math.min(pageCount, MAX_CLAUDE_VISION_PAGES);
-                const claudeResult = await processPdfWithClaudeVision(filePath, tempDir, pagesToProcess);
-                
-                if (claudeResult.text.length > content.length) {
-                  content = claudeResult.text;
-                  processingMethod = claudeResult.method;
-                  console.log(`Claude Vision improved text extraction, new content length: ${content.length}`);
-                }
-              }
-            }
-          } catch (err) {
-            console.error('Error with PDF processing:', err);
-            
-            // If text extraction fails, try OCR as fallback
-            try {
-              console.log('Falling back to OCR due to PDF parsing error');
-              
-              // Send progress update
-              if (fileSize > 5 * 1024 * 1024) {
-                res.write(JSON.stringify({
-                  status: 'processing',
-                  message: 'Standard PDF extraction failed, trying OCR...',
-                  progress: 75
-                }));
-              }
-              
-              const ocrResult = await processPdfWithOcr(filePath, tempDir);
-              content = ocrResult.text;
-              processingMethod = ocrResult.method;
-              
-              // If still below threshold, try Claude Vision
-              if (content.length < MIN_TEXT_LENGTH) {
-                console.log(`OCR fallback yielded minimal results (${content.length} chars), trying Claude Vision`);
-                
-                // Send progress update
-                if (fileSize > 5 * 1024 * 1024) {
-                  res.write(JSON.stringify({
-                    status: 'processing',
-                    message: 'Trying AI Vision as last resort...',
-                    progress: 90
-                  }));
-                }
-                
-                // Process multiple pages with Claude Vision
-                const pagesToProcess = Math.min(pageCount, MAX_CLAUDE_VISION_PAGES);
-                const claudeResult = await processPdfWithClaudeVision(filePath, tempDir, pagesToProcess);
-                
-                if (claudeResult.text.length > content.length) {
-                  content = claudeResult.text;
-                  processingMethod = claudeResult.method;
-                  console.log(`Claude Vision improved text extraction, new content length: ${content.length}`);
-                }
-              }
-            } catch (ocrErr) {
-              console.error('OCR fallback also failed:', ocrErr);
-              
-              // Try Claude Vision as last resort
-              try {
-                console.log('All OCR methods failed, trying Claude Vision as last resort');
-                
-                // Send progress update
-                if (fileSize > 5 * 1024 * 1024) {
-                  res.write(JSON.stringify({
-                    status: 'processing',
-                    message: 'Trying AI Vision as last resort...',
-                    progress: 95
-                  }));
-                }
-                
-                // Process multiple pages with Claude Vision
-                const pagesToProcess = Math.min(pageCount, MAX_CLAUDE_VISION_PAGES);
-                const claudeResult = await processPdfWithClaudeVision(filePath, tempDir, pagesToProcess);
-                content = claudeResult.text;
-                processingMethod = claudeResult.method;
-              } catch (claudeErr) {
-                console.error('Claude Vision fallback also failed:', claudeErr);
-                content = '[PDF processing failed - document may be damaged or encrypted]';
-                processingMethod = 'all-methods-failed';
-              }
+            } catch (claudeErr) {
+              console.error('Claude Vision OCR error:', claudeErr);
+              // Continue with best content we have so far
             }
           }
+        } else if (hasExtractedText) {
+          console.log(`Direct extraction successful, yielded ${content.length} characters`);
+        } else {
+          console.log('All extraction methods failed');
+          content = '[PDF processing failed - document may be damaged, encrypted, or contain no extractable text]';
+          processingMethod = 'all-methods-failed';
         }
-      } else if (mimeType.includes('text') || fileExtension === '.txt') {
-        // Direct text file reading
-        console.log('Processing as text file');
-        content = fs.readFileSync(filePath, 'utf-8');
-        processingMethod = 'direct-text';
-      } else if (mimeType.includes('image') || 
-                ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].includes(fileExtension)) {
-        // Process images with Tesseract OCR
-        console.log('Processing as image with OCR');
-        try {
-          const ocrResult = await processImageWithOcr(filePath, tempDir);
-          content = ocrResult.text;
-          processingMethod = 'image-ocr';
-          
-          // If below threshold, try Claude Vision
-          if (content.length < MIN_TEXT_LENGTH) {
-            console.log(`Image OCR yielded minimal results (${content.length} chars), trying Claude Vision`);
-            const claudeResult = await processWithClaudeVision(filePath, mimeType);
-            
-            if (claudeResult.text.length > content.length) {
-              content = claudeResult.text;
-              processingMethod = claudeResult.method;
-              console.log(`Claude Vision improved image text extraction, new content length: ${content.length}`);
-            }
-          }
-        } catch (err) {
-          console.error('Image OCR error:', err);
-          
-          // Try Claude Vision as fallback
-          try {
-            console.log('Image OCR failed, falling back to Claude Vision');
-            const claudeResult = await processWithClaudeVision(filePath, mimeType);
-            content = claudeResult.text;
-            processingMethod = claudeResult.method;
-          } catch (claudeErr) {
-            console.error('Claude Vision fallback also failed:', claudeErr);
-            content = '[Image processing failed - unable to extract text]';
-            processingMethod = 'all-methods-failed';
-          }
-        }
-      } else {
-        content = `[Unsupported file type: ${mimeType || fileExtension}]`;
-        processingMethod = 'unsupported';
+      } catch (error) {
+        console.error('PDF processing error:', error);
+        content = '[PDF processing failed - document may be damaged or encrypted]';
+        processingMethod = 'all-methods-failed';
       }
+    } else if (mimeType.includes('text') || fileExtension === '.txt') {
+      // Direct text file reading
+      console.log('Processing as text file');
+      content = fs.readFileSync(filePath, 'utf-8');
+      processingMethod = 'direct-text';
+    } else if (mimeType.includes('image') || 
+              ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].includes(fileExtension)) {
+      // Image processing with auto-fallback from Gemini to Claude
+      console.log('Processing image with AI Vision');
+      
+      // Read the image file
+      const imageBuffer = fs.readFileSync(filePath);
+      
+      // Always try Gemini first, then fall back to Claude if it fails
+      let geminiSuccess = false;
+      
+      if (!visionModel.includes('claude')) {
+        try {
+          // Try Gemini Vision first
+          console.log('Trying Gemini Vision first for image OCR');
+          const model = googleAI.getGenerativeModel({ model: visionModel });
+          
+          const result = await model.generateContent({
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  { text: "Extract all text from this image accurately, preserving formatting. If the image has no text, describe what is shown in the image in detail." },
+                  { 
+                    inlineData: {
+                      mimeType: mimeType || "image/jpeg",
+                      data: imageBuffer.toString('base64')
+                    }
+                  }
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.1,
+              maxOutputTokens: 4096,
+            }
+          });
+          
+          content = result.response.text();
+          processingMethod = `gemini-vision-image-${visionModel}`;
+          geminiSuccess = true;
+          console.log(`Gemini Vision extracted ${content.length} characters from image`);
+          
+        } catch (geminiErr) {
+          console.error('Gemini Vision error (trying Claude as fallback):', geminiErr);
+          // Will fall back to Claude Vision below
+        }
+      }
+      
+      // Use Claude Vision if Gemini failed or was not attempted
+      if (!geminiSuccess || visionModel.includes('claude')) {
+        try {
+          console.log('Using Claude Vision for image OCR');
+          const base64Image = imageBuffer.toString('base64');
+          
+          const response = await anthropic.messages.create({
+            model: 'claude-3-5-haiku-latest',
+            max_tokens: 8000,
+            temperature: 0.1,
+            system: "Extract ALL text visible in the image with perfect formatting. If the image has no text, then provide a detailed description of the image.",
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'text',
+                    text: 'Please extract ALL text from this image, maintaining formatting as much as possible. If there is no text, provide a detailed description of the image.'
+                  },
+                  {
+                    type: 'image',
+                    source: {
+                      type: 'base64',
+                     media_type: getSupportedMediaType(mimeType || ''),
+                      data: base64Image
+                    }
+                  }
+                ]
+              }
+            ]
+          });
+          
+          content = response.content[0]?.type === 'text' ? response.content[0].text : '';
+          processingMethod = 'claude-vision-image';
+          console.log(`Claude Vision extracted ${content.length} characters from image`);
+          
+        } catch (claudeErr) {
+          console.error('Claude Vision error:', claudeErr);
+          
+          // If both models failed, set error content
+          if (!geminiSuccess) {
+            content = '[Image processing failed - unable to extract text with either Gemini or Claude. This may be due to the nature of the content. Try a different source.)]';
+            processingMethod = 'image-processing-failed';
+          }
+        }
+      }
+    }
+
+     else {
+      content = `[Unsupported file type: ${mimeType || fileExtension}]`;
+      processingMethod = 'unsupported';
     }
     
     // Clean up original uploaded file
@@ -497,10 +589,10 @@ export default async function handler(
     }
     
     // Apply OCR text cleaning
-    if (processingMethod.includes('ocr') || processingMethod.includes('claude-vision')) {
+    if (processingMethod.includes('ocr') || processingMethod.includes('vision') || processingMethod.includes('gemini')) {
       const originalLength = content.length;
       content = cleanOcrText(content);
-      console.log(`OCR cleaning applied, content length changed from ${originalLength} to ${content.length}`);
+      console.log(`Text cleaning applied, content length changed from ${originalLength} to ${content.length}`);
     }
     
     console.log(`Processing complete, final content length: ${content.length}`);
@@ -559,321 +651,6 @@ export default async function handler(
   }
 }
 
-// Process with Claude Vision for OCR
-async function processWithClaudeVision(filePath: string, mimeType: string): Promise<{ text: string; method: string }> {
-  console.log('Processing with Claude Vision...');
-  
-  try {
-    // Check if this is a PDF
-    const isPdf = mimeType.includes('pdf') || filePath.toLowerCase().endsWith('.pdf');
-    let fileToProcess = filePath;
-    let tempFilePath = '';
-    
-    // If it's a PDF, we need to convert the first page to an image first
-    if (isPdf) {
-      console.log('Converting PDF to image for Claude Vision...');
-      
-      // Check if Poppler is available for PDF conversion
-      const poppler = await checkPoppler();
-      
-      if (!poppler.available) {
-        throw new Error('Cannot process PDF with Claude Vision: Poppler not available for conversion');
-      }
-      
-      // Create temp directory for the image if needed
-      const tempDir = path.dirname(filePath);
-      const pdfFilename = path.basename(filePath, '.pdf');
-      const outputPath = path.join(tempDir, `${pdfFilename}-vision`);
-      
-      // Convert first page of PDF to PNG
-      await exec(`${poppler.command} -png -f 1 -l 1 -r 300 "${filePath}" "${outputPath}"`);
-      
-      // Find the generated image file
-      const imageFiles = fs.readdirSync(tempDir)
-        .filter(file => file.startsWith(`${pdfFilename}-vision`) && file.endsWith('.png'))
-        .map(file => path.join(tempDir, file));
-      
-      if (imageFiles.length === 0) {
-        throw new Error('Failed to convert PDF to image for Claude Vision');
-      }
-      
-      // Use the first page for processing
-      fileToProcess = imageFiles[0];
-      tempFilePath = fileToProcess; // Remember to clean up this temp file later
-      mimeType = 'image/png';
-    }
-    
-    // Check if it's a supported image type
-    if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(mimeType)) {
-      // If not a standard image format that Claude supports, convert to PNG
-      if (mimeType.includes('image')) {
-        // It's an image but not in a supported format, convert to PNG using ImageMagick if available
-        try {
-          const tempPngPath = `${fileToProcess}.converted.png`;
-          await exec(`convert "${fileToProcess}" "${tempPngPath}"`);
-          
-          if (fs.existsSync(tempPngPath)) {
-            if (tempFilePath) {
-              // Clean up the previous temp file if it exists
-              try { fs.unlinkSync(tempFilePath); } catch {}
-            }
-            
-            fileToProcess = tempPngPath;
-            tempFilePath = tempPngPath;
-            mimeType = 'image/png';
-          }
-        } catch (convErr) {
-          console.error('Failed to convert image format:', convErr);
-          // Continue with original file and let Claude API handle error
-        }
-      } else {
-        throw new Error(`Unsupported file type for Claude Vision: ${mimeType}`);
-      }
-    }
-    
-    // Read the file as a base64 string
-    const fileBuffer = fs.readFileSync(fileToProcess);
-    const base64File = fileBuffer.toString('base64');
-    
-    console.log(`Sending file to Claude Vision API (${Math.round(fileBuffer.length / 1024)} KB, type: ${mimeType})`);
-    
-    // Create Claude message with the image
-    const response = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307', // Use Claude 3 Haiku with vision
-      max_tokens: 4000,
-      temperature: 0.2,
-      system: "You are an OCR specialist. Extract ALL text visible in the image with perfect formatting, including paragraph breaks. Include all text, tables, captions, headers, footers, and page numbers. Do not add any commentary, just extract the text precisely as it appears. If the image has no text and is a picture, then provide an extremely detailed description and analysis of the image, including conjectures about when and by whom it may have been made.",
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Please extract ALL text from this document, maintaining paragraph breaks and formatting as much as possible. Include tables, captions, headers, footers, and page numbers if present. Just give me the raw extracted text with no commentary.'
-            },
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mimeType as "image/png" | "image/jpeg" | "image/gif" | "image/webp",
-                data: base64File
-              }
-            }
-          ]
-        }
-      ]
-    });
-    
-    // Clean up temporary file if we created one
-    if (tempFilePath && tempFilePath !== filePath) {
-      try {
-        fs.unlinkSync(tempFilePath);
-        console.log(`Deleted temporary file: ${tempFilePath}`);
-      } catch (unlinkErr) {
-        console.warn(`Failed to delete temporary file ${tempFilePath}:`, unlinkErr);
-      }
-    }
-    
-    // Extract the text from Claude's response
-    const extractedText = response.content[0]?.type === 'text' 
-      ? response.content[0].text 
-      : '';
-    
-    console.log(`Claude Vision extracted ${extractedText.length} characters`);
-    
-    // If this was a PDF, add a note that only the first page was processed
-    const methodSuffix = isPdf ? '-pdf-first-page' : '';
-    
-    return {
-      text: isPdf 
-        ? extractedText + '\n\n[Note: Only the first page of the PDF was processed with Claude Vision]' 
-        : extractedText,
-      method: `claude-vision-ocr${methodSuffix}`
-    };
-  } catch (error) {
-    console.error('Error in Claude Vision processing:', error);
-    throw error;
-  }
-}
-
-// Process multiple PDF pages with Claude Vision
-async function processPdfWithClaudeVision(
-  pdfPath: string, 
-  tempDir: string, 
-  maxPages: number = MAX_CLAUDE_VISION_PAGES
-): Promise<{ text: string; method: string }> {
-  console.log(`Processing up to ${maxPages} PDF pages with Claude Vision...`);
-  
-  // Check if Poppler is available for PDF conversion
-  const poppler = await checkPoppler();
-  
-  if (!poppler.available) {
-    throw new Error('Cannot process PDF with Claude Vision: Poppler not available for conversion');
-  }
-  
-  try {
-    // Convert PDF pages to images
-    const pdfFilename = path.basename(pdfPath, '.pdf');
-    const outputPath = path.join(tempDir, `${pdfFilename}-vision`);
-    
-    console.log(`Converting ${maxPages} PDF pages to images for Claude Vision`);
-    await exec(`${poppler.command} -png -r 300 -f 1 -l ${maxPages} "${pdfPath}" "${outputPath}"`);
-    
-    // Find the generated image files
-    const imageFiles = fs.readdirSync(tempDir)
-      .filter(file => file.startsWith(`${pdfFilename}-vision`) && file.endsWith('.png'))
-      .map(file => path.join(tempDir, file))
-      .sort(); // Make sure they're in order
-    
-    if (imageFiles.length === 0) {
-      throw new Error('Failed to convert PDF pages to images for Claude Vision');
-    }
-    
-    console.log(`Generated ${imageFiles.length} page images for Claude Vision`);
-    
-    // Process each page with Claude Vision
-    let allText = '';
-    let pageNumber = 1;
-    
-    for (const imagePath of imageFiles) {
-      console.log(`Processing page ${pageNumber} with Claude Vision`);
-      
-      try {
-        const result = await processImageWithClaudeVision(imagePath);
-        allText += `\n\n----- Page ${pageNumber} -----\n\n` + result.text;
-        
-        // Clean up the temporary image
-        try {
-          fs.unlinkSync(imagePath);
-        } catch (err) {
-          console.warn(`Error deleting temporary image: ${imagePath}`, err);
-        }
-      } catch (pageError) {
-        console.error(`Error processing page ${pageNumber} with Claude Vision:`, pageError);
-        allText += `\n\n----- Page ${pageNumber} -----\n\n[Text extraction failed for this page]`;
-      }
-      
-      pageNumber++;
-    }
-    
-    return {
-      text: allText,
-      method: `claude-vision-ocr-${imageFiles.length}-pages`
-    };
-  } catch (error) {
-    console.error('Error in multi-page PDF Claude Vision processing:', error);
-    throw error;
-  }
-}
-
-// Process a single PDF page with Claude Vision
-async function processSinglePageWithClaudeVision(
-  pdfPath: string, 
-  tempDir: string, 
-  pageNumber: number
-): Promise<{ text: string; method: string }> {
-  console.log(`Processing PDF page ${pageNumber} with Claude Vision...`);
-  
-  // Check if Poppler is available for PDF conversion
-  const poppler = await checkPoppler();
-  
-  if (!poppler.available) {
-    throw new Error('Cannot process PDF with Claude Vision: Poppler not available for conversion');
-  }
-  
-  try {
-    // Convert specific PDF page to image
-    const pdfFilename = path.basename(pdfPath, '.pdf');
-    const outputPath = path.join(tempDir, `${pdfFilename}-p${pageNumber}`);
-    
-    console.log(`Converting PDF page ${pageNumber} to image for Claude Vision`);
-    await exec(`${poppler.command} -png -r 300 -f ${pageNumber} -l ${pageNumber} "${pdfPath}" "${outputPath}"`);
-    
-    // Find the generated image file
-    const imageFiles = fs.readdirSync(tempDir)
-      .filter(file => file.startsWith(`${pdfFilename}-p${pageNumber}`) && file.endsWith('.png'))
-      .map(file => path.join(tempDir, file));
-    
-    if (imageFiles.length === 0) {
-      throw new Error(`Failed to convert PDF page ${pageNumber} to image for Claude Vision`);
-    }
-    
-    // Process the image with Claude Vision
-    const result = await processImageWithClaudeVision(imageFiles[0]);
-    
-    // Clean up the temporary image
-    try {
-      fs.unlinkSync(imageFiles[0]);
-    } catch (err) {
-      console.warn(`Error deleting temporary image: ${imageFiles[0]}`, err);
-    }
-    
-    return {
-      text: result.text,
-      method: `claude-vision-ocr-page-${pageNumber}`
-    };
-  } catch (error) {
-    console.error(`Error processing PDF page ${pageNumber} with Claude Vision:`, error);
-    throw error;
-  }
-}
-
-// Process an image with Claude Vision
-async function processImageWithClaudeVision(imagePath: string): Promise<{ text: string; method: string }> {
-  console.log(`Processing image with Claude Vision: ${imagePath}`);
-  
-  try {
-    // Read the file as a base64 string
-    const fileBuffer = fs.readFileSync(imagePath);
-    const base64File = fileBuffer.toString('base64');
-    const mimeType = 'image/png'; // Assume PNG since we convert everything to PNG
-    
-    console.log(`Sending image to Claude Vision API (${Math.round(fileBuffer.length / 1024)} KB)`);
-    
-    // Create Claude message with the image
-    const response = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307', // Use Claude 3 Haiku with vision
-      max_tokens: 4000,
-      temperature: 0.2,
-      system: "You are an OCR specialist. Extract ALL text visible in the image with perfect formatting, including paragraph breaks. Include all text, tables, captions, headers, footers, and page numbers. Do not add any commentary, just extract the text precisely as it appears. If the image has no text and is a picture, then provide an extremely detailed description and analysis of the image, including conjectures about when and by whom it may have been made.",
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Please extract ALL text from this document, maintaining paragraph breaks and formatting as much as possible. Include tables, captions, headers, footers, and page numbers if present. Just give me the raw extracted text with no commentary.'
-            },
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mimeType,
-                data: base64File
-              }
-            }
-          ]
-        }
-      ]
-    });
-    
-    // Extract the text from Claude's response
-    const extractedText = response.content[0]?.type === 'text' 
-      ? response.content[0].text 
-      : '';
-    
-    console.log(`Claude Vision extracted ${extractedText.length} characters from image`);
-    
-    return {
-      text: extractedText,
-      method: 'claude-vision-ocr-image'
-    };
-  } catch (error) {
-    console.error('Error in Claude Vision image processing:', error);
-    throw error;
-  }
-}
-
 // Check if Poppler is installed and get the command
 async function checkPoppler(): Promise<{ available: boolean; command: string }> {
   const possibleCommands = ['pdftoppm', 'pdftoppm.exe'];
@@ -904,280 +681,29 @@ async function checkPoppler(): Promise<{ available: boolean; command: string }> 
       return { available: false, command: '' };
     }
   }
-}
 
-// Extract text from specific pages of a PDF
-async function extractPdfTextRange(pdfPath: string, startPage: number, endPage: number): Promise<string> {
-  console.log(`Extracting text from PDF pages ${startPage}-${endPage}`);
-  
+  // Helper function to check if a command is available
+async function checkCommandAvailable(command: string): Promise<boolean> {
   try {
-    const pdfBuffer = fs.readFileSync(pdfPath);
-    
-    // Use pdf-parse with more options
-    const pdfData = await pdfParse(pdfBuffer, {
-      max: endPage, // Maximum pages
-      pagerender: (pageData) => {
-        // Custom page renderer if needed
-       return pageData.getTextContent()
-         .then((textContent: any) => {
-            let lastY, text = '';
-            for (const item of textContent.items) {
-              if (lastY != item.transform[5] || text.endsWith(' ')) {
-                text += '\n';
-              }
-              text += item.str;
-              lastY = item.transform[5];
-            }
-            return text;
-          });
-      }
-    });
-
-    // Filter content to only include the requested pages
-    const lines = pdfData.text.split('\n');
-    
-    // Approximate page markers in the text - this depends on PDF structure
-    const pagesStartMarkers = findPageBreaks(lines);
-    
-    if (pagesStartMarkers.length < startPage) {
-      // If we can't determine page boundaries, return all text from the PDF
-      console.log('Could not determine page boundaries, returning all extracted text');
-      return pdfData.text;
-    }
-    
-    const startIndex = pagesStartMarkers[startPage - 1] || 0;
-    const endIndex = (endPage < pagesStartMarkers.length) ? pagesStartMarkers[endPage] : lines.length;
-    
-    const extractedText = lines.slice(startIndex, endIndex).join('\n');
-    console.log(`Extracted ${extractedText.length} characters from pages ${startPage}-${endPage}`);
-    
-    return extractedText;
-  } catch (error) {
-    console.error(`Error extracting PDF text range for pages ${startPage}-${endPage}:`, error);
-    throw error;
-  }
-}
-
-// Find likely page breaks in PDF text
-function findPageBreaks(lines: string[]): number[] {
-  const markers: number[] = [0]; // First page starts at the beginning
-  
-  // Look for page break patterns - this is heuristic and depends on PDF structure
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    // Look for common page break patterns
-    if (
-      (line.match(/^\s*Page\s+\d+\s*$/i) && lines[i+1]?.trim() === '') || // "Page X" followed by blank line
-      (line.match(/^\s*\d+\s*$/) && lines[i-1]?.trim() === '' && lines[i+1]?.trim() === '') || // Isolated page number between blank lines
-      (line === '' && lines[i+1]?.trim() === '' && lines[i+2]?.match(/^\s*\d+\s*$/)) || // Multiple blank lines followed by page number
-      (line.match(/^\s*-\s*\d+\s*-\s*$/) || line.match(/^\[\s*\d+\s*\]$/)) // Format like "-42-" or "[42]"
-    ) {
-      markers.push(i);
-    }
-  }
-  
-  // If we didn't find many page breaks but it's a long document,
-  // use a simple heuristic based on approximate lines per page
-  if (markers.length < 3 && lines.length > 100) {
-    console.log('Few page markers found, using approximate page sizes');
-    markers.length = 0;
-    markers.push(0); // Start of first page
-    
-    const approxLinesPerPage = 50; // Rough estimate, adjust as needed
-    for (let i = approxLinesPerPage; i < lines.length; i += approxLinesPerPage) {
-      markers.push(i);
-    }
-  }
-  
-  return markers;
-}
-
-// Process specific PDF pages with OCR
-async function processPdfPagesWithOcr(
-  pdfPath: string, 
-  tempDir: string, 
-  startPage: number, 
-  endPage: number
-): Promise<{ text: string; method: string }> {
-  console.log(`OCR processing PDF pages ${startPage}-${endPage}`);
-  
-  const poppler = await checkPoppler();
-  
-  if (!poppler.available) {
-    console.log('Poppler not available for page extraction');
-    return {
-      text: `[Pages ${startPage}-${endPage}: OCR processing unavailable]`,
-      method: 'pdf-noocr'
-    };
-  }
-  
-  try {
-    const pdfFilename = path.basename(pdfPath, '.pdf');
-    const outputPathBase = path.join(tempDir, `${pdfFilename}-page`);
-    
-    // Convert specific PDF pages to images using pdftoppm
-    console.log(`Converting PDF pages ${startPage}-${endPage} to images`);
-    await exec(`${poppler.command} -png -r 300 -f ${startPage} -l ${endPage} "${pdfPath}" "${outputPathBase}"`);
-    
-    // Get the list of generated image files
-    const imageFiles = fs.readdirSync(tempDir)
-      .filter(file => file.startsWith(`${pdfFilename}-page`) && file.endsWith('.png'))
-      .map(file => path.join(tempDir, file))
-      .sort();
-    
-    console.log(`Generated ${imageFiles.length} images from PDF pages ${startPage}-${endPage}`);
-    
-    if (imageFiles.length === 0) {
-      console.warn(`No images generated from PDF pages ${startPage}-${endPage}`);
-      return { 
-        text: `[Pages ${startPage}-${endPage}: Image conversion failed]`, 
-        method: 'pdf-image-failed' 
-      };
-    }
-    
-    // Process images with Tesseract OCR
-    let pageText = '';
-    for (const imagePath of imageFiles) {
-      const ocrText = await runTesseractOcr(imagePath);
-      pageText += ocrText + '\n\n';
-      
-      // Clean up the temporary image
-      try {
-        fs.unlinkSync(imagePath);
-      } catch (err) {
-        console.warn(`Error deleting temporary image: ${imagePath}`, err);
-      }
-    }
-    
-    return { text: pageText, method: 'pdf-ocr-pages' };
+    await exec(`which ${command}`);
+    return true;
   } catch (err) {
-    console.error(`Error in PDF pages OCR processing: ${startPage}-${endPage}`, err);
-    return {
-      text: `[Pages ${startPage}-${endPage}: OCR processing error]`,
-      method: 'pdf-ocr-error'
-    };
+    return false;
   }
 }
 
-// Process PDF with OCR by first converting to images
-async function processPdfWithOcr(pdfPath: string, tempDir: string): Promise<{ text: string; method: string }> {
-  console.log('Checking for Poppler installation...');
+// Helper function to format duration in HH:MM:SS
+function formatDuration(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
   
-  // Check if Poppler is available
-  const poppler = await checkPoppler();
-  
-  if (!poppler.available) {
-    console.log('Poppler not available, using pdf-parse only');
-    return {
-      text: 'This PDF may contain images or scanned content that requires OCR processing. For better results, install Poppler utilities on your server.',
-      method: 'pdf-parse-noocr'
-    };
-  }
-  
-  console.log('Starting PDF OCR processing with Poppler...');
-  
-  try {
-    const pdfFilename = path.basename(pdfPath, '.pdf');
-    const outputPath = path.join(tempDir, `${pdfFilename}-page`);
-    
-    // Convert PDF to images using pdftoppm
-    console.log(`Converting PDF to images: ${pdfPath}`);
-    await exec(`${poppler.command} -png -r 300 "${pdfPath}" "${outputPath}"`);
-    
-    // Get the list of generated image files
-    const imageFiles = fs.readdirSync(tempDir)
-      .filter(file => file.startsWith(`${pdfFilename}-page`) && file.endsWith('.png'))
-      .map(file => path.join(tempDir, file))
-      .sort();
-    
-    console.log(`Generated ${imageFiles.length} images from PDF`);
-    
-    if (imageFiles.length === 0) {
-      console.warn('No images generated from PDF');
-      return { text: '[PDF conversion failed - no images generated]', method: 'pdf-image-failed' };
-    }
-    
-    // Process a reasonable number of pages (limit to first 20 to save processing time)
-    const pagesToProcess = Math.min(imageFiles.length, 20); // Increased from 5 to 20
-    let allText = '';
-    
-    // Process each image with Tesseract OCR
-    for (let i = 0; i < pagesToProcess; i++) {
-      console.log(`OCR processing page ${i + 1}/${pagesToProcess}`);
-      const pageText = await runTesseractOcr(imageFiles[i]);
-      allText += pageText + '\n\n';
-      
-      // Clean up the temporary image
-      try {
-        fs.unlinkSync(imageFiles[i]);
-      } catch (err) {
-        console.warn(`Error deleting temporary image: ${imageFiles[i]}`, err);
-      }
-    }
-    
-    if (imageFiles.length > pagesToProcess) {
-      allText += `\n\n[Note: Only the first ${pagesToProcess} pages of ${imageFiles.length} total pages were processed]`;
-    }
-    
-    return { text: allText, method: 'pdf-poppler-ocr' };
-  } catch (err) {
-    console.error('Error in PDF OCR processing:', err);
-    
-    // Fallback to simpler method
-    return {
-      text: 'PDF processing encountered an error. This may be due to lack of text content or an issue with the OCR system.',
-      method: 'pdf-ocr-error'
-    };
-  }
+  return [
+    hours > 0 ? String(hours).padStart(2, '0') : '',
+    String(minutes).padStart(2, '0'),
+    String(secs).padStart(2, '0')
+  ].filter(Boolean).join(':');
+}
 }
 
-// Process an image with Tesseract OCR
-async function processImageWithOcr(imagePath: string, tempDir: string): Promise<{ text: string; method: string }> {
-  return {
-    text: await runTesseractOcr(imagePath),
-    method: 'tesseract-ocr'
-  };
-}
 
-// Run Tesseract OCR command line
-async function runTesseractOcr(imagePath: string): Promise<string> {
-  const outputBase = path.join(
-    path.dirname(imagePath),
-    `ocr-${path.basename(imagePath, path.extname(imagePath))}`
-  );
-  const outputTxt = `${outputBase}.txt`;
-  
-  try {
-    // Run Tesseract OCR with improved options
-    await exec(`tesseract "${imagePath}" "${outputBase}" -l eng --psm 3 --dpi 300 -c preserve_interword_spaces=1`);
-    
-    // Read the output
-    if (fs.existsSync(outputTxt)) {
-      const text = fs.readFileSync(outputTxt, 'utf-8');
-      
-      // Clean up
-      fs.unlinkSync(outputTxt);
-      
-      return text;
-    } else {
-      throw new Error('Tesseract OCR output file not found');
-    }
-  } catch (err) {
-    console.error('Tesseract OCR error:', err);
-    
-    // Try fallback to simpler version
-    try {
-      await exec(`tesseract "${imagePath}" "${outputBase}"`);
-      
-      if (fs.existsSync(outputTxt)) {
-        const text = fs.readFileSync(outputTxt, 'utf-8');
-        fs.unlinkSync(outputTxt);
-        return text;
-      }
-    } catch (fallbackErr) {
-      console.error('Tesseract fallback also failed:', fallbackErr);
-    }
-    
-    return '[OCR processing failed]';
-  }
-}

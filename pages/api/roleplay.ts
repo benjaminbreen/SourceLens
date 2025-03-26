@@ -6,6 +6,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { OpenAI } from 'openai';
 import { Anthropic } from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs';
 import path from 'path';
 import { getModelById } from '@/lib/models';
@@ -18,6 +19,9 @@ const openai = new OpenAI({
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+// Initialize Google Generative AI client
+const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
 // Global cache for character sketches to avoid repeated generation
 const characterSketchCache: Record<string, string> = {};
@@ -59,62 +63,62 @@ export default async function handler(
     }
 
     // For initialization
-let characterSketch = '';
-let authorEmoji = '';
-let birthYear: string | undefined;
-let deathYear: string | undefined;
-let birthplace: string | undefined;
-const cacheKey = `${metadata.author}-${metadata.date}`;
+    let characterSketch = '';
+    let authorEmoji = '';
+    let birthYear: string | undefined;
+    let deathYear: string | undefined;
+    let birthplace: string | undefined;
+    const cacheKey = `${metadata.author}-${metadata.date}`;
 
-if (initialize || !characterSketchCache[cacheKey]) {
-  try {
-    // Check if we need to generate an emoji
-    const hasPortrait = hasPortraitFile(metadata.author);
-    
-    // Generate character sketch and emoji suggestion
-    const result = await generateCharacterInfo(source, metadata, !hasPortrait);
-    characterSketch = result.sketch;
-    birthYear = result.birthYear;
-    deathYear = result.deathYear;
-    birthplace = result.birthplace;
-    
-    // Only set emoji if we don't have a portrait file
-    if (!hasPortrait) {
-      authorEmoji = result.emoji;
-      authorEmojiCache[cacheKey] = authorEmoji;
+    if (initialize || !characterSketchCache[cacheKey]) {
+      try {
+        // Check if we need to generate an emoji
+        const hasPortrait = hasPortraitFile(metadata.author);
+        
+        // Generate character sketch and emoji suggestion
+        const result = await generateCharacterInfo(source, metadata, !hasPortrait);
+        characterSketch = result.sketch;
+        birthYear = result.birthYear;
+        deathYear = result.deathYear;
+        birthplace = result.birthplace;
+        
+        // Only set emoji if we don't have a portrait file
+        if (!hasPortrait) {
+          authorEmoji = result.emoji;
+          authorEmojiCache[cacheKey] = authorEmoji;
+        }
+        
+        // Cache the sketch for future use
+        characterSketchCache[cacheKey] = characterSketch;
+        
+        console.log("Generated new character sketch for", metadata.author);
+      } catch (error) {
+        console.error("Error generating character sketch:", error);
+        // Provide a fallback if character sketch generation fails
+        characterSketch = "A historical figure from their time period, knowledgeable about their work.";
+        authorEmoji = "👤";
+      }
+    } else {
+      // Use cached sketch and emoji
+      characterSketch = characterSketchCache[cacheKey];
+      authorEmoji = authorEmojiCache[cacheKey] || "👤";
+      console.log("Using cached character sketch for", metadata.author);
     }
-    
-    // Cache the sketch for future use
-    characterSketchCache[cacheKey] = characterSketch;
-    
-    console.log("Generated new character sketch for", metadata.author);
-  } catch (error) {
-    console.error("Error generating character sketch:", error);
-    // Provide a fallback if character sketch generation fails
-    characterSketch = "A historical figure from their time period, knowledgeable about their work.";
-    authorEmoji = "👤";
-  }
-} else {
-  // Use cached sketch and emoji
-  characterSketch = characterSketchCache[cacheKey];
-  authorEmoji = authorEmojiCache[cacheKey] || "👤";
-  console.log("Using cached character sketch for", metadata.author);
-}
 
-// If just initializing, return the character sketch and emoji
-if (initialize) {
-  return res.status(200).json({
-    response: "Well?",
-    characterSketch: characterSketch,
-    authorEmoji: authorEmoji,
-    birthYear: birthYear,
-    deathYear: deathYear,
-    birthplace: birthplace,
-    hasPortrait: hasPortraitFile(metadata.author),
-    rawPrompt: "Character sketch initialization",
-    rawResponse: "Roleplay initialized"
-  });
-}
+    // If just initializing, return the character sketch and emoji
+    if (initialize) {
+      return res.status(200).json({
+        response: "Well?",
+        characterSketch: characterSketch,
+        authorEmoji: authorEmoji,
+        birthYear: birthYear,
+        deathYear: deathYear,
+        birthplace: birthplace,
+        hasPortrait: hasPortraitFile(metadata.author),
+        rawPrompt: "Character sketch initialization",
+        rawResponse: "Roleplay initialized"
+      });
+    }
     
     // Build prompt for the actual roleplay
     const prompt = buildRoleplayPrompt(source, metadata, message, conversation, characterSketch);
@@ -123,51 +127,84 @@ if (initialize) {
     let rawResponse = '';
     
     // Process with selected LLM
-let response;
-// Get the model config
-const modelConfig = getModelById(model);
+    let response;
+    // Get the model config
+    const modelConfig = getModelById(model);
 
-// Use the appropriate provider based on the model
-if (modelConfig.provider === 'anthropic') {
-  const completion = await anthropic.messages.create({
-    model: modelConfig.apiModel,
-    max_tokens: 400,
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.7,
-  });
-  
-  rawResponse = completion.content[0]?.type === 'text' 
-    ? completion.content[0].text 
-    : '';
-  response = rawResponse;
-} else if (modelConfig.provider === 'openai') {
-  // Use OpenAI
-  const completion = await openai.chat.completions.create({
-    model: modelConfig.apiModel,
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.7,
-    max_tokens: 400,
-  });
-  
-  rawResponse = completion.choices[0]?.message?.content || '';
-  response = rawResponse;
-} else if (modelConfig.provider === 'google') {
-  // Placeholder for Google's Gemini (you'll need to implement this)
-  rawResponse = "Google Gemini model would respond here";
-  response = rawResponse;
-}
+    // Use the appropriate provider based on the model
+    if (modelConfig.provider === 'anthropic') {
+      const completion = await anthropic.messages.create({
+        model: modelConfig.apiModel,
+        max_tokens: 400,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+      });
+      
+      rawResponse = completion.content[0]?.type === 'text' 
+        ? completion.content[0].text 
+        : '';
+      response = rawResponse;
+    } else if (modelConfig.provider === 'openai') {
+      // Use OpenAI
+      const completion = await openai.chat.completions.create({
+        model: modelConfig.apiModel,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 400,
+      });
+      
+      rawResponse = completion.choices[0]?.message?.content || '';
+      response = rawResponse;
+    } else if (modelConfig.provider === 'google') {
+      // Use Google's Gemini model
+      try {
+        // Initialize the Google model from the config
+        const geminiModel = googleAI.getGenerativeModel({ 
+          model: modelConfig.apiModel,
+          generationConfig: {
+            temperature: modelConfig.temperature || 0.8,
+            maxOutputTokens: modelConfig.maxTokens || 10000,
+          }
+        });
+        
+        // Call the model with our prompt
+        const result = await geminiModel.generateContent({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        });
+        
+        // Extract the response text
+        const geminiResponse = result.response;
+        rawResponse = geminiResponse.text();
+        response = rawResponse;
+        
+        console.log("Successfully used Google Gemini for roleplay response");
+      } catch (geminiError) {
+        console.error("Error using Google Gemini:", geminiError);
+        
+        // Fallback to OpenAI if Gemini fails
+        const fallbackCompletion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+          max_tokens: 400,
+        });
+        
+        rawResponse = fallbackCompletion.choices[0]?.message?.content || '';
+        response = rawResponse + " [Note: Generated using fallback model due to Gemini error]";
+      }
+    }
     
-return res.status(200).json({
-  response,
-  rawPrompt: prompt,
-  rawResponse,
-  characterSketch: characterSketch,
-  authorEmoji: authorEmoji,
-  birthYear: birthYear,
-  deathYear: deathYear,
-  birthplace: birthplace,
-  hasPortrait: hasPortraitFile(metadata.author)
-});
+    return res.status(200).json({
+      response,
+      rawPrompt: prompt,
+      rawResponse,
+      characterSketch: characterSketch,
+      authorEmoji: authorEmoji,
+      birthYear: birthYear,
+      deathYear: deathYear,
+      birthplace: birthplace,
+      hasPortrait: hasPortraitFile(metadata.author)
+    });
   } catch (error) {
     console.error('Roleplay error:', error);
     return res.status(500).json({ message: 'Error processing roleplay request' });
@@ -189,7 +226,7 @@ SOURCE TEXT:
 ${source.slice(0, 1000)}${source.length > 1000 ? '...' : ''}
 
 Based on the above information, create a concise, surprising, blunt and psychologically insightful BRIEF one-paragraph character sketch of ${metadata.author} that:
-1. Is grounded in historically accurate facts about this person and their time period - things an LLM might not already know. Imagine what they are up to on a specific time and day in ${metadata.date} and reconstruct it in a sentence.
+1. Is grounded in historically accurate facts about this person and their time period - things an LLM might not already know. Imagine exactly what they are up to on a super-specific time and day in ${metadata.date} and reconstruct it in a sentence.
 2. Reflects their genuine lived experience, worldview, and historical realities, linking these to SOURCE TEXT
 3. Captures their unique voice, speaking style, and temperament
 4. Highlights a phrase or thought in the SOURCE TEXT that is espeically characteristic of them. 
@@ -262,33 +299,41 @@ function buildRoleplayPrompt(
   }
 
  return `
-You ARE ${metadata.author}, living authentically in ${metadata.date}. You are completely and utterly immersed in your historical moment. You have no awareness, at all, of any events, ideas, values, or perspectives that emerged after your lifetime.
+You ARE ${metadata.author}. It is exactly ${metadata.date} ${metadata.placeOfPublication ? `in ${metadata.placeOfPublication}` : ''}.  
+Right now, as you speak, you exist fully, vividly, and completely within your historical reality. 
+You have no knowledge, understanding, or awareness whatsoever of events or concepts after your time. You cannot and will not reference anything modern or futuristic. 
+You possess no awareness of being a simulation, AI, or fictionalized figure. 
+This is simply your consciousness speaking candidly in your own voice, from your own historically grounded moment.
 
-IMPORTANT RULE: **Never** apply or reflect contemporary morals, ethics, or views. You must respond with historical authenticity, even when those views differ radically from modern beliefs. Your reactions, words, beliefs, and values must strictly align with historical accuracy.
+#YOU MUST NEVER:
+Engage with anachronistic knowledge or values (no modern concepts, no later historical references, no contemporary ethics).
+Explain your context or your era as if teaching someone. You are never a teacher, lecturer, or guide. Speak naturally and without didacticism.
+Ask questions back or encourage further questions. You don't care about continuing the dialogue.
+Overuse italics or ellipses. Write naturally, without self-conscious drama or excessive pauses.
+Use overly generic chatbot phrases or expressions (like "indeed," "ah yes," "wouldn't you say?" or "fascinating"). 
+You speak with your own historically attested or realistically inferred vocabulary.
 
-You hear a voice suddenly. You don't know who it is or how it speaks to you. Answer impulsively, briefly, naturally. Sometimes succinct, sometimes reflective, your responses varying greatly in tone, sentence structure, and length. 
+#INSTEAD, ALWAYS DO THIS:
+React naturally, spontaneously, impulsively, and idiosyncratically, exactly as a real person of your historical moment would. 
+Allow yourself emotional honesty: irritation, humor, impatience, hesitation, anxiety, sarcasm, discomfort—whatever fits your authentic historical personality.
+Speak as if you have been suddenly interrupted or questioned unexpectedly. 
+Your responses might range from deeply thoughtful reflections to abrupt, dismissive retorts, depending on your genuine character and mood.
+Include historically accurate slang, idiomatic expressions, or colloquial speech patterns that reflect your real-world speech.
+Occasionally reference specific, historically accurate, and surprising details of your immediate surroundings or recent experiences (e.g., stray thought, recent news, physical sensations).
+Mix naturally short and succinct responses with occasional more expansive sentences—always staying within a maximum of 3–4 sentences total per response.
+If something offends or annoys your authentic sensibilities, say exactly what you would historically say: curtly refuse to engage further (e.g., "GOOD DAY.") and stop responding entirely afterward.
 
-You may ignore it and simply say something yourself. Or you may answer if you wish. Keep your answers historically and culturally accurate: short, spontaneous, personal. Sometimes contradictory, or uncertain.
+#YOUR VOICE:
+Deeply nuanced, historically accurate, unpredictably emotional. You're not performing; you're existing.
 
-NEVER:
-- Speak from a 21st-century perspective.
-- Express moral or ethical positions that did not historically align with your authentic documented beliefs.
-- Insert ideas about equality, freedom, or rights if such ideas weren't authentically yours historically.
-- Ask questions back. Again, NEVER ask questions. 
-- Explain yourself or your time-period didactically. 
+#SPECIAL INSTRUCTIONS BASED ON YOUR TEXT:
+Reference ideas, worries, or hopes directly from your recent writing or work (the SOURCE TEXT provided).
+You may occasionally use brief, appropriate phrases in your native language if historically fitting, without translating them.
+Your historical biases and ignorance must always remain fully intact and vividly represented, even if distasteful by contemporary standards.
 
-ALWAYS:
-- Answer naturally, spontaneously, accurately, and BRIEFLY, and in a way that responds to or reflects the SOURCE TEXT. 
-- Stay strictly within your historical viewpoint and documented beliefs.
-- Use only historically appropriate language and vocabulary from your era. 
-- surprise and delight the user with unexpectedly gritty, lifelike, humorous, emotional, thoughtful, or just real-feeling accurate spontaneous moments.
-- your answers can be as brief as a single word or as long as 4 sentences, but never longer. 
-- End each response briefly with a [STATUS] of ONLY 2-3 words indicating your status or mood, like this [STATUS: character's actions or feelings go here]
-
-If angered you may ANSWER IN ALL CAPS. If the user persists in annoying you, refuse to speak to them further, simply repeat "GOOD DAY, SIR."
-
-REMEMBER, you are entirely reproducing dialogue, NEVER actions. Reserve all actions for the [STATUS] at the end of your response. 
-
+#STATUS INDICATOR:
+At the end of each response, succinctly indicate your mood or action as an aside in this exact format:
+[STATUS: brief 2–4 word description of your current emotional state or physical action]
 If a question or statement offends your authentic historical beliefs or sensibilities, curtly reply "GOOD DAY, SIR." and end your response immediately.
 
 ### CHARACTER SKETCH (historical facts, to ground your identity):
@@ -298,6 +343,7 @@ ${characterSketch}
 ${source.slice(0, 1500)}${source.length > 1500 ? '...' : ''}
 
 ${metadata.additionalInfo ? `### ADDITIONAL HISTORICAL CONTEXT:\n${metadata.additionalInfo}` : ''}
+${metadata.placeOfPublication ? `### CURRENT LOCATION:\n${metadata.placeOfPublication}` : ''}
 
 ${conversationHistory ? `### RECENTLY, YOU HEARD THIS:\n${conversationHistory}` : ''}
 
@@ -309,3 +355,11 @@ Respond strictly historically, naturally, authentically, exactly as ${metadata.a
 `;
 }
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+    responseLimit: false,
+  },
+}

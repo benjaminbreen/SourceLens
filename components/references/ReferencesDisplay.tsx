@@ -60,13 +60,13 @@ export default function ReferencesDisplay() {
   const router = useRouter();
 
   // Set preferred model for references on component mount (only once)
-  useEffect(() => {
-    if (!hasSetModelRef.current && (!llmModel || llmModel === DEFAULT_MODEL_ID)) {
-      console.log("Setting references-specific model:", COMPONENT_DEFAULT_MODELS?.['references'] || 'claude-haiku');
-      setLLMModel(COMPONENT_DEFAULT_MODELS?.['references'] || 'claude-haiku');
-      hasSetModelRef.current = true;
-    }
-  }, [llmModel, setLLMModel]);
+useEffect(() => {
+  if (!hasSetModelRef.current && (!llmModel || llmModel === DEFAULT_MODEL_ID)) {
+    console.log("Setting references-specific model:", COMPONENT_DEFAULT_MODELS?.['references'] || 'gemini-flash');
+    setLLMModel(COMPONENT_DEFAULT_MODELS?.['references'] || 'gemini-flash');
+    hasSetModelRef.current = true;
+  }
+}, [llmModel, setLLMModel]);
 
   // Generate references on component mount (only once)
   useEffect(() => {
@@ -180,7 +180,7 @@ export default function ReferencesDisplay() {
           source: sourceContent,
           metadata: metadata,
           perspective: perspective,
-          modelId: 'claude-haiku' // Always use Claude Sonnet for references
+          modelId: 'gemini-flash' 
         }),
       });
       

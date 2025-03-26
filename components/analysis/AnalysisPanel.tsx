@@ -10,6 +10,8 @@ import { useAppStore } from '@/lib/store';
 import CounterNarrative from './CounterNarrative';
 import SaveToLibraryButton from '../library/SaveToLibraryButton';
 import { useLibrary } from '@/lib/libraryContext';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // Add this style
 const citationLinkStyle = `
@@ -38,6 +40,7 @@ interface Reference {
   id: number;
   text: string;
   inLibrary: boolean;
+  url?: string; // optional
 }
 
 export default function AnalysisPanel() {
@@ -143,10 +146,10 @@ const buildCitationMap = (references: Reference[]) => {
       console.log("Parsing detailed analysis:", detailedAnalysis);
       
       // Parse with the new format that includes ###REFERENCES
-      const contextMatch = detailedAnalysis.match(/(?:###CONTEXT:|1\.\s*###CONTEXT:|1\.\s*CONTEXT:)([\s\S]*?)(?=###AUTHOR|2\.|$)/i);
-      const authorMatch = detailedAnalysis.match(/(?:###AUTHOR PERSPECTIVE:|2\.\s*###AUTHOR PERSPECTIVE:|2\.\s*AUTHOR PERSPECTIVE:)([\s\S]*?)(?=###KEY|3\.|$)/i);
-      const themesMatch = detailedAnalysis.match(/(?:###KEY THEMES:|3\.\s*###KEY THEMES:|3\.\s*KEY THEMES:)([\s\S]*?)(?=###EVIDENCE|4\.|$)/i);
-      const evidenceMatch = detailedAnalysis.match(/(?:###EVIDENCE & RHETORIC:|4\.\s*###EVIDENCE & RHETORIC:|4\.\s*EVIDENCE & RHETORIC:)([\s\S]*?)(?=###SIGNIFICANCE|5\.|$)/i);
+      const contextMatch = detailedAnalysis.match(/(?:###CONTEXT:|1\.\s*###CONTEXT:|1\.\s*CONTEXT:)([\s\S]*?)(?=###PERSPECTIVE|2\.|$)/i);
+      const authorMatch = detailedAnalysis.match(/(?:###PERSPECTIVE:|2\.\s*###PERSPECTIVE:|2\.\s*PERSPECTIVE:)([\s\S]*?)(?=###THEMES|3\.|$)/i);
+      const themesMatch = detailedAnalysis.match(/(?:###THEMES:|3\.\s*###KEY THEMES:|3\.\s*THEMES:)([\s\S]*?)(?=###EVIDENCE|4\.|$)/i);
+      const evidenceMatch = detailedAnalysis.match(/(?:###EVIDENCE:|4\.\s*###EVIDENCE:|4\.\s*EVIDENCE:)([\s\S]*?)(?=###SIGNIFICANCE|5\.|$)/i);
       const significanceMatch = detailedAnalysis.match(/(?:###SIGNIFICANCE:|5\.\s*###SIGNIFICANCE:|5\.\s*SIGNIFICANCE:)([\s\S]*?)(?=###REFERENCES|6\.|$)/i);
       const referencesMatch = detailedAnalysis.match(/(?:###REFERENCES:|6\.\s*###REFERENCES:|6\.\s*REFERENCES:)([\s\S]*?)(?=$)/i);
       
@@ -167,7 +170,7 @@ const buildCitationMap = (references: Reference[]) => {
       }
       
       if (!sections.author) {
-        const altAuthorMatch = detailedAnalysis.match(/(?:### 2\. AUTHOR|### AUTHOR PERSPECTIVE)([\s\S]*?)(?=### 3\.|### KEY|$)/i);
+        const altAuthorMatch = detailedAnalysis.match(/(?:### 2\. PERSPECTIVE|###PERSPECTIVE)([\s\S]*?)(?=### 3\.|### KEY|$)/i);
         sections.author = altAuthorMatch?.[1]?.trim() || 'Author perspective analysis not available.';
       }
       
@@ -221,7 +224,7 @@ const buildCitationMap = (references: Reference[]) => {
   useEffect(() => {
     const checkSectionHeights = () => {
       const lineHeight = 24; // Approximate line height in pixels
-      const maxLines = 8; // Maximum number of lines before showing "Show more"
+      const maxLines = 6; // Maximum number of lines before showing "Show more"
       const maxHeight = lineHeight * maxLines;
       
       const newSectionHasMore = { ...sectionHasMore };
@@ -295,39 +298,39 @@ const buildCitationMap = (references: Reference[]) => {
   // Define section colors and styles for the enhanced typography
   const sectionStyles = {
     context: {
-      color: 'text-indigo-900',
-      border: 'border-none',
-      bg: 'bg-indigo-50/80',
-      btn: 'text-indigo-600 hover:text-indigo-800',
-      icon: 'text-indigo-500 hover:text-indigo-700'
-    },
-    author: {
-      color: 'text-amber-900',
-      border: 'border-none',
-      bg: 'bg-amber-50/80',
-      btn: 'text-blue-600 hover:text-blue-800',
-      icon: 'text-amber-500 hover:text-amber-700'
-    },
-    themes: {
-      color: 'text-emerald-900',
-      border: 'border-none',
-      bg: 'bg-emerald-50/80',
-      btn: 'text-blue-600 hover:text-blue-800',
-      icon: 'text-emerald-500 hover:text-emerald-700'
-    },
-    evidence: {
       color: 'text-purple-900',
       border: 'border-none',
       bg: 'bg-purple-50/80',
-      btn: 'text-blue-600 hover:text-blue-800',
+      btn: 'text-purple-600 hover:text-indigo-800',
       icon: 'text-purple-500 hover:text-purple-700'
     },
-    significance: {
-      color: 'text-rose-900',
+    author: {
+      color: 'text-pink-900',
       border: 'border-none',
-      bg: 'bg-rose-50',
+      bg: 'bg-pink-50/80',
       btn: 'text-blue-600 hover:text-blue-800',
-      icon: 'text-rose-500 hover:text-rose-700'
+      icon: 'text-pink-500 hover:text-pink-700'
+    },
+    themes: {
+      color: 'text-sky-900',
+      border: 'border-none',
+      bg: 'bg-sky-50/80',
+      btn: 'text-blue-600 hover:text-blue-800',
+      icon: 'text-sky-500 hover:text-sky-700'
+    },
+    evidence: {
+      color: 'text-teal-900',
+      border: 'border-none',
+      bg: 'bg-teal-50/80',
+      btn: 'text-blue-600 hover:text-blue-800',
+      icon: 'text-teal-500 hover:text-teal-700'
+    },
+    significance: {
+      color: 'text-indigo-900',
+      border: 'border-none',
+      bg: 'bg-indigo-50',
+      btn: 'text-blue-600 hover:text-blue-800',
+      icon: 'text-indigo-500 hover:text-indigo-700'
     },
     references: {
       color: 'text-blue-900',
@@ -338,120 +341,57 @@ const buildCitationMap = (references: Reference[]) => {
     }
   };
 
-  if (isLoading && !initialAnalysis) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center">
-        <div className="w-12 h-12 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin mb-4"></div>
-        <p className="text-slate-600">Analyzing your source...</p>
-      </div>
-    );
-  }
+// Replace the loading indicator in AnalysisPanel.tsx with this modified version
+if (isLoading && !initialAnalysis && activePanel !== 'roleplay') {
+  return (
+    <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+      <div className="w-12 h-12 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin mb-4"></div>
+      <p className="text-slate-600">Analyzing your source...</p>
+    </div>
+  );
+}
 
-  if (!initialAnalysis) {
-    return (
-      <div className="h-full flex items-center justify-center p-8 text-center">
-        <div className="text-slate-500">
-          <svg className="w-12 h-12 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          <p>
-            Waiting for analysis to begin...
-          </p>
-        </div>
+if (!initialAnalysis && activePanel !== 'roleplay') {
+  return (
+    <div className="h-full flex items-center justify-center p-8 text-center">
+      <div className="text-slate-500">
+        <svg className="w-12 h-12 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <p>
+          Waiting for analysis to begin...
+        </p>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
- const processContentWithCitations = (text: string) => {
-   if (!text || references.length === 0) return text;
-   
-   // Handle both the unicode emoji and the text representation
-   const emojiPatterns = [
-     /📚\(([^)]+)\)/g,         // Unicode emoji: 📚(Author, Year)
-     /\\uD83D\\uDCDA\(([^)]+)\)/g, // Escaped unicode: \uD83D\uDCDA(Author, Year)
-     /book emoji\(([^)]+)\)/gi, // Text description: book emoji(Author, Year)
-     /📚\s*\(([^)]+)\)/g      // Unicode emoji with space: 📚 (Author, Year)
-   ];
-   
-   let processedText = text;
-   
-   // Process each emoji pattern
-   emojiPatterns.forEach(pattern => {
-     processedText = processedText.replace(pattern, (match, citation) => {
-       // Extract author name (and year if present)
-       const parts = citation.split(',');
-       const author = parts[0].trim().toLowerCase();
-       
-       // Try to find the reference ID in the citation map
-       const refId = citationMap[author];
-       
-       // If we found a matching reference, create a link
-       if (refId !== undefined) {
-         // Replace the emoji or text with just normal parentheses
-         const cleanedMatch = match
-           .replace(/📚\s*/, '')
-           .replace(/\\uD83D\\uDCDA\s*/, '')
-           .replace(/book emoji\s*/i, '');
-         return `<a href="#reference-${refId}" class="citation-link">${cleanedMatch}</a>`;
-       }
-       
-       // Return the original match without the emoji/text if no reference found
-       return match
-         .replace(/📚\s*/, '')
-         .replace(/\\uD83D\\uDCDA\s*/, '')
-         .replace(/book emoji\s*/i, '');
-     });
-   });
-   
-   // Also look for citations directly (Author, Year) without emoji
-   // This is a fallback for citations that might be in the text but not properly marked
-   if (!emojiPatterns.some(pattern => pattern.test(text))) {
-     const referenceAuthors = references.map(ref => {
-       const authorMatch = ref.text.match(/^([^,]+)/);
-       return authorMatch ? authorMatch[1].trim().toLowerCase() : null;
-     }).filter(Boolean);
-     
-     // Find citations in the form (Author, Year) or Author (Year)
-     const citationPatterns = [
-       /\(([^,\)]+),?\s*(\d{4})?\)/g,  // (Author, 2005) or (Author)
-       /\b([A-Z][a-z]+)\s+\((\d{4})\)/g,  // Author (2005)
-     ];
-     
-     citationPatterns.forEach(pattern => {
-       processedText = processedText.replace(pattern, (match, author, year) => {
-         if (!author) return match;
-         
-         const authorKey = author.trim().toLowerCase();
-         
-         // Only process if this author is in our references
-         if (referenceAuthors.includes(authorKey)) {
-           const refId = citationMap[authorKey];
-           
-           if (refId !== undefined) {
-             return `<a href="#reference-${refId}" class="citation-link">${match}</a>`;
-           }
-         }
-         
-         return match;
-       });
-     });
-     
-     // Also try specific author names (more targeted approach)
-     references.forEach(ref => {
-       const authorMatch = ref.text.match(/^([^,]+)/);
-       if (authorMatch) {
-         const author = authorMatch[1].trim();
-         const regex = new RegExp(`\\b${author}\\b`, 'g');
-         
-         processedText = processedText.replace(regex, (match) => {
-           return `<a href="#reference-${ref.id}" class="citation-link">${match}</a>`;
-         });
-       }
-     });
-   }
-   
-   return processedText;
- };
+const processContentWithCitations = (text: string) => {
+  if (!text || references.length === 0) return text;
+
+  let processedText = text;
+
+  const emojiPatterns = [
+    /📚\(([^)]+)\)/g,
+    /\\uD83D\\uDCDA\(([^)]+)\)/g,
+    /book emoji\(([^)]+)\)/gi,
+    /📚\s*\(([^)]+)\)/g
+  ];
+
+  emojiPatterns.forEach(pattern => {
+    processedText = processedText.replace(pattern, (_, citationKey) => {
+      const refId = citationMap[citationKey.toLowerCase()] ?? citationMap[citationKey.trim().toLowerCase()];
+      if (refId !== undefined) {
+        return `<a href="#reference-${refId}" class="citation-link">📚(${citationKey})</a>`;
+      } else {
+        return `📚(${citationKey})`; // fallback
+      }
+    });
+  });
+
+  return processedText.replace(/\*(.*?)\*/g, '<em>$1</em>'); // also handle italics here
+};
+
 
  const renderContent = () => {
   switch (activePanel) {
@@ -479,15 +419,39 @@ case 'counter':
     </div>
   );
       
-    case 'roleplay':
-      return (
-        <div>
-          <h3 className="text-lg font-medium text-slate-800 mb-3 pb-2 border-b border-slate-100">Author Perspective</h3>
-          <p className="text-slate-500 italic">
-            Click "Begin Roleplay" in the tools panel to simulate a conversation with the author.
+   // Replace the existing roleplay case in AnalysisPanel.tsx
+case 'roleplay':
+  return (
+    <div className="space-y-4">
+      {/* Header with icon */}
+      
+        <h3 className="text-md font-medium flex items-center">
+         
+          About Simulation Mode
+        </h3>
+
+      
+      {/* Main content with better typography and structure */}
+
+        <div className="flex items-start mb-2">
+          <p className="text-sm text-slate-700 leading-relaxed">
+            This is an experimental simulation tool that feeds a Large Language Model extensive context relating to the author of a primary source and allows you to "speak" to "them."  
           </p>
+
+     
         </div>
-      );
+        
+        <div className="mt-4 pt-3 border-t border-dashed border-slate-200">
+          <div className="flex items-center text-xs text-slate-500">
+            <svg className="w-4 h-4 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="italic">Using this feature requires a nuanced understanding of historical context. This output should never be mistaken for a fully accurate account of what the real historical figure thought.</span>
+          </div>
+     
+      </div>
+    </div>
+  );
       
     case 'detailed-analysis':
       // Always show detailed analysis when this panel is active
@@ -515,7 +479,7 @@ case 'counter':
             {/* Context Section */}
             <div className="mb-2">
               <div className={` rounded-lg overflow-hidden mb-1 `}>
-                <h4 className={`text-md shadow-sm  font-bold font-mono tracking-tight ${sectionStyles.context.color} ${sectionStyles.context.bg} p-1 border-b-1 ${sectionStyles.context.border} flex items-center`}>
+                <h4 className={`text-md shadow-sm  font-medium font-mono tracking-tight ${sectionStyles.context.color} ${sectionStyles.context.bg} p-1 border-b-1 ${sectionStyles.context.border} flex items-center`}>
                   <span className={`mr-3 ${sectionStyles.context.icon}`}>
                     <svg className="w-5 h-5 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -530,9 +494,9 @@ case 'counter':
                 <div className="relative">
                   <div 
                     ref={contentRefs.context}
-                    className={`text-slate-700 font-medium leading-relaxed mb-2 py-2 px-3 ${
+                    className={`text-slate-700 leading-relaxed mb-2 py-1 px-3 ${
                       !expandedSections.context && sectionHasMore.context 
-                        ? 'max-h-48 overflow-hidden' 
+                        ? 'max-h-50 overflow-hidden' 
                         : ''
                     }`}
                     dangerouslySetInnerHTML={{ 
@@ -549,7 +513,7 @@ case 'counter':
             {/* Author Perspective Section */}
             <div className="mb-5">
               <div className={`rounded-lg overflow-hidden mb-1`}>
-                <h4 className={`text-md shadow-sm font-bold font-mono tracking-tight ${sectionStyles.author.color} ${sectionStyles.author.bg} p-1 border-b-1 ${sectionStyles.author.border} flex items-center`}>
+                <h4 className={`text-md shadow-sm font-medium font-mono tracking-tight ${sectionStyles.author.color} ${sectionStyles.author.bg} p-1 border-b-1 ${sectionStyles.author.border} flex items-center`}>
                   <span className={`mr-3 ${sectionStyles.author.icon}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -563,9 +527,9 @@ case 'counter':
                 <div className="relative">
                   <div 
                     ref={contentRefs.author}
-                    className={`text-slate-700 leading-relaxed py-2 px-3 ${
+                    className={`text-slate-700 leading-relaxed py-1 px-3 ${
                       !expandedSections.author && sectionHasMore.author 
-                        ? 'max-h-48 overflow-hidden' 
+                        ? 'max-h-20 overflow-hidden' 
                         : ''
                     }`}
                     dangerouslySetInnerHTML={{ 
@@ -582,7 +546,7 @@ case 'counter':
               {sectionHasMore.author && (
                 <button
                   onClick={() => toggleSection('author')}
-                  className={`mt-1 flex items-center justify-center w-full py-1.5 px-2 text-sm ${sectionStyles.author.btn} font-medium`}
+                  className={`mt-1 flex items-center justify-center w-full py-1 px-2 text-sm ${sectionStyles.author.btn} font-medium`}
                 >
                   {expandedSections.author ? 'Show less' : 'Show more'} 
                   <svg className={`w-4 h-4 ml-1 transition-transform ${expandedSections.author ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -595,7 +559,7 @@ case 'counter':
             {/* Key Themes Section */}
             <div className="mb-5">
               <div className={`rounded-lg overflow-hidden mb-1`}>
-                <h4 className={`text-md shadow-sm font-bold font-mono tracking-tight ${sectionStyles.themes.color} ${sectionStyles.themes.bg} p-1 border-b-1 ${sectionStyles.themes.border} flex items-center`}>
+                <h4 className={`text-md shadow-sm font-medium font-mono tracking-tight ${sectionStyles.themes.color} ${sectionStyles.themes.bg} p-1 border-b-1 ${sectionStyles.themes.border} flex items-center`}>
                   <span className={`mr-3 ${sectionStyles.themes.icon}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -609,9 +573,9 @@ case 'counter':
                 <div className="relative">
                   <div 
                     ref={contentRefs.themes}
-                    className={`text-slate-700 leading-relaxed py-2 px-3 ${
+                    className={`text-slate-700 leading-relaxed py-1 px-3 ${
                       !expandedSections.themes && sectionHasMore.themes 
-                        ? 'max-h-48 overflow-hidden' 
+                        ? 'max-h-20 overflow-hidden' 
                         : ''
                     }`}
                     dangerouslySetInnerHTML={{ 
@@ -628,7 +592,7 @@ case 'counter':
               {sectionHasMore.themes && (
                 <button
                   onClick={() => toggleSection('themes')}
-                  className={`mt-1 flex items-center justify-center w-full py-1.5 px-2 text-sm ${sectionStyles.themes.btn} font-medium`}
+                  className={`mt-1 flex items-center justify-center w-full py-1 px-2 text-sm ${sectionStyles.themes.btn} font-medium`}
                 >
                   {expandedSections.themes ? 'Show less' : 'Show more'} 
                   <svg className={`w-4 h-4 ml-1 transition-transform ${expandedSections.themes ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -641,7 +605,7 @@ case 'counter':
             {/* Evidence & Rhetoric Section */}
             <div className="mb-5">
               <div className={`rounded-lg overflow-hidden mb-1`}>
-                <h4 className={`text-md shadow-sm font-bold font-mono tracking-tight ${sectionStyles.evidence.color} ${sectionStyles.evidence.bg} p-1 border-b-1 ${sectionStyles.evidence.border} flex items-center`}>
+                <h4 className={`text-md shadow-sm font-medium font-mono tracking-tight ${sectionStyles.evidence.color} ${sectionStyles.evidence.bg} p-1 border-b-1 ${sectionStyles.evidence.border} flex items-center`}>
                   <span className={`mr-3 ${sectionStyles.evidence.icon}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -655,9 +619,9 @@ case 'counter':
                 <div className="relative">
                   <div 
                     ref={contentRefs.evidence}
-                    className={`text-slate-700 leading-relaxed py-2 px-3 ${
+                    className={`text-slate-700 leading-relaxed py-1 px-3 ${
                       !expandedSections.evidence && sectionHasMore.evidence 
-                        ? 'max-h-48 overflow-hidden' 
+                        ? 'max-h-20 overflow-hidden' 
                         : ''
                     }`}
                     dangerouslySetInnerHTML={{ 
@@ -674,7 +638,7 @@ case 'counter':
               {sectionHasMore.evidence && (
                 <button
                   onClick={() => toggleSection('evidence')}
-                  className={`mt-1 flex items-center justify-center w-full py-1.5 px-2 text-sm ${sectionStyles.evidence.btn} font-medium`}
+                  className={`mt-1 flex items-center justify-center w-full py-1 px-2 text-sm ${sectionStyles.evidence.btn} font-medium`}
                 >
                   {expandedSections.evidence ? 'Show less' : 'Show more'} 
                   <svg className={`w-4 h-4 ml-1 transition-transform ${expandedSections.evidence ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -687,7 +651,7 @@ case 'counter':
             {/* Significance Section */}
             <div className="mb-5">
               <div className={`rounded-lg overflow-hidden mb-1`}>
-                <h4 className={`text-md shadow-sm font-bold font-mono tracking-tight ${sectionStyles.significance.color} ${sectionStyles.significance.bg} p-1 border-b-1 ${sectionStyles.significance.border} flex items-center`}>
+                <h4 className={`text-md shadow-sm font-medium font-mono tracking-tight ${sectionStyles.significance.color} ${sectionStyles.significance.bg} p-1 border-b-1 ${sectionStyles.significance.border} flex items-center`}>
                   <span className={`mr-3 ${sectionStyles.significance.icon}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -701,9 +665,9 @@ case 'counter':
                 <div className="relative">
                   <div 
                     ref={contentRefs.significance}
-                    className={`text-slate-700 leading-relaxed py-2 px-3 ${
+                    className={`text-slate-700 leading-relaxed py-1 px-3 ${
                       !expandedSections.significance && sectionHasMore.significance 
-                        ? 'max-h-48 overflow-hidden' 
+                        ? 'max-h-40 overflow-hidden' 
                         : ''
                     }`}
                     dangerouslySetInnerHTML={{ 
@@ -720,7 +684,7 @@ case 'counter':
               {sectionHasMore.significance && (
                 <button
                   onClick={() => toggleSection('significance')}
-                  className={`mt-1 flex items-center justify-center w-full py-1.5 px-2 text-sm ${sectionStyles.significance.btn} font-medium`}
+                  className={`mt-1 flex items-center justify-center w-full py-1 px-2 text-sm ${sectionStyles.significance.btn} font-medium`}
                 >
                   {expandedSections.significance ? 'Show less' : 'Show more'} 
                   <svg className={`w-4 h-4 ml-1 transition-transform ${expandedSections.significance ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -730,51 +694,92 @@ case 'counter':
               )}
             </div>
             
-            {/* References Section - Always shown in full */}
-            {references.length > 0 && (
-              <div className="mb-5">
-                <div className={`rounded-md overflow-hidden mb-2 shadow-sm border ${sectionStyles.references.border}`}>
-                  <h4 className={`text-lg font-black font-serif ${sectionStyles.references.color} ${sectionStyles.references.bg} p-3 border-b-2 ${sectionStyles.references.border} flex items-center justify-between`}>
-                    <div className="flex items-center">
-                      <span className={`mr-2 ${sectionStyles.references.icon}`}>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      </span>
-                      Scholarly References 
+          {/* References */}
+              {references.length > 0 && (
+                <div className="mb-4">
+                  <div className="rounded-lg   border-slate-200">
+                    <div className="bg-gradient-to-r from-blue-100 to-indigo-200 rounded p-2 border-b border-dashed shadow border-indigo-300">
+                      <h4 className="text-lg text-indigo-900 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <span className="mr-2 text-indigo-700">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                          </span>
+                          <span className="font-bold ">Scholarly References</span>
+                        </div>
+                        <span className="text-xs font-sans bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full">
+                          {references.length} {references.length === 1 ? 'source' : 'sources'}
+                        </span>
+                      </h4>
                     </div>
-                    <span className="text-xs font-normal bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                      {references.length} {references.length === 1 ? 'source' : 'sources'}
-                    </span>
-                  </h4>
-                  <div className="py-2">
-                    <ul className="divide-y divide-slate-100">
-                      {references.map((ref) => (
-                        <li key={ref.id} id={`reference-${ref.id}`} className="py-2 px-4 target:bg-blue-50 transition-colors">
+                    <div className="divide-y divide-slate-100">
+                      {references.map(ref => (
+                     <div 
+                       key={ref.id} 
+                       id={`reference-${ref.id}`} 
+                       className="py-2 px-5 bg-white rounded-sm shadow-sm hover:shadow-md hover:bg-blue-300/8 transition-all border border-slate-100"
+                     >
+
                           <div className="flex items-start justify-between">
-                            <p className="text-sm font-mono text-slate-700 leading-relaxed">
-                              {ref.text}
-                            </p>
-                            <div className="ml-3 flex-shrink-0">
+                            <div className="pr-4">
+                             <p
+                               className="text-md font-sans text-slate-800 leading-relaxed "
+                               dangerouslySetInnerHTML={{ __html: ref.text.replace(/\*(.*?)\*/g, '<em>$1</em>') }}
+                             ></p>
+                              <div className="mt-1 flex items-center space-x-3">
+                                <a
+                                  href="#"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    navigator.clipboard.writeText(ref.text);
+                                    alert('Citation copied to clipboard!');
+                                  }}
+                                  className="inline-flex hover:bg-purple-300/10 items-center text-xs text-indigo-600 hover:text-indigo-800"
+                                >
+                                  <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                  Copy Citation
+                                </a>
+                                <span className="text-slate-300 ">•</span>
+                                <a
+                                  href={
+                                    ref.url
+                                      ? ref.url
+                                      : `https://scholar.google.com/scholar?q=${encodeURIComponent(ref.text)}`
+                                  }
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex hover:bg-blue-300/10  items-center text-xs text-blue-600 hover:text-blue-800"
+                                >
+                                  <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                  </svg>
+                                  Find Source
+                                </a>
+                              </div>
+                            </div>
+                            <div className="flex-shrink-0">
                               <button
                                 onClick={() => addToLibrary(ref.id)}
                                 disabled={ref.inLibrary}
-                                className={`flex items-center text-xs px-2 py-1 rounded transition-colors ${
+                                className={`flex items-center text-xs px-3 py-1.5 rounded-lg transition-colors ${
                                   ref.inLibrary
                                     ? 'bg-green-100 text-green-700 cursor-default'
-                                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                    : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
                                 }`}
                               >
                                 {ref.inLibrary ? (
                                   <>
-                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
-                                    Added
+                                    Saved
                                   </>
                                 ) : (
                                   <>
-                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                     </svg>
                                     Add to Library
@@ -783,59 +788,73 @@ case 'counter':
                               </button>
                             </div>
                           </div>
-                        </li>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        );
-      }
+              )}
+            </div>
+          );
+        }
       // Fall through to basic analysis if detailed analysis isn't available
       
-    case 'analysis':
-    default:
-      // Always show basic/initial analysis for the 'analysis' panel
-      return (
-        <div>
-          <div className="mb-5">
-            <h3 className="text-lg font-medium text-slate-800 mb-3 pb-2 border-b border-slate-100">Summary</h3>
-            <p className="text-slate-700">{initialAnalysis.summary}</p>
-          </div>
-          
-          <div className="mb-5">
-            <h3 className="text-lg font-medium text-slate-800 mb-3 pb-2 border-b border-slate-100">Preliminary Analysis</h3>
-            <p className="text-slate-700">{initialAnalysis.analysis}</p>
-          </div>
-          
-          <div>
-            <h3 className="text-lg font-medium text-slate-800 mb-3 pb-2 border-b border-slate-100">Follow-up Questions</h3>
-            <p className="text-sm text-slate-500 mb-3">
-              Click a question to add it in the discussion:
-            </p>
-            <div className="space-y-2">
-              {initialAnalysis.followupQuestions.map((question, idx) => (
-                <div 
-                  key={idx}
-                  className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                    selectedQuestion === idx 
-                      ? 'bg-indigo-50 border-indigo-300 shadow-sm' 
-                      : 'hover:bg-slate-50 border-slate-200'
-                  }`}
-                  onClick={() => {
-                    setSelectedQuestion(idx);
-                    handleAskQuestion(question);
-                  }}
-                >
-                  <p className="text-slate-700">{question}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+  case 'analysis':
+default:
+  return (
+    <div>
+      {/* Summary section */}
+      <div className="mb-4">
+        <h3 className="text-lg font-medium text-slate-800 mb-2 pb-1 border-b border-slate-200">
+          Summary
+        </h3>
+        {/* Wrap ReactMarkdown in a parent div */}
+        <div className="text-slate-700">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {initialAnalysis?.summary || "No summary available"}
+          </ReactMarkdown>
         </div>
-      );
+      </div>
+
+     <div className="mb-4">
+  <h3 className="text-lg font-medium text-slate-800 mb-2 pb-1 border-b border-slate-200">
+    Preliminary Analysis
+  </h3>
+  <div className="text-slate-700">
+    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+      {initialAnalysis?.analysis || "No analysis available"}
+    </ReactMarkdown>
+  </div>
+</div>
+
+     <div>
+       <h3 className="text-lg font-medium text-slate-800 mb-2 pb-1 border-b border-dashed border-slate-300">
+         Follow-up Questions
+       </h3>
+       <p className="text-sm italic text-slate-500 mb-3">
+         Click a question to add it in the discussion:
+       </p>
+       <div className="space-y-2">
+         {initialAnalysis?.followupQuestions?.map((question, idx) => (
+           <div
+             key={idx}
+             className={`p-3 border rounded-md cursor-pointer transition-colors ${
+               selectedQuestion === idx 
+                 ? 'bg-indigo-50 border-indigo-300 shadow-sm' 
+                 : 'hover:bg-blue-100/80 border-slate-200'
+             }`}
+             onClick={() => {
+               setSelectedQuestion(idx);
+               handleAskQuestion(question);
+             }}
+           >
+             <p className="text-slate-700">{question}</p>
+           </div>
+         ))}
+       </div>
+     </div>
+    </div>
+  );
   }
 };
 

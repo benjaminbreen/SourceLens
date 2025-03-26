@@ -1,12 +1,16 @@
 // pages/api/detailed-analysis.ts
 // API route for detailed source analysis with standardized model handling
+// Now using Gemini 2.0 Pro Exp as default for high-quality detailed analysis
 // Supports OpenAI, Anthropic, and Google models through a unified configuration
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { OpenAI } from 'openai';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getModelById, DEFAULT_MODEL_ID } from '@/lib/models';
+import { getModelById } from '@/lib/models';
+
+// Set default model to Gemini 2.0 Pro Exp for detailed analysis
+const DEFAULT_DETAILED_MODEL = 'gemini-flash';
 
 // Configure API clients
 const openai = new OpenAI({
@@ -33,15 +37,22 @@ export default async function handler(
       source, 
       metadata, 
       perspective = '',
-      modelId = DEFAULT_MODEL_ID,  // New parameter name for model ID
+      modelId,  // New parameter name for model ID
       model      // Keep for backward compatibility
     } = req.body;
     
-    // Handle backward compatibility - if modelId isn't provided but model is
-    const effectiveModelId = modelId || (model === 'gpt' ? 'gpt-4o-mini' : 'claude-haiku');
+    // Always prioritize user-selected model, fall back to old 'model' param for compatibility
+    const effectiveModelId = modelId || model || DEFAULT_DETAILED_MODEL;
     
     // Get model configuration
-    const modelConfig = getModelById(effectiveModelId);
+    let modelConfig;
+    try {
+      modelConfig = getModelById(effectiveModelId);
+    } catch (error) {
+      // If model not found, use default
+      console.warn(`Model ID ${effectiveModelId} not found, using ${DEFAULT_DETAILED_MODEL}`);
+      modelConfig = getModelById(DEFAULT_DETAILED_MODEL);
+    }
     
     // Log request details for debugging
     console.log("Detailed analysis request received:", {
@@ -59,8 +70,16 @@ export default async function handler(
       return res.status(400).json({ message: 'Missing required fields' });
     }
     
+    // Process large text appropriately for different models
+    const truncatedSource = processSizeForModel(source, modelConfig);
+    const isTruncated = truncatedSource.length < source.length;
+    
+    if (isTruncated) {
+      console.log(`Source truncated from ${source.length} chars to ${truncatedSource.length} chars for ${modelConfig.name}`);
+    }
+    
     // Build prompt
-    const prompt = buildDetailedAnalysisPrompt(source, metadata, perspective);
+    const prompt = buildDetailedAnalysisPrompt(truncatedSource, metadata, perspective, isTruncated);
     console.log(`Prompt built, sending to ${modelConfig.provider} model: ${modelConfig.apiModel}`);
     
     // Track raw prompt and response for transparency
@@ -75,7 +94,7 @@ export default async function handler(
         model: modelConfig.apiModel,
         messages: [{ role: 'user', content: prompt }],
         temperature: modelConfig.temperature || 0.4,
-        max_tokens: modelConfig.maxTokens || 4500,
+        max_tokens: modelConfig.maxTokens || 16000,
       });
       
       rawResponse = response.choices[0]?.message?.content || '';
@@ -89,7 +108,7 @@ export default async function handler(
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: modelConfig.temperature || 0.4,
-          maxOutputTokens: modelConfig.maxTokens || 4500,
+          maxOutputTokens: modelConfig.maxTokens || 16000,
         },
       });
       
@@ -104,7 +123,7 @@ export default async function handler(
         model: modelConfig.apiModel,
         messages: [{ role: 'user', content: prompt }],
         temperature: modelConfig.temperature || 0.5,
-        max_tokens: modelConfig.maxTokens || 4500,
+        max_tokens: modelConfig.maxTokens || 16000,
       });
       
       rawResponse = response.content[0]?.type === 'text' 
@@ -117,7 +136,11 @@ export default async function handler(
     return res.status(200).json({
       analysis,
       rawPrompt,
-      rawResponse
+      rawResponse,
+      modelUsed: modelConfig.name,
+      truncated: isTruncated,
+      originalLength: source.length,
+      truncatedLength: truncatedSource.length
     });
   } catch (error) {
     console.error('Detailed analysis error:', error);
@@ -128,12 +151,40 @@ export default async function handler(
   }
 }
 
+// Process source text with appropriate truncation based on model
+function processSizeForModel(source: string, modelConfig: any): string {
+  // Default token counts - adjust based on model capabilities
+  const maxTokens = {
+    'openai': 30000,
+    'anthropic': 25000,
+    'google': 40000
+  };
+  
+  // Rough approximation: 1 token ≈ 4 characters for English text
+  const provider = modelConfig.provider;
+
+const charLimit = (maxTokens[provider as keyof typeof maxTokens] || 40000) * 4;
+  
+  // Special handling for specific models with larger context windows
+  if (modelConfig.id === 'gemini-2.0-pro-exp-02-05' || modelConfig.id === 'gemini-flash') {
+    return source; // These models can handle very large contexts, so no truncation
+  }
+  
+  // For other models, truncate if necessary
+  if (source.length > charLimit) {
+    return source.substring(0, charLimit);
+  }
+  
+  return source;
+}
+
 function buildDetailedAnalysisPrompt(
   source: string, 
   metadata: any, 
-  perspective: string
+  perspective: string,
+  isTruncated: boolean
 ): string {
-  return `You are an expert and highly sensitive professor in the humanities analyzing a primary source in depth. You have a flexible, creative, and unorthodox mind and value scholarly rigor, truth-telling, skepticism, and plainspokennes.
+  return `You are an expert, blunt, and succinct professor in the humanities analyzing a primary source in depth. You have a flexible, creative, and unorthodox mind and value scholarly rigor, truth-telling, skepticism, and plainspokenness.
 
 SOURCE DATE: ${metadata.date}
 SOURCE AUTHOR: ${metadata.author}
@@ -141,27 +192,37 @@ RESEARCH GOALS: ${metadata.researchGoals}
 ${metadata.additionalInfo ? `ADDITIONAL CONTEXT: ${metadata.additionalInfo}` : ''}
 ${perspective ? `ANALYTICAL PERSPECTIVE: ${perspective}` : ''}
 
-PRIMARY SOURCE:
+PRIMARY SOURCE${isTruncated ? ' (truncated for analysis)' : ''}:
 ${source}
 
-Provide an analysis of this primary source that addresses the following (around 2-3 sentences each). 
+Provide an analysis of this primary source that includes only the the following 6 sections: ###CONTEXT: ###PERSPECTIVE: ###THEMES: ###EVIDENCE: ###SIGNIFICANCE: ###REFERENCES:   Remember that each entry must always be formatted like ###HEADER: content
 
-IMPORTANT: Cite the most relevant and useful academic secondary sources as needed, maximum 4. THIS IS KEY: When citing a source, ALWAYS use the format 📚(Author, Year) - for example 📚(Smith, 2010) or 📚(Johnson). This ensures the citations are properly linked in the interface.
+Use in-line short form chicago style citations the most relevant and useful academic secondary sources throughout (between 3 and 5 total citations). 
+
+When citing a source, ALWAYS use the format 📚(Author, Year) - for example 📚(Smith, 2010) or 📚(Johnson, 2010). This ensures the citations are properly linked in the interface.
 
 Provide ONLY the following entries, with absolutely no prefatory material or opening sentence. 
 
-1. ###CONTEXT: Place this source in its historical context, including relevant events, movements, or trends from the period. Include unfamiliar or unexpected but true details as needed.
+1.###CONTEXT: Place this source in its historical context, including relevant events, movements, or trends from the period. 3-4 sentences. Always discuss the wider context of the time period, and cite at least one source.
 
-2. ###AUTHOR PERSPECTIVE: Analyze the author's background, potential biases, and how these might influence the source.
+2.###PERSPECTIVE: Analyze the author's background, potential biases, and how these might influence the source. 4-5 sentences. Always consider what is excluded. 
 
-3. ###KEY THEMES: Identify the main themes, arguments, or narratives present in the source.
+3.###THEMES: Identify the main themes, arguments, or narratives present in the source. 4-5 sentences, with direct quotes. Cite at least one source here.
 
-4. ###EVIDENCE & RHETORIC: Analyze how the author uses evidence, language, or rhetoric to convey their message.
+4.###EVIDENCE: Analyze how the author uses evidence, language, or rhetoric to convey their message. 4-5 sentences, with direct quotes. Cite at least one source. 
 
-5. ###SIGNIFICANCE: Explain why this source MAY (or MAY NOT) be valuable for the stated research goals, highlighting its potential contributions (or not) to understanding the topic. ONE SENTENCE ONLY.
+5.###SIGNIFICANCE: Explain why this source MAY (or MAY NOT) be valuable for the stated research goals, highlighting its potential contributions (or not) to understanding the topic. ONE SENTENCE ONLY.
 
-6. ###REFERENCES: All sources you cited, in Chicago style. List them in the order they were first cited.
+6.###REFERENCES: All sources you cited, in full Chicago style. Numbered in alphabetical order. Always cite minimum of three sources.
 
-KEEP IT BRIEF BUT CONTENT RICH. Provide specific examples from the text where relevant and THIS IS CRUCIAL cite relevent academic sources using the 📚(Author, Year) format within your text. Be thorough but concise, and ensure your analysis directly relates to the researcher's stated goals.
 `;
 }
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+    responseLimit: false,
+  },
+};

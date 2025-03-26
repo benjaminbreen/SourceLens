@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { OpenAI } from 'openai';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { getModelById } from '@/lib/models';
-
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Configure API clients
 const openai = new OpenAI({
@@ -14,7 +14,9 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-//  timeout handler function 
+const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+
+// Timeout handler function 
 async function fetchWithTimeout<T>(promise: Promise<T>, timeout: number): Promise<T> {
   // Initialize timer to undefined initially
   let timer: NodeJS.Timeout | undefined = undefined;
@@ -38,7 +40,6 @@ async function fetchWithTimeout<T>(promise: Promise<T>, timeout: number): Promis
     throw error;
   }
 }
-
 
 // Define Reference interface
 export interface Reference {
@@ -65,7 +66,7 @@ export default async function handler(
       source, 
       metadata, 
       perspective = '',
-      modelId = 'claude-haiku', // Default to claude-haiku
+      modelId = 'gemini-flash', // Default to gemini flash
     } = req.body;
     
     // Validate input
@@ -80,13 +81,13 @@ export default async function handler(
     let rawPrompt = prompt;
     let rawResponse = '';
     
-    // Use Claude haiku by default - simpler approach
+    // Get model configuration
     let model;
     try {
       model = getModelById(modelId);
     } catch (error) {
-      console.warn(`Model ID ${modelId} not found, using claude-haiku`);
-      model = getModelById('claude-haiku');
+      console.warn(`Model ID ${modelId} not found, using gemini-flash`);
+      model = getModelById('gemini-flash');
     }
     
     let references: Reference[] = [];
@@ -127,8 +128,8 @@ export default async function handler(
           const fallbackResponse = await openai.chat.completions.create({
             model: 'gpt-4o',
             messages: [{ role: 'user', content: prompt }],
-            temperature: 0.3,
-            max_tokens: 1000,
+            temperature: 0.2,
+            max_tokens: 1500,
             response_format: { type: "json_object" },
           });
           
@@ -141,14 +142,46 @@ export default async function handler(
         const response = await openai.chat.completions.create({
           model: model.apiModel,
           messages: [{ role: 'user', content: prompt }],
-          temperature: 0.3,
-          max_tokens: 1000,
+          temperature: 0.2,
+          max_tokens: 1500,
           response_format: { type: "json_object" },
         });
         
         rawResponse = response.choices[0]?.message?.content || '';
         const parsed = JSON.parse(rawResponse);
         references = parsed.references || [];
+      } else if (model.provider === 'google') {
+        // Google AI option
+        const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+        const geminiModel = genAI.getGenerativeModel({ model: model.apiModel });
+        
+        const geminiResponse = await geminiModel.generateContent({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 1500,
+          },
+        });
+        
+        rawResponse = geminiResponse.response.text();
+        try {
+          const parsed = JSON.parse(rawResponse);
+          references = parsed.references || [];
+        } catch (parseError) {
+          console.error("Error parsing Google AI response:", parseError);
+          // Try OpenAI as fallback
+          const fallbackResponse = await openai.chat.completions.create({
+            model: 'gpt-4o',
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.2,
+            max_tokens: 1500,
+            response_format: { type: "json_object" },
+          });
+          
+          rawResponse = fallbackResponse.choices[0]?.message?.content || '';
+          const parsed = JSON.parse(rawResponse);
+          references = parsed.references || [];
+        }
       } else {
         throw new Error(`Unsupported model provider: ${model.provider}`);
       }
@@ -173,19 +206,18 @@ export default async function handler(
       modelUsed: model.name,
       processingTime: Date.now() - startTime
     });
-
-} catch (error) {
-  console.error('References generation error:', error);
-  
-  // Always return something useful, even on error
-  const fallbackReferences = createFallbackReferences(req.body.metadata);
-  
-  return res.status(200).json({ 
-    references: fallbackReferences,
-    message: 'Using fallback references due to an error',
-    error: error instanceof Error ? error.message : 'Unknown error'
-  });
-}
+  } catch (error) {
+    console.error('References generation error:', error);
+    
+    // Always return something useful, even on error
+    const fallbackReferences = createFallbackReferences(req.body.metadata);
+    
+    return res.status(200).json({ 
+      references: fallbackReferences,
+      message: 'Using fallback references due to an error',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 }
 
 // Create fallback references if LLM fails
@@ -242,7 +274,7 @@ function buildReferencesPrompt(
 ): string {
   const sourceExcerpt = source.length > 1000 ? source.substring(0, 1000) + '...' : source;
 
-  return `Generate 4 highly relevant scholarly references for understanding this primary source.
+  return `Generate 5 highly relevant scholarly references for understanding this primary source.
 
 SOURCE DATE: ${metadata.date}
 SOURCE AUTHOR: ${metadata.author}
@@ -264,7 +296,7 @@ Return a JSON object with this exact structure:
       "sourceQuote": "BRIEF quote from the primary source this reference contextualizes",
       "importance": number from 1-5 (5 = most important)
     }
-    // 3 more references
+    // 4 more references
   ]
 }
 
@@ -277,3 +309,12 @@ Your references must be:
 
 DO NOT include any text outside the JSON. Return ONLY valid JSON with no markdown formatting.`;
 }
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+    responseLimit: false,
+  },
+};

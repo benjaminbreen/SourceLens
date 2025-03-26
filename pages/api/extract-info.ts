@@ -1,10 +1,16 @@
 // pages/api/extract-info.ts
 // API for extracting structured lists and information from documents
+// Optimized for Gemini Flash with enhanced handling of extremely large documents
+// Only chunks data for documents larger than 300k characters
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { OpenAI } from 'openai';
 import { Anthropic } from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getModelById } from '@/lib/models';
+
+// Set default model to Gemini Flash for extraction tasks
+const DEFAULT_EXTRACTION_MODEL = 'gemini-flash';
 
 // Configure API clients
 const openai = new OpenAI({
@@ -15,8 +21,20 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// Configure Google client
+const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+
+// Maximum character size before chunking (approximately 400k tokens)
+const MAX_FULL_CONTENT_SIZE = 400000;
+
 // Maximum response token length for extraction
-const MAX_TOKENS = 16000; // Set high to accommodate large lists
+const MAX_TOKENS = 30000;
+
+// Helper to get appropriate token limit based on model
+function getMaxTokensForModel(model: any): number {
+  // Return the model's configured max tokens or a reasonable default if not specified
+  return model.maxTokens || MAX_TOKENS;
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -30,7 +48,7 @@ export default async function handler(
     const { 
       content, 
       query, 
-      modelId = 'gpt-4o-mini', // Default to most capable model for extraction
+      modelId = DEFAULT_EXTRACTION_MODEL, // Default to Gemini Flash
       format = 'list' // Default format (list, table, etc.)
     } = req.body;
     
@@ -39,22 +57,29 @@ export default async function handler(
       return res.status(400).json({ message: 'Missing required fields (content, query)' });
     }
     
-    // Trim content if it's too long to process efficiently
+    // Content processing strategy
     const contentLength = content.length;
     let processedContent = content;
     let contentStrategy = 'full';
     
-    // For extremely large documents, we need to be selective
-    if (contentLength > 100000) { // ~70 pages of text
+    // Only chunk extremely large documents
+    if (contentLength > MAX_FULL_CONTENT_SIZE) {
       contentStrategy = 'chunked';
-      console.log(`Content too large (${contentLength} chars), processing in chunks`);
-      // We'll process this document in sections
+      console.log(`Content exceeds ${MAX_FULL_CONTENT_SIZE} chars (${contentLength} chars), processing in chunks`);
       processedContent = prepareChunkedProcessing(content);
+      console.log(`Chunked content length: ${processedContent.length} chars`);
     }
     
     // Get model configuration
-    const model = getModelById(modelId);
-    console.log(`Using ${model.name} for extraction`);
+    let model;
+    try {
+      model = getModelById(modelId);
+    } catch (error) {
+      console.warn(`Model ID ${modelId} not found, using ${DEFAULT_EXTRACTION_MODEL}`);
+      model = getModelById(DEFAULT_EXTRACTION_MODEL);
+    }
+    
+    console.log(`Using ${model.name} for extraction on ${contentLength} chars of content (strategy: ${contentStrategy})`);
     
     // Build the prompt for information extraction
     const prompt = buildExtractionPrompt(processedContent, query, format, contentStrategy);
@@ -64,9 +89,10 @@ export default async function handler(
     
     // Process with the selected model
     if (model.provider === 'anthropic') {
+      console.log(`Using Anthropic model: ${model.apiModel}`);
       const response = await anthropic.messages.create({
         model: model.apiModel,
-        max_tokens: MAX_TOKENS,
+        max_tokens: getMaxTokensForModel(model),
         system: "You are an expert at extracting structured information from documents. You always return clear, comprehensive lists focused exactly on what was requested. You are thorough and do not miss any relevant items. Format your response appropriately.",
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.2, // Keep temperature low for reliable extraction
@@ -76,8 +102,24 @@ export default async function handler(
         ? response.content[0].text 
         : '';
       extractedInfo = rawResponse;
+    } else if (model.provider === 'google') {
+      // Google Gemini model processing
+      console.log(`Using Google model: ${model.apiModel}`);
+      const genModel = googleAI.getGenerativeModel({ model: model.apiModel });
+      
+      const result = await genModel.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: getMaxTokensForModel(model),
+        }
+      });
+      
+      rawResponse = result.response.text();
+      extractedInfo = rawResponse;
     } else {
-      // Default to OpenAI
+      //  OpenAI
+      console.log(`Using OpenAI model: ${model.apiModel}`);
       const response = await openai.chat.completions.create({
         model: model.apiModel,
         messages: [
@@ -88,7 +130,7 @@ export default async function handler(
           { role: 'user', content: prompt }
         ],
         temperature: 0.2, // Keep temperature low for reliable extraction
-        max_tokens: MAX_TOKENS,
+        max_tokens: getMaxTokensForModel(model),
       });
       
       rawResponse = response.choices[0]?.message?.content || '';
@@ -103,7 +145,9 @@ export default async function handler(
       contentStrategy,
       contentLength,
       format,
-      rawResponse
+      rawResponse,
+      modelUsed: model.name,
+      chunkingApplied: contentStrategy === 'chunked'
     });
     
   } catch (error) {
@@ -115,42 +159,54 @@ export default async function handler(
   }
 }
 
-// Prepare content for chunked processing
+// Prepare content for chunked processing with larger chunks for Gemini Flash
 function prepareChunkedProcessing(content: string): string {
-  // Simple chunking strategy - take beginning, middle and end sections
-  // This can be refined based on specific document types
+  // Adaptive chunking strategy - takes size into account
+  const totalLength = content.length;
+  const chunkSize = totalLength > 500000 ? 20000 : 30000; // Larger chunks for Gemini Flash
+  
+  // Use a more strategic approach for large documents
   const lines = content.split('\n');
-  const chunkSize = 10000; // Characters per chunk
   
   if (lines.length < 100) {
     // If not many lines, just reduce the overall content
-    return content.substring(0, 60000);
+    return content.substring(0, 120000);
   }
   
-  // Take beginning chunk
-  const beginChunk = lines.slice(0, lines.length / 5).join('\n');
+  // Determine how many chunks to use based on document size
+  const numChunks = Math.min(5, Math.ceil(totalLength / 150000));
+  let result = '';
   
-  // Take middle chunk
-  const midStartIndex = Math.floor(lines.length * 0.4);
-  const midEndIndex = Math.floor(lines.length * 0.6);
-  const middleChunk = lines.slice(midStartIndex, midEndIndex).join('\n');
+  // Take beginning chunk - always important
+  const beginChunk = lines.slice(0, Math.min(lines.length / 8, 400)).join('\n');
+  result += `[BEGINNING OF DOCUMENT]\n${beginChunk.substring(0, chunkSize)}\n\n`;
   
-  // Take end chunk
-  const endChunk = lines.slice(Math.floor(lines.length * 0.8)).join('\n');
+  // For very large documents, sample multiple sections throughout
+  if (numChunks > 2) {
+    for (let i = 1; i < numChunks - 1; i++) {
+      const position = Math.floor((lines.length * i) / numChunks);
+      const sectionStart = Math.max(0, position - 200);
+      const sectionEnd = Math.min(lines.length, position + 200);
+      const sectionChunk = lines.slice(sectionStart, sectionEnd).join('\n');
+      
+      result += `[SECTION ${i} OF DOCUMENT - APPROXIMATELY ${Math.floor((i * 100) / numChunks)}% THROUGH]\n${sectionChunk.substring(0, chunkSize)}\n\n`;
+    }
+  } else {
+    // For smaller documents, just take a middle chunk
+    const midStartIndex = Math.floor(lines.length * 0.4);
+    const midEndIndex = Math.floor(lines.length * 0.6);
+    const middleChunk = lines.slice(midStartIndex, midEndIndex).join('\n');
+    result += `[MIDDLE OF DOCUMENT]\n${middleChunk.substring(0, chunkSize)}\n\n`;
+  }
   
-  // Combine chunks with markers
-  return `
-[BEGINNING OF DOCUMENT]
-${beginChunk.substring(0, chunkSize)}
-
-[MIDDLE OF DOCUMENT]
-${middleChunk.substring(0, chunkSize)}
-
-[END OF DOCUMENT]
-${endChunk.substring(0, chunkSize)}
-
-[NOTE: This document has been sampled from beginning, middle, and end sections due to its large size.]
-`;
+  // Take end chunk - always important
+  const endChunk = lines.slice(Math.max(0, Math.floor(lines.length * 0.9))).join('\n');
+  result += `[END OF DOCUMENT]\n${endChunk.substring(0, chunkSize)}\n\n`;
+  
+  // Add a note about sampling
+  result += `[NOTE: This document has been sampled from ${numChunks} sections due to its large size (approximately ${Math.round(totalLength / 1000)}KB). The full document may contain additional important information not captured in these samples.]\n`;
+  
+  return result;
 }
 
 // Build prompt for information extraction
@@ -172,6 +228,7 @@ For each item, include any relevant details (like descriptions, context, page re
 Do not include duplicates, but DO include variants or related forms that might be significant.
 ORDER the list by first appearance in the document.
 If asked to augment the data in the source with your own knowledge, you may do so. 
+NEVER  leave cellls blank. Always return 'n/a' or 'unknown' if no concrete answer is possible.
 
 If the document was too large and you only saw samples, note any limitations in your analysis.
 `;
@@ -219,4 +276,13 @@ function processExtractedInfo(extractedInfo: string, format: string): any {
   
   // Default: return as-is
   return extractedInfo;
+}
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+    responseLimit: false,
+  },
 }

@@ -8,6 +8,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import SaveToLibraryButton from '../library/SaveToLibraryButton';
 
 // Field input interface
 interface Field {
@@ -24,11 +25,28 @@ export default function ExtractInfoPanel() {
     llmModel,
     setRawPrompt,
     setRawResponse,
-     extractInfoConfig
+     extractInfoConfig,
+     setExtractInfoConfig,
   } = useAppStore();
 
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showExpandModal, setShowExpandModal] = useState(false);
+    const [showInputPanel, setShowInputPanel] = useState(true);
+
+    // Helper function to check if content contains markdown tables
+const containsMarkdownTable = (text: string): boolean => {
+  const lines = text.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    // Check for table row format
+    if (lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')) {
+      // Check for header separator
+      if (i + 1 < lines.length && /^\|[\s-:]+\|/.test(lines[i + 1].trim())) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
 
   const handleGoogleDriveSave = () => {
   // For now, just show a message that this feature is coming soon
@@ -37,6 +55,93 @@ export default function ExtractInfoPanel() {
   // Close the modal
   setShowSaveModal(false);
 };
+
+// surprise me button code (for suggesting info extraction strategy with fields filled in)
+
+const handleSurpriseMe = async () => {
+  if (!sourceContent) return;
+  
+  setIsProcessing(true);
+  setProcessingStatus('Analyzing document for smart extraction...');
+  setLoading(true);
+  
+  try {
+    // Call the API to get suggestions
+    const response = await fetch('/api/suggest-extraction', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content: sourceContent,
+        modelId: llmModel,
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Server responded with ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Update the extraction configuration
+    setListType(data.listType);
+    
+    // Set fields from suggestions
+ const newFields = data.fields.map((field: string, index: number) => ({
+   id: (index + 1).toString(),
+   value: field
+ }));
+    
+    // Ensure we have at least one empty field at the end
+    if (newFields.length > 0) {
+      newFields.push({
+        id: (newFields.length + 1).toString(),
+        value: ''
+      });
+    }
+    
+    setFields(newFields);
+    
+    // Set format if suggested
+    if (data.format && (data.format === 'list' || data.format === 'table')) {
+      setResultFormat(data.format);
+    }
+    
+    // Save to store
+    setExtractInfoConfig({
+      listType: data.listType,
+      fields: data.fields,
+      format: data.format || 'table'
+    });
+    
+    // Store the raw data for transparency
+    setRawPrompt(data.prompt);
+    setRawResponse(data.rawResponse);
+    
+  } catch (error) {
+    console.error('Error getting extraction suggestions:', error);
+    setError(`Failed to generate suggestions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  } finally {
+    setIsProcessing(false);
+    setLoading(false);
+  }
+};
+
+// Listen for toggle events from the ExtractPanelToggle component
+useEffect(() => {
+  const handleToggle = (event: CustomEvent) => {
+    setShowInputPanel(event.detail.isExpanded);
+  };
+  
+  // Add event listener
+  document.addEventListener('extract-panel-toggle', handleToggle as EventListener);
+  
+  // Clean up
+  return () => {
+    document.removeEventListener('extract-panel-toggle', handleToggle as EventListener);
+  };
+}, []);
 
   // Add this save function
 const handleSave = (format: 'json' | 'txt' | 'csv' | 'xlsx') => {
@@ -57,41 +162,50 @@ const handleSave = (format: 'json' | 'txt' | 'csv' | 'xlsx') => {
       // If not valid JSON, just save as text
       content = extractedInfo;
     }
-  } else if (format === 'csv') {
-    // Better markdown table to CSV conversion
-    mimeType = 'text/csv';
-    extension = 'csv';
+  } 
+ else if (format === 'csv') {
+  // Improved markdown table to CSV conversion
+  mimeType = 'text/csv';
+  extension = 'csv';
+  
+  try {
+    // Parse markdown tables more reliably
+    const lines = extractedInfo.split('\n');
+    let csvContent = '';
+    let inTable = false;
+    let headerProcessed = false;
     
-    try {
-      // Properly convert markdown table to CSV
-      const lines = extractedInfo.split('\n');
-      let csvContent = '';
+    for (const line of lines) {
+      const trimmedLine = line.trim();
       
-      for (const line of lines) {
-        // Skip separator lines and empty lines
-        if (line.trim() === '' || line.match(/^\s*\|[-:]+\|\s*$/)) {
-          continue;
-        }
+      // Skip empty lines and horizontal dividers
+      if (trimmedLine === '' || /^\|?\s*:?-+:?\s*\|/.test(trimmedLine)) {
+        continue;
+      }
+      
+      // Check if we're entering a table
+      if (trimmedLine.startsWith('|') && trimmedLine.endsWith('|')) {
+        inTable = true;
         
-        // Remove leading/trailing pipes and spaces
-        let processed = line.trim();
-        if (processed.startsWith('|')) {
-          processed = processed.substring(1);
-        }
-        if (processed.endsWith('|')) {
-          processed = processed.substring(0, processed.length - 1);
-        }
+        // Process table row
+        let processedLine = trimmedLine;
+        // Remove first and last pipe
+        processedLine = processedLine.substring(1, processedLine.length - 1);
         
         // Split by pipe character and trim each cell
-        const cells = processed.split('|').map(cell => cell.trim());
-        
-        // Escape quotes and commas in cell content
-        const escapedCells = cells.map(cell => {
-          // Remove markdown formatting if present
-          cell = cell.replace(/\*\*(.*?)\*\*/g, '$1'); // Bold
-          cell = cell.replace(/\*(.*?)\*/g, '$1');     // Italic
+        const cells = processedLine.split('|').map(cell => {
+          // Clean up the cell content
+          let cleanCell = cell.trim();
+          // Remove markdown formatting
+          cleanCell = cleanCell.replace(/\*\*(.*?)\*\*/g, '$1'); // Bold
+          cleanCell = cleanCell.replace(/\*(.*?)\*/g, '$1');     // Italic
+          cleanCell = cleanCell.replace(/`(.*?)`/g, '$1');       // Code
           
-          // If cell contains comma or quotes, wrap in quotes and escape existing quotes
+          return cleanCell;
+        });
+        
+        // Escape quotes and commas for CSV format
+        const escapedCells = cells.map(cell => {
           if (cell.includes(',') || cell.includes('"')) {
             return `"${cell.replace(/"/g, '""')}"`;
           }
@@ -100,17 +214,33 @@ const handleSave = (format: 'json' | 'txt' | 'csv' | 'xlsx') => {
         
         // Join with commas to create a CSV row
         csvContent += escapedCells.join(',') + '\n';
+        
+        headerProcessed = true;
+      } else if (inTable && !trimmedLine.includes('|')) {
+        // We've exited the table
+        inTable = false;
       }
-      
-      content = csvContent;
-    } catch (e) {
-      console.error('Error converting to CSV:', e);
-      // Fallback to basic approach if conversion fails
-      content = extractedInfo
+    }
+    
+    // If no table was detected, fall back to basic processing
+    if (csvContent === '') {
+      csvContent = extractedInfo
         .replace(/\|/g, ',')
         .replace(/^\s*,|,\s*$/gm, '')
-        .replace(/\s*,\s*/g, ',');
+        .replace(/\s*,\s*/g, ',')
+        .replace(/\r?\n\s*[-:]+\s*\r?\n/g, '\n'); // Remove table separators
     }
+    
+    content = csvContent;
+  } catch (e) {
+    console.error('Error converting to CSV:', e);
+    // Fallback to basic approach if conversion fails
+    content = extractedInfo
+      .replace(/\|/g, ',')
+      .replace(/^\s*,|,\s*$/gm, '')
+      .replace(/\s*,\s*/g, ',');
+  }
+
   } else if (format === 'xlsx') {
     // For Excel, we'll create a CSV that Excel can open
     // But use the xlsx extension which Excel will recognize
@@ -224,6 +354,12 @@ const handleSave = (format: 'json' | 'txt' | 'csv' | 'xlsx') => {
       setError('Please specify at least one field for the list items');
       return;
     }
+
+     setExtractInfoConfig({
+    listType: listType,
+    fields: fields.filter(f => f.value.trim()).map(f => f.value.trim()),
+    format: resultFormat
+  });
     
     setError(null);
     setIsProcessing(true);
@@ -307,108 +443,131 @@ const handleSave = (format: 'json' | 'txt' | 'csv' | 'xlsx') => {
     window.removeEventListener('keydown', handleEscKey);
   };
 }, []);
-  
-  return (
-    <div className="flex flex-col h-full">
-      {/* Input Form */}
-      <div className="bg-white rounded-lg p-2 mb-4">
-       
-        
-        {error && (
-          <div className="mb-3 p-3 bg-red-50 text-red-700 rounded-md border border-red-200">
-            {error}
+
+  // Toggle the input panel visibility
+const toggleInputPanel = () => {
+  setShowInputPanel(!showInputPanel);
+};
+
+return (
+  <div className="flex flex-col h-full">
+    {/* Input Form - Now with conditional rendering based on showInputPanel state */}
+    <div className={`${showInputPanel ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'} bg-white rounded-lg p-2 mb-4 transition-all duration-300 ease-in-out`}>
+      {error && (
+        <div className="mb-3 p-3 bg-red-50 text-red-700 rounded-md border border-red-200">
+          {error}
+        </div>
+      )}
+      
+      <div className="space-y-3">
+        {/* List Type Input */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            What kind of list do you want?
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              value={listType}
+              onChange={(e) => setListType(e.target.value)}
+              placeholder="For example: all people, places, events, technical terms, or diseases mentioned..."
+              className="w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+              disabled={isProcessing}
+            />
+            <p className="mt-1 text-xs text-slate-500 italic">
+              Be specific about what you're looking for and any criteria for inclusion
+            </p>
           </div>
-        )}
+        </div>
+
+        <div className="mb-4">
+  <button
+    onClick={handleSurpriseMe}
+    disabled={isProcessing || !sourceContent}
+    className={`w-full py-2 px-4 rounded-md text-white font-medium transition-colors flex items-center justify-center ${
+      isProcessing || !sourceContent
+        ? 'bg-slate-400 cursor-not-allowed'
+        : 'bg-indigo-500 hover:bg-indigo-600'
+    }`}
+  >
+    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+    {isProcessing ? 'Analyzing...' : 'Surprise Me!'}
+  </button>
+  <p className="mt-1 text-xs text-slate-500 text-center">
+    Let AI suggest fields based on your document
+  </p>
+</div>
         
-        <div className="space-y-3">
-          {/* List Type Input */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              What kind of list do you want?
-            </label>
-            <div className="relative">
+        {/* Fields Input */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            What fields do you want the list to contain? (up to 10)
+          </label>
+          <div className="space-y-2">
+            {fields.map((field, index) => (
               <input
+                key={field.id}
                 type="text"
-                value={listType}
-                onChange={(e) => setListType(e.target.value)}
-                placeholder="For example: all people, places, events, technical terms, or diseases mentioned..."
+                value={field.value}
+                onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                placeholder={`Field ${index + 1} (e.g., Name, Date, Location...)`}
                 className="w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 disabled={isProcessing}
               />
-              <p className="mt-1 text-xs text-slate-500 italic">
-                Be specific about what you're looking for and any criteria for inclusion
-              </p>
-            </div>
+            ))}
           </div>
-          
-          {/* Fields Input */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              What fields do you want the list to contain? (up to 10)
+          <p className="mt-1 text-xs text-slate-500 italic">
+            Each field will be extracted for every item in the list if available
+          </p>
+        </div>
+        
+        {/* Format Options */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Result Format
+          </label>
+          <div className="flex space-x-4">
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                className="form-radio text-indigo-600"
+                checked={resultFormat === 'list'}
+                onChange={() => setResultFormat('list')}
+                disabled={isProcessing}
+              />
+              <span className="ml-2 text-sm text-slate-700">Numbered List</span>
             </label>
-            <div className="space-y-2">
-              {fields.map((field, index) => (
-                <input
-                  key={field.id}
-                  type="text"
-                  value={field.value}
-                  onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                  placeholder={`Field ${index + 1} (e.g., Name, Date, Location...)`}
-                  className="w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                  disabled={isProcessing}
-                />
-              ))}
-            </div>
-            <p className="mt-1 text-xs text-slate-500 italic">
-              Each field will be extracted for every item in the list if available
-            </p>
-          </div>
-          
-          {/* Format Options */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Result Format
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                className="form-radio text-indigo-600"
+                checked={resultFormat === 'table'}
+                onChange={() => setResultFormat('table')}
+                disabled={isProcessing}
+              />
+              <span className="ml-2 text-sm text-slate-700">Table Format</span>
             </label>
-            <div className="flex space-x-4">
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  className="form-radio text-indigo-600"
-                  checked={resultFormat === 'list'}
-                  onChange={() => setResultFormat('list')}
-                  disabled={isProcessing}
-                />
-                <span className="ml-2 text-sm text-slate-700">Numbered List</span>
-              </label>
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  className="form-radio text-indigo-600"
-                  checked={resultFormat === 'table'}
-                  onChange={() => setResultFormat('table')}
-                  disabled={isProcessing}
-                />
-                <span className="ml-2 text-sm text-slate-700">Table Format</span>
-              </label>
-            </div>
-          </div>
-          
-          {/* Extract Button */}
-          <div>
-            <button
-              onClick={handleExtractInfo}
-              disabled={isProcessing || !listType.trim()}
-              className={`w-full py-2 px-4 rounded-md text-white font-medium transition-colors ${
-                isProcessing || !listType.trim()
-                  ? 'bg-slate-400 cursor-not-allowed'
-                  : 'bg-indigo-600 hover:bg-indigo-700'
-              }`}
-            >
-              {isProcessing ? 'Processing...' : 'Extract Information'}
-            </button>
           </div>
         </div>
+        
+        {/* Extract Button */}
+        <div>
+          <button
+            onClick={handleExtractInfo}
+            disabled={isProcessing || !listType.trim()}
+            className={`w-full py-2 px-4 rounded-md text-white font-medium transition-colors ${
+              isProcessing || !listType.trim()
+                ? 'bg-slate-400 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-700'
+            }`}
+          >
+            {isProcessing ? 'Processing...' : 'Extract Information'}
+          </button>
+        </div>
       </div>
+    </div>
       
  {/* Results Display */}
 <div className="flex-1 overflow-y-auto">
@@ -435,6 +594,25 @@ const handleSave = (format: 'json' | 'txt' | 'csv' | 'xlsx') => {
            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
          </svg>
        </button>
+
+       {extractedInfo && (
+  <SaveToLibraryButton
+    type="analysis"
+    data={{
+      type: 'extract-info',
+      title: `Extracted ${listType}`,
+      content: extractedInfo,
+      sourceName: metadata?.title || 'Untitled Source',
+      sourceAuthor: metadata?.author || 'Unknown',
+      sourceDate: metadata?.date || 'Unknown date',
+      perspective: `Extract: ${listType}`,
+      model: llmModel
+    }}
+    variant="secondary"
+    size="sm"
+    className="text-emerald-700 border-emerald-200"
+  />
+)}
        
        <button
          onClick={() => setShowSaveModal(true)}
@@ -454,13 +632,14 @@ const handleSave = (format: 'json' | 'txt' | 'csv' | 'xlsx') => {
          remarkPlugins={[remarkGfm]}
          components={{
            table: ({node, ...props}) => (
-             <table className="min-w-full divide-y divide-slate-300 border border-slate-200" {...props} />
+             <div className="overflow-x-auto my-4">
+               <table className="min-w-full divide-y divide-slate-300 border border-blue-200 table-auto" {...props} />
+             </div>
            ),
            thead: ({node, ...props}) => <thead className="bg-slate-100" {...props} />,
-           tbody: ({node, ...props}) => <tbody className="divide-y divide-slate-200" {...props} />,
-           tr: ({node, ...props}) => <tr className="hover:bg-slate-50" {...props} />,
-           th: ({node, ...props}) => <th className="px-4 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider" {...props} />,
-           td: ({node, ...props}) => <td className="px-4 py-3 text-sm text-slate-700" {...props} />
+           tr: ({node, ...props}) => <tr className="hover:bg-blue-50 border-b border-slate-200" {...props} />,
+           th: ({node, ...props}) => <th className="hover:bg-blue-100 px-4 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider " {...props} />,
+           td: ({node, ...props}) => <td className="px-4 py-3 text-sm text-slate-700 border-r border-slate-200 last:border-r-0" {...props} />
          }}
        >
          {extractedInfo}
@@ -486,7 +665,7 @@ const handleSave = (format: 'json' | 'txt' | 'csv' | 'xlsx') => {
 {/* Expanded View Modal */}
 {showExpandModal && (
   <div 
-    className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6"
+    className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6"
     onClick={() => setShowExpandModal(false)}
     onKeyDown={(e) => e.key === 'Escape' && setShowExpandModal(false)}
   >
@@ -494,7 +673,7 @@ const handleSave = (format: 'json' | 'txt' | 'csv' | 'xlsx') => {
       className="bg-white rounded-xl shadow-2xl w-[90vw] h-[85vh] overflow-hidden flex flex-col"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="bg-indigo-600 p-4 border-b border-indigo-700 flex justify-between items-center">
+      <div className="bg-indigo-600 p-3 border-b border-indigo-700 flex justify-between items-center">
         <h3 className="font-bold text-xl text-white">Extracted Information</h3>
         <button 
           onClick={() => setShowExpandModal(false)}
@@ -506,27 +685,30 @@ const handleSave = (format: 'json' | 'txt' | 'csv' | 'xlsx') => {
         </button>
       </div>
       
-      <div className="flex-1 overflow-auto p-6 bg-slate-50">
-        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm h-full overflow-auto">
-          <div className="prose prose-lg max-w-none prose-indigo">
-            <ReactMarkdown 
-              remarkPlugins={[remarkGfm]}
-              components={{
-                table: ({node, ...props}) => (
-                  <table className="min-w-full divide-y divide-slate-300 border border-slate-200" {...props} />
-                ),
-                thead: ({node, ...props}) => <thead className="bg-slate-100" {...props} />,
-                tbody: ({node, ...props}) => <tbody className="divide-y divide-slate-200" {...props} />,
-                tr: ({node, ...props}) => <tr className="hover:bg-slate-50" {...props} />,
-                th: ({node, ...props}) => <th className="px-4 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider" {...props} />,
-                td: ({node, ...props}) => <td className="px-4 py-3 text-sm text-slate-700" {...props} />
-              }}
-            >
-              {extractedInfo}
-            </ReactMarkdown>
-          </div>
-        </div>
-      </div>
+     <div className="flex-1 overflow-auto p-6 bg-slate-50">
+  <div className={`bg-white p-6 rounded-lg border border-slate-200 shadow-sm h-full overflow-auto ${
+    containsMarkdownTable(extractedInfo || '') ? 'min-w-[800px]' : ''
+  }`}>
+    <div className="prose prose-lg max-w-none prose-indigo">
+      <ReactMarkdown 
+        remarkPlugins={[remarkGfm]}
+        components={{
+          table: ({node, ...props}) => (
+            <div className="overflow-x-auto my-4">
+              <table className="min-w-full divide-y divide-slate-300 border border-slate-200 table-auto" {...props} />
+            </div>
+          ),
+          thead: ({node, ...props}) => <thead className="bg-slate-100" {...props} />,
+          tr: ({node, ...props}) => <tr className="hover:bg-slate-50 border-b border-slate-200" {...props} />,
+          th: ({node, ...props}) => <th className="px-4 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider" {...props} />,
+          td: ({node, ...props}) => <td className="px-4 py-3 text-sm text-slate-700 border-r border-slate-200 last:border-r-0" {...props} />
+        }}
+      >
+        {extractedInfo}
+      </ReactMarkdown>
+    </div>
+  </div>
+</div>
       
       <div className="p-4 border-t border-slate-200 bg-white flex justify-between">
         <button

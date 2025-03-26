@@ -1,6 +1,6 @@
 // lib/text-processing/cleanOcrText.ts
-// Utility function to clean OCR text artifacts and improve readability
-// Handles common OCR issues like excessive line breaks, strange characters, and formatting issues
+// Enhanced utility function to clean OCR text artifacts and improve readability
+// Now with better handling of line breaks in PDF text extracted from Gemini
 
 /**
  * Cleans OCR text to improve readability by removing artifacts and normalizing formatting
@@ -12,6 +12,13 @@ export function cleanOcrText(text: string): string {
   
   // Make a copy of the input text
   let cleaned = text;
+  
+  // Pre-process Gemini PDF specific issues - join words separated by line breaks
+  // This specifically targets the pattern shown in your example output
+  cleaned = cleaned.replace(/(\w+)\s*\n\s*(\w+)/g, '$1 $2');
+  
+  // Fix cases where a word is split across lines (like "effi-\nficar" becoming "efficar")
+  cleaned = cleaned.replace(/(\w+)-\s*\n\s*(\w+)/g, '$1$2');
   
   // Replace multiple spaces with a single space
   cleaned = cleaned.replace(/\s{2,}/g, ' ');
@@ -79,7 +86,35 @@ export function cleanOcrText(text: string): string {
   const filteredParagraphs = paragraphs.filter(p => p.length > 3);
   
   // Join paragraphs with double line breaks
-  return filteredParagraphs.join('\n\n');
+  let result = filteredParagraphs.join('\n\n');
+  
+  // Final cleanup pass for any missed split words
+  result = result.replace(/(\w+)\s+(\w{1,2})\s+(\w+)/g, (match, p1, p2, p3) => {
+    // Check if middle part is likely part of one of the surrounding words
+    if (p1.endsWith(p2.charAt(0)) || p3.startsWith(p2.charAt(p2.length-1))) {
+      return `${p1} ${p3}`;
+    }
+    return match;
+  });
+  
+  // Process common Portuguese words that might have been incorrectly split
+  const portugueseFixPatterns = [
+    /\bna\s+o\b/g, 'no',
+    /\bna\s+a\b/g, 'na',
+    /\bem\s+o\b/g, 'no',
+    /\bde\s+o\b/g, 'do',
+    /\bde\s+a\b/g, 'da',
+    /\ba\s+o\b/g, 'ao',
+    /\bé\s+o\b/g, 'é o',
+  ];
+  
+  for (let i = 0; i < portugueseFixPatterns.length; i += 2) {
+    const pattern = portugueseFixPatterns[i] as RegExp;
+    const replacement = portugueseFixPatterns[i + 1] as string;
+    result = result.replace(pattern, replacement);
+  }
+  
+  return result;
 }
 
 /**
@@ -98,7 +133,8 @@ export function isLikelyOcrText(text: string): boolean {
     /[A-Z]\s+[a-z]/,              // Capital letter separated from lowercase by space
     /[a-z]\s+[a-z]/,              // Lowercase letters separated by space
     /\w+\s+-\s+\w+/,              // Words separated by spaced hyphens
-    /\n\w{1,2}\n/                 // Single characters on their own lines
+    /\n\w{1,2}\n/,                // Single characters on their own lines
+    /\w+\n\w+/                    // Words split by line breaks (common in PDFs)
   ];
   
   // Check for short lines that don't end with punctuation

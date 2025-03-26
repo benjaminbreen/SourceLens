@@ -31,7 +31,7 @@ export interface SavedReference {
 
 export interface SavedAnalysis {
   id: string;
-  type: 'detailed' | 'counter' | 'conversation' | 'roleplay' | 'initial';
+  type: 'detailed' | 'counter' | 'conversation' | 'roleplay' | 'initial' | 'extract-info';
   title: string;
   content: string;
   sourceName: string;

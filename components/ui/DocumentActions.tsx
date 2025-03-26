@@ -1,0 +1,183 @@
+// components/ui/DocumentActions.tsx
+// Updated to emit a state change when summarization is completed
+
+'use client';
+
+import React, { useState, useRef, useEffect } from 'react';
+import { useAppStore } from '@/lib/store';
+import CleanupText from '../text/CleanupText';
+import SummarizeText from '../text/SummarizeText';
+
+interface DocumentActionsProps {
+  onAction?: (action: string) => void;
+  darkMode?: boolean;
+  toggleDarkMode?: () => void;
+  onSummarizeComplete?: () => void;  // Add this new prop
+}
+
+export default function DocumentActions({ 
+  onAction, 
+  darkMode, 
+  toggleDarkMode, 
+  onSummarizeComplete 
+}: DocumentActionsProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [showCleanup, setShowCleanup] = useState(false);
+  const [showSummarize, setShowSummarize] = useState(false);
+  const [showAnimation, setShowAnimation] = useState(true);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  
+  // Start animation and automatically stop it after 2 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowAnimation(false);
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node) && 
+          buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleToggleMenu = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const handleCleanupClick = () => {
+    setShowCleanup(true);
+    setIsOpen(false);
+  };
+
+  const handleSummarizeClick = () => {
+    setShowSummarize(true);
+    setIsOpen(false);
+  };
+
+  const handleTranslateClick = () => {
+    alert('Translation feature coming soon!');
+    setIsOpen(false);
+    if (onAction) onAction('translate');
+  };
+
+  const handleToggleDarkMode = () => {
+    if (toggleDarkMode) {
+      toggleDarkMode();
+    }
+    setIsOpen(false);
+  };
+
+  // Handle summary completion
+  const handleSummarizeClose = () => {
+    setShowSummarize(false);
+    // Notify parent component that summarization is complete
+    if (onSummarizeComplete) {
+      onSummarizeComplete();
+    }
+  };
+
+  return (
+    <div className="relative inline-block">
+      {/* Document Icon Button with Blue Styling */}
+      <button
+        ref={buttonRef}
+        onClick={handleToggleMenu}
+        className={`px-2 py-1.5 rounded-md bg-indigo-600 text-white transition-all duration-300
+          hover:bg-indigo-700 hover:shadow-md focus:outline-none flex items-center gap-1.5
+          ${showAnimation ? 'animate-pulse shadow-[0_0_8px_rgba(79,70,229,0.5)]' : 'hover:shadow-[0_0_6px_rgba(79,70,229,0.4)]'}`}
+        aria-label="Document Options"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span className="text-xs font-medium">Actions</span>
+      </button>
+
+      {/* Dropdown Menu */}
+      {isOpen && (
+        <div 
+          ref={menuRef}
+          className="absolute right-0 mt-1 bg-white rounded-lg shadow-xl border border-slate-200 w-52 py-1 z-50 origin-top-right animate-in fade-in-50 zoom-in-95 duration-200"
+          style={{ transformOrigin: 'top right' }}
+        >
+          <button
+            onClick={handleCleanupClick}
+            className="flex items-center w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+          >
+            <svg className="w-4 h-4 mr-3 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+            Clean up text
+          </button>
+          
+          {/* New Summarize Button */}
+          <button
+            onClick={handleSummarizeClick}
+            className="flex items-center w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+          >
+            <svg className="w-4 h-4 mr-3 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            Summarize text
+          </button>
+          
+          <button
+            onClick={handleTranslateClick}
+            className="flex items-center w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+          >
+            <svg className="w-4 h-4 mr-3 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10m-11.048-2.5a18.022 18.022 0 000-5" />
+            </svg>
+            Translate text
+          </button>
+          
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={handleToggleDarkMode}
+            className="flex items-center w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+          >
+            {darkMode ? (
+              <>
+                <svg className="w-4 h-4 mr-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 12.728l-.707-.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                Light mode
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 mr-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+                Dark mode
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Cleanup Modal */}
+      {showCleanup && (
+        <CleanupText 
+          onClose={() => setShowCleanup(false)} 
+        />
+      )}
+
+      {/* Summarize Modal */}
+      {showSummarize && (
+        <SummarizeText 
+          onClose={handleSummarizeClose}
+        />
+      )}
+    </div>
+  );
+}

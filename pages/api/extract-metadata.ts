@@ -1,11 +1,18 @@
 // pages/api/extract-metadata.ts
+// API endpoint for extracting metadata from source text using Gemini Flash model
+// Improved with citation generation and additional scholarly metadata fields
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { OpenAI } from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Configure OpenAI client
+// Configure OpenAI client as fallback
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Configure Google Gemini client
+const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
 export default async function handler(
   req: NextApiRequest,
@@ -21,40 +28,87 @@ export default async function handler(
       return res.status(400).json({ message: 'Text is required' });
     }
     
-    // Use OpenAI to extract metadata
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `Extract document metadata from the provided text. 
-          Return ONLY a JSON object with these fields:
-          - date: the most likely publication date found in ISO format (YYYY-MM-DD) or empty string if uncertain
-          - author: the most likely author name or empty string if uncertain. If the first name is abbreviated, expand it to the most likely result (i.e. Wm--> William)
-          - title: the most likely document title or empty string if uncertain
-          - summary: a VERY SHORT 5-6 word summary of the document content
-          - documentEmoji: a single emoji that creatively represents the document's content, theme, or time period
-          - documentType: the type of document (e.g., Letter, Diary, Speech, etc.) or empty string if uncertain
-          - genre: the literary or historical genre of the document or empty string if uncertain
-          - placeOfPublication: where the document was created or published (if evident) or empty string if uncertain
-          - academicSubfield: what academic fields might study this document or empty string if uncertain
-          - tags: an array of 3-5 keyword tags related to the document's content and context
-          - researchValue: a brief 1-2 sentence description of what this document might be useful for researching
-          `
-        },
-        {
-          role: 'user',
-          content: text
-        }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.4,
-    });
+    // Truncate text to first 10,000 words to avoid token limit errors
+    const truncatedText = text.split(/\s+/).slice(0, 10000).join(' ');
+    console.log(`Original text length: ${text.length} chars, truncated to: ${truncatedText.length} chars`);
     
-    // Parse the response
-    const content = completion.choices[0].message.content;
-    // Add a null check
-    const extractedMetadata = content ? JSON.parse(content) : {};
+    // Set up prompt for metadata extraction
+    const promptContent = `Extract document metadata from the provided text (this is only the beginning portion of a longer document). 
+    Return ONLY a JSON object with these fields:
+    - date: the most likely publication date found in ISO format (YYYY-MM-DD) or provide your best guess if unclear from text. ALWAYS provide a guess here. 
+    - author: the most likely author name or say UNKNOWN if truly uncertain. In some cases there will be an AUTHOR and an EDITOR, in which case list the author here and editor in additionalInfo
+    - title: the most likely document title or empty string if uncertain
+    - summary: a VERY SHORT 5-6 word summary of the document content
+    - documentEmoji: a single emoji that creatively represents the document's content, theme, or time period
+    - researchValue: a brief 1-2 sentence description of what this document might be useful for researching
+    - additionalInfo: one sentence of any other relevent information extracted from text or speculation based on your training data. If unsure of author or title, ALWAYS provide your best guess here based on context clues. 
+    - documentType: the type of document (e.g., Letter, Diary, Speech, etc.) or empty string if uncertain
+    - genre: the literary or historical genre of the document or empty string if uncertain
+    - placeOfPublication: where the document was created or published, or best guess if uncertain
+    - academicSubfield: what academic fields might study this document or empty string if uncertain
+    - tags: an array of 3-5 keyword tags related to the document's content and context
+    - fullCitation: a complete Chicago-style citation for this source based on the available information. Construct this using the author, title, place of publication, date, and any other relevant details. If you don't have enough information for a proper citation, make your best attempt and include available data in standard Chicago format. If citation is impossible, leave an empty string.
+    
+    Extrapolate and make educated guesses if a field is not obvious, but if unsure please indicate this (in the case of dates, by preceding integer with 'circa').`;
+    
+    let extractedMetadata = {};
+    
+    try {
+      // Primary attempt with Gemini Flash
+      console.log("Attempting metadata extraction with Gemini Flash");
+      const model = googleAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: promptContent + "\n\nTEXT TO ANALYZE:\n" + truncatedText }] }],
+        generationConfig: {
+          temperature: 0.2,
+        },
+      });
+      
+      const response = result.response;
+      const responseText = response.text();
+      
+      // Try to parse JSON from response
+      try {
+        // Extract JSON if it's wrapped in backticks
+        const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/) || 
+                          responseText.match(/```\s*([\s\S]*?)\s*```/) ||
+                          [null, responseText];
+        
+        const jsonContent = jsonMatch[1] || responseText;
+        extractedMetadata = JSON.parse(jsonContent);
+        console.log("Successfully extracted metadata with Gemini Flash");
+      } catch (parseError) {
+        console.error("Error parsing Gemini JSON response:", parseError);
+        // Fall back to OpenAI if JSON parsing fails
+        throw new Error("Failed to parse Gemini response");
+      }
+    } catch (geminiError) {
+      // Fallback to OpenAI
+      console.warn("Gemini Flash failed, falling back to OpenAI:", geminiError);
+      
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: promptContent
+          },
+          {
+            role: 'user',
+            content: truncatedText
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.2,
+      });
+      
+      // Parse the response
+      const content = completion.choices[0].message.content;
+      // Add a null check
+      extractedMetadata = content ? JSON.parse(content) : {};
+      console.log("Successfully extracted metadata with OpenAI fallback");
+    }
     
     return res.status(200).json(extractedMetadata);
   } catch (error) {
@@ -65,3 +119,12 @@ export default async function handler(
     });
   }
 }
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+    responseLimit: false,
+  },
+};

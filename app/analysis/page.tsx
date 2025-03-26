@@ -1,13 +1,22 @@
 // app/analysis/page.tsx
 // Optimized to prevent duplicate analysis requests and unnecessary re-fetching
+// Now with detailed processing step tracking and status updates for multiple analysis types
 
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import MainLayout from '@/components/analysis/MainLayout';
-import RoleplayChat from '@/components/roleplay/RoleplayChat';
 import { useAppStore } from '@/lib/store';
+
+// Define window augmentation for our timing variables
+declare global {
+  interface Window {
+    _sourceAnalysisStartTime?: number;
+    _detailedAnalysisStartTime?: number;
+    _counterNarrativeStartTime?: number;
+  }
+}
 
 export default function AnalysisPage() {
   const router = useRouter();
@@ -28,7 +37,9 @@ export default function AnalysisPage() {
     roleplayMode,
     setRoleplayMode,
     detailedAnalysisLoaded,
-    setDetailedAnalysisLoaded
+    setDetailedAnalysisLoaded,
+    setProcessingStep,
+    setProcessingData
   } = useAppStore();
   
   // Track state to control when to fetch analysis
@@ -62,13 +73,22 @@ export default function AnalysisPage() {
       return;
     }
     
+    // Store current values for comparison
+    const currentModel = llmModel;
+    const currentPerspective = perspective;
+    
+    // Log model change for debugging
+    if (prevModelRef.current !== currentModel) {
+      console.log(`Model changed from "${prevModelRef.current}" to "${currentModel}"`);
+    }
+    
     // Check if model or perspective changed
-    const isModelChange = prevModelRef.current !== llmModel;
+    const isModelChange = prevModelRef.current !== currentModel;
     const isPerspectiveChange = prevPerspectiveRef.current !== perspective;
     
     // Update refs
-    prevModelRef.current = llmModel;
-    prevPerspectiveRef.current = perspective;
+    prevModelRef.current = currentModel;
+    prevPerspectiveRef.current = currentPerspective;
     
     // If model or perspective changed and we have source content, trigger reanalysis
     // But only if we're not in references or roleplay mode
@@ -82,8 +102,57 @@ export default function AnalysisPage() {
       // Flag that we should fetch new analysis
       setShouldFetchAnalysis(true);
     }
-  }, [llmModel, perspective, sourceContent, metadata, initialAnalysis, activePanel, setDetailedAnalysis, setDetailedAnalysisLoaded]);
+  }, [llmModel, perspective, sourceContent, metadata, initialAnalysis, activePanel, setDetailedAnalysis, setDetailedAnalysisLoaded, setInitialAnalysis]);
   
+  // Function to simulate and track detailed analysis steps
+  const simulateDetailedAnalysisProgress = () => {
+    // Initialize start time if not already set
+    window._detailedAnalysisStartTime = Date.now();
+    
+    // Define detailed analysis steps
+    const detailedSteps = [
+      'preparing-detailed',
+      'contextual-analysis',
+      'author-analysis',
+      'themes-extraction',
+      'evidence-analysis',
+      'significance-evaluation',
+      'reference-compilation'
+    ];
+    
+    // Estimated time for each step (adjust as needed)
+    const stepDurations = [1000, 1500, 1500, 1500, 1500, 1000, 1000]; // in ms
+    let currentStepIndex = 0;
+    
+    // Create interval to update steps
+    const intervalId = setInterval(() => {
+      if (currentStepIndex < detailedSteps.length) {
+        // Update current processing step
+        setProcessingStep(detailedSteps[currentStepIndex]);
+        
+        // Update processing data
+        setProcessingData({
+          model: llmModel,
+          sourceLength: sourceContent?.length || 0,
+          provider: llmModel?.includes('gpt') ? 'openai' : 'anthropic',
+         timeElapsed: Date.now() - (window._detailedAnalysisStartTime || Date.now()),
+          estimatedTime: stepDurations.reduce((a, b) => a + b, 0),
+          step: currentStepIndex + 1,
+          totalSteps: detailedSteps.length,
+          requestType: 'detailed-analysis'
+        });
+        
+        // Move to next step
+        currentStepIndex++;
+      } else {
+        // All steps completed, clear interval
+        clearInterval(intervalId);
+      }
+    }, 1500); // Update every 1.5 seconds
+    
+    // Return the interval ID so it can be cleared if analysis completes early
+    return intervalId;
+  };
   
   // Handle the actual analysis fetching
   useEffect(() => {
@@ -91,6 +160,9 @@ export default function AnalysisPage() {
     if (!shouldFetchAnalysis || analysisInProgressRef.current || !sourceContent || !metadata) {
       return;
     }
+
+    // Store start time for performance tracking
+    window._sourceAnalysisStartTime = Date.now();
     
     const fetchAnalysis = async () => {
       // Set flags to prevent duplicate requests
@@ -98,11 +170,25 @@ export default function AnalysisPage() {
       analysisInProgressRef.current = true;
       setLoading(true);
       
+      // Initialize processing tracking with empty values first
+      setProcessingStep('selecting-model');
+      setProcessingData({
+        startTime: Date.now(),
+        model: llmModel,
+        sourceLength: sourceContent.length
+      });
+      
       try {
         console.log('Fetching analysis...', { model: llmModel, perspective });
         
+        // Update processing step
+        setProcessingStep('analyzing-source');
+        
         // Try the initial-analysis endpoint
         try {
+          // Update processing step
+          setProcessingStep('building-prompt');
+          
           const response = await fetch('/api/initial-analysis', {
             method: 'POST',
             headers: {
@@ -116,13 +202,29 @@ export default function AnalysisPage() {
             }),
           });
           
+          // Update processing step
+          setProcessingStep('sending-request');
+          
           if (!response.ok) {
             console.error('Error initial-analysis response:', response.status);
             throw new Error(`initial-analysis API returned status ${response.status}`);
           }
           
+          // Update processing step
+          setProcessingStep('receiving-response');
+          
           const data = await response.json();
           console.log('Initial analysis received:', data);
+          
+          // Update processing data
+          setProcessingData({
+            truncatedLength: data.contentLength || sourceContent.length,
+            provider: llmModel.includes('gpt') ? 'openai' : 'anthropic',
+            time: Date.now() - (window._sourceAnalysisStartTime || Date.now())
+          });
+          
+          // Update processing step
+          setProcessingStep('processing-results');
           
           // Set the initial analysis
           setInitialAnalysis(data.analysis);
@@ -136,6 +238,8 @@ export default function AnalysisPage() {
         }
         
         // Fallback to the regular analysis endpoint
+        setProcessingStep('trying-fallback-endpoint');
+        
         const fallbackResponse = await fetch('/api/analysis', {
           method: 'POST',
           headers: {
@@ -154,8 +258,18 @@ export default function AnalysisPage() {
           throw new Error(`Fallback API returned status ${fallbackResponse.status}`);
         }
         
+        // Update processing step
+        setProcessingStep('processing-fallback-response');
+        
         const fallbackData = await fallbackResponse.json();
         console.log('Fallback analysis received:', fallbackData);
+        
+        // Update processing data
+        setProcessingData({
+          provider: llmModel.includes('gpt') ? 'openai' : 'anthropic',
+          time: Date.now() - (window._sourceAnalysisStartTime || Date.now()),
+          usingFallback: true
+        });
         
         // Extract analysis from fallback
         const analysisData = fallbackData.analysis || {};
@@ -176,6 +290,8 @@ export default function AnalysisPage() {
         
       } catch (error) {
         console.error('All analysis attempts failed:', error);
+        // Update processing step
+        setProcessingStep('analysis-failed');
         // Don't navigate away on error, just show error state
       } finally {
         analysisInProgressRef.current = false;
@@ -184,7 +300,7 @@ export default function AnalysisPage() {
     };
     
     fetchAnalysis();
-  }, [shouldFetchAnalysis, sourceContent, metadata, llmModel, perspective, setInitialAnalysis, setRawPrompt, setRawResponse]);
+  }, [shouldFetchAnalysis, sourceContent, metadata, llmModel, perspective, setInitialAnalysis, setRawPrompt, setRawResponse, setProcessingStep, setProcessingData]);
   
   // Track when detailed analysis is loaded from specific panel requests (not on model change)
   useEffect(() => {
@@ -193,6 +309,26 @@ export default function AnalysisPage() {
       console.log('Detailed analysis is now loaded and cached');
     }
   }, [detailedAnalysis, detailedAnalysisLoaded, setDetailedAnalysisLoaded]);
+  
+  // Track the detailed analysis progress when panel changes to detailed-analysis
+  useEffect(() => {
+    let progressIntervalId: NodeJS.Timeout | null = null;
+    
+    if (activePanel === 'detailed-analysis' && isLoading && !detailedAnalysis) {
+      // Initialize timing data
+      window._detailedAnalysisStartTime = Date.now();
+      
+      // Start the progress simulation
+      progressIntervalId = simulateDetailedAnalysisProgress();
+    }
+    
+    // Clean up on unmount or when analysis completes
+    return () => {
+      if (progressIntervalId) {
+        clearInterval(progressIntervalId);
+      }
+    };
+  }, [activePanel, isLoading, detailedAnalysis]);
   
   // Redirect to home if no source content
   useEffect(() => {

@@ -15,7 +15,7 @@ const SAVED_ANALYSES_KEY = 'sourceLens_savedAnalyses';
 // Interface for saved analysis item
 interface SavedAnalysis {
   id: string;
-  type: 'detailed' | 'counter' | 'conversation' | 'roleplay' | 'initial';
+  type: 'detailed' | 'counter' | 'conversation' | 'roleplay' | 'initial' | 'extract-info';
   title: string;
   content: string;
   sourceName: string;
@@ -174,40 +174,44 @@ ${analysis.content}
   };
 
   // Get badge color based on analysis type
-  const getTypeBadgeColor = (type: string) => {
-    switch (type) {
-      case 'detailed':
-        return 'bg-indigo-100 text-indigo-800';
-      case 'counter':
-        return 'bg-purple-100 text-purple-800';
-      case 'conversation':
-        return 'bg-green-100 text-green-800';
-      case 'roleplay':
-        return 'bg-amber-100 text-amber-800';
-      case 'initial':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-slate-100 text-slate-800';
-    }
-  };
+const getTypeBadgeColor = (type: string) => {
+  switch (type) {
+    case 'detailed':
+      return 'bg-indigo-100 text-indigo-800';
+    case 'counter':
+      return 'bg-purple-100 text-purple-800';
+    case 'conversation':
+      return 'bg-green-100 text-green-800';
+    case 'roleplay':
+      return 'bg-amber-100 text-amber-800';
+    case 'initial':
+      return 'bg-blue-100 text-blue-800';
+    case 'extract-info':
+      return 'bg-emerald-100 text-emerald-800';
+    default:
+      return 'bg-slate-100 text-slate-800';
+  }
+};
 
   // Get a more readable name for analysis type
   const getTypeDisplayName = (type: string) => {
-    switch (type) {
-      case 'detailed':
-        return 'Detailed Analysis';
-      case 'counter':
-        return 'Counter-Narrative';
-      case 'conversation':
-        return 'Conversation';
-      case 'roleplay':
-        return 'Author Roleplay';
-      case 'initial':
-        return 'Initial Analysis';
-      default:
-        return type.charAt(0).toUpperCase() + type.slice(1);
-    }
-  };
+  switch (type) {
+    case 'detailed':
+      return 'Detailed Analysis';
+    case 'counter':
+      return 'Counter-Narrative';
+    case 'conversation':
+      return 'Conversation';
+    case 'roleplay':
+      return 'Author Roleplay';
+    case 'initial':
+      return 'Initial Analysis';
+    case 'extract-info':
+      return 'Extracted Data';
+    default:
+      return type.charAt(0).toUpperCase() + type.slice(1);
+  }
+};
 
   // Truncate text to a certain length with ellipsis
   const truncateText = (text: string, maxLength: number) => {
@@ -281,6 +285,7 @@ ${analysis.content}
               <option value="conversation">Conversations</option>
               <option value="roleplay">Author Roleplay</option>
               <option value="initial">Initial Analysis</option>
+               <option value="extract-info">Extracted Data</option>
             </select>
           </div>
         </div>

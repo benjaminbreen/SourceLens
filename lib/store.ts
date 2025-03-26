@@ -5,6 +5,8 @@
 import { create } from 'zustand';
 import { DEFAULT_MODEL_ID } from './models';
 
+
+
 export interface Metadata {
   date: string;
   author: string;
@@ -25,6 +27,12 @@ export interface Metadata {
   tags?: string[] | string;
   fullCitation?: string;
 
+}
+
+export interface ExtractInfoConfig {
+  listType: string;
+  fields: string[];
+  format?: 'list' | 'table';
 }
 
 export interface AnalysisResult {
@@ -51,12 +59,6 @@ export interface Reference {
 
 
 
-export interface ExtractInfoConfig {
-  listType: string;
-  fields: string[];
-  format?: 'list' | 'table';
-}
-
 
 interface AppState {
   // Source and metadata
@@ -66,8 +68,28 @@ interface AppState {
   metadata: Metadata | null;
   perspective: string;
   referencesModel: string;
-  extractInfoConfig: ExtractInfoConfig | null;
-setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
+
+
+// dark mode
+isDarkMode: boolean;
+toggleDarkMode: () => void;
+
+// summaries
+
+summarySections: {
+  id: string;
+  title: string;
+  summary: string;
+  fullText: string;
+}[];
+summaryOverall: string;
+setSummarySections: (sections: {
+  id: string;
+  title: string;
+  summary: string;
+  fullText: string;
+}[]) => void;
+setSummaryOverall: (summary: string) => void;
   
   // Analysis results
     detailedAnalysisLoaded: boolean;
@@ -80,6 +102,10 @@ setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
   roleplayMode: boolean;
   roleplayContext: any | null;
   conversation: ConversationMessage[];
+
+  // data extraction
+  extractInfoConfig: ExtractInfoConfig | null;
+setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
   
   // UI state
   isLoading: boolean;
@@ -88,32 +114,36 @@ setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
   rawPrompt: string | null;
   rawResponse: string | null;
   llmModel: string;
+  processingStep: string;
+  processingData: Record<string, any>;
+  setProcessingStep: (step: string) => void;
+  setProcessingData: (data: Record<string, any>) => void;
   
   // Actions
   setSourceContent: (content: string) => void;
-  setSourceFile: (file: File | null) => void;
-  setSourceType: (type: 'text' | 'pdf' | 'image' | null) => void;
-  setMetadata: (metadata: Metadata) => void;
-  setPerspective: (perspective: string) => void;
-  setInitialAnalysis: (analysis: AnalysisResult | null) => void;
-  setDetailedAnalysis: (analysis: string | null) => void;
-  setCounterNarrative: (narrative: string | null) => void;
-  setRoleplayMode: (active: boolean) => void;
-  setRoleplayContext: (context: any | null) => void;
-  addMessage: (message: Omit<ConversationMessage, 'timestamp'>) => void;
-  clearConversation: () => void;
-  setLoading: (loading: boolean) => void;
- setActivePanel: (panel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info') => void;
-  setShowMetadataModal: (show: boolean) => void;
-  setRawPrompt: (prompt: string | null) => void;
-  setRawResponse: (response: string | null) => void;
-  setLLMModel: (model: string) => void;
-  resetState: () => void;
-   setReferencesModel: (model: string) => void; 
-    setDetailedAnalysisLoaded: (loaded: boolean) => void;
-  resetDetailedAnalysisLoaded: () => void;
-
-}
+   setSourceFile: (file: File | null) => void;
+   setSourceType: (type: 'text' | 'pdf' | 'image' | null) => void;
+   setMetadata: (metadata: Metadata) => void;
+   setPerspective: (perspective: string) => void;
+   setInitialAnalysis: (analysis: AnalysisResult | null) => void;
+   setDetailedAnalysis: (analysis: string | null) => void;
+   setCounterNarrative: (narrative: string | null) => void;
+   setRoleplayMode: (active: boolean) => void;
+   setRoleplayContext: (context: any | null) => void;
+   addMessage: (message: Omit<ConversationMessage, 'timestamp'>) => void;
+   clearConversation: () => void;
+   setLoading: (loading: boolean) => void;
+   setActivePanel: (panel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info') => void;
+   setShowMetadataModal: (show: boolean) => void;
+   setRawPrompt: (prompt: string | null) => void;
+   setRawResponse: (response: string | null) => void;
+   setLLMModel: (model: string) => void;
+   resetState: () => void;
+   setReferencesModel: (model: string) => void;
+   setDetailedAnalysisLoaded: (loaded: boolean) => void;
+   resetDetailedAnalysisLoaded: () => void;
+ 
+ }
 
 const initialState = {
   sourceContent: '',
@@ -134,10 +164,14 @@ const initialState = {
   rawPrompt: null,
   rawResponse: null,
   llmModel: DEFAULT_MODEL_ID,
-  referencesModel: 'claude-sonnet', 
+  referencesModel: 'gemini-flash', 
   detailedAnalysisLoaded: false,
-
    extractInfoConfig: null,
+   processingStep: '',
+   processingData: {},
+   isDarkMode: false,
+   summarySections: [],
+summaryOverall: '',
    
 };
 
@@ -196,6 +230,16 @@ export const useAppStore = create<AppState>((set) => ({
   setLLMModel: (model) => set({ llmModel: model }),
   
   setExtractInfoConfig: (config) => set({ extractInfoConfig: config }),
+
+    setProcessingStep: (step) => set({ processingStep: step }),
+  
+  setProcessingData: (data) => set({ processingData: data }),
+
+  setSummarySections: (sections) => set({ summarySections: sections }),
+setSummaryOverall: (summary) => set({ summaryOverall: summary }),
+
+  toggleDarkMode: () => set(state => ({ isDarkMode: !state.isDarkMode })),
+
   
   resetState: () => set(initialState)
 }));

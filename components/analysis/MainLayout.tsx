@@ -25,6 +25,11 @@ import ChatContainer from '../chat/ChatContainer';
 import SaveToLibraryButton from '../library/SaveToLibraryButton';
 import ExtractInfoPanel from '../extract/ExtractInfoPanel';
 import ExtractInfoExplanation from '../extract/ExtractInfoExplanation';
+import ProgressIndicator from '../ui/ProgressIndicator';
+import ExtractPanelToggle from '@/components/extract/ExtractPanelToggle';
+import DocumentActions from '../ui/DocumentActions';
+import InfoButton from '../ui/InfoButton';
+import DocumentPortrait from '../ui/DocumentPortrait';
 
 export default function MainLayout() {
   const { 
@@ -38,13 +43,23 @@ export default function MainLayout() {
     conversation,
     detailedAnalysis,
     sourceContent,
-    sourceType
+    sourceType,
+    processingStep,
+    processingData,
+    llmModel, 
+    perspective,
+    sourceFile
   } = useAppStore();
 
   const [animateHeader, setAnimateHeader] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [chatExpanded, setChatExpanded] = useState(false);
   const [portraitError, setPortraitError] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
+  const toggleDarkMode = () => {
+  setDarkMode(!darkMode);
+};
   
   // Add animation effect to header on load
   useEffect(() => {
@@ -69,165 +84,6 @@ const extractYear = (dateStr: string): string => {
 
 
 
- // Determine what to show in portrait box based on mode
-
-  const renderPortrait = () => {
-  // Calculate century based on date, regardless of mode
-  const date = metadata?.date || '';
-  const year = parseInt(date.match(/\d+/)?.[0] || '2000', 10);
-  const century = Math.floor(year / 100) + 1;
-  
-  // Get color scheme based on century
-  const getColorScheme = () => {
-    switch (century) {
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-      case 5: // Ancient (1st-5th century)
-        return {
-          gradient: "bg-gradient-to-br from-white to-violet-100",
-          ring: "ring-violet-200",
-          text: "text-violet-700"
-        };
-      case 6:
-      case 7:
-      case 8:
-      case 9:
-      case 10: // Medieval (6th-10th century)
-        return {
-          gradient: "bg-gradient-to-br from-white to-indigo-100",
-          ring: "ring-indigo-200",
-          text: "text-indigo-700"
-        };
-      case 11:
-      case 12:
-      case 13: // High Medieval (11th-13th century)
-        return {
-          gradient: "bg-gradient-to-br from-white to-blue-100",
-          ring: "ring-blue-200",
-          text: "text-blue-700"
-        };
-      case 14:
-      case 15: // Late Medieval/Early Renaissance (14th-15th century)
-        return {
-          gradient: "bg-gradient-to-br from-white to-sky-100",
-          ring: "ring-sky-200",
-          text: "text-sky-700"
-        };
-      case 16: // Renaissance (16th century)
-        return {
-          gradient: "bg-gradient-to-br from-white to-cyan-100",
-          ring: "ring-cyan-200",
-          text: "text-cyan-700"
-        };
-      case 17: // Early Modern (17th century)
-        return {
-          gradient: "bg-gradient-to-br from-white to-teal-100",
-          ring: "ring-teal-200",
-          text: "text-teal-700"
-        };
-      case 18: // Enlightenment (18th century)
-        return {
-          gradient: "bg-gradient-to-br from-white to-emerald-100",
-          ring: "ring-emerald-200",
-          text: "text-emerald-700"
-        };
-      case 19: // Industrial Revolution (19th century)
-        return {
-          gradient: "bg-gradient-to-br from-white to-amber-100",
-          ring: "ring-amber-200",
-          text: "text-amber-700"
-        };
-      case 20: // Modern (20th century)
-        return {
-          gradient: "bg-gradient-to-br from-white to-orange-100",
-          ring: "ring-orange-200",
-          text: "text-orange-700"
-        };
-      default: // Contemporary (21st century onward)
-        return {
-          gradient: "bg-gradient-to-br from-white to-rose-100",
-          ring: "ring-rose-200",
-          text: "text-rose-700"
-        };
-    }
-  };
-  
-  const colorScheme = getColorScheme();
-  
-  if (roleplayMode && metadata?.author) {
-    // Roleplay mode with author portrait
-    const authorNameForFile = metadata.author.toLowerCase().replace(/\s+/g, '');
-    const portraitPath = `/portraits/${authorNameForFile}.jpg`;
-    
-    return (
-      <div className={`flex flex-col items-center p-5 rounded-xl ${colorScheme.gradient}`}>
-        {/* For portrait or emoji */}
-        <div className={`w-24 h-24 rounded-full bg-white flex items-center justify-center text-5xl mb-2 overflow-hidden relative shadow-sm border border-slate-100 ${colorScheme.ring}`}>
-          {!portraitError ? (
-            <div className="w-full h-full relative">
-              <Image 
-                src={portraitPath} 
-                alt={metadata.author} 
-                fill 
-                className="object-cover"
-                onError={() => setPortraitError(true)}
-              />
-            </div>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              {metadata.authorEmoji || '👤'}
-            </div>
-          )}
-        </div>
-        <h3 className={`font-medium text-center ${colorScheme.text}`}>{metadata.author}</h3>
-        
-        {/* Show character status instead of birth/death years */}
-        {metadata.characterStatus ? (
-          <p className="text-sm text-center text-slate-500 italic mt-1 max-w-[400px]">
-            {metadata.characterStatus}
-          </p>
-        ) : (
-          <p className="text-xs text-center text-slate-500">{metadata.date}</p>
-        )}
-      </div>
-    );
-  } else {
-    // Regular document mode
-    return (
-      <div className={`flex flex-col items-center p-5 rounded-xl ${colorScheme.gradient}`}>
-        <div className={`w-25 h-25 rounded-full bg-white flex items-center justify-center text-8xl mb-2 overflow-hidden shadow-xl border border-slate-100 ${colorScheme.ring}`}>
-          {metadata?.documentEmoji || '📄'}
-        </div>
-        <h3 className={`font-medium text-center ${colorScheme.text}`}>
-          {metadata?.title || "Primary Source"}
-        </h3>
-        <div className="flex flex-col items-center gap-1">
-          <p className="text-xs text-center text-slate-500">
-            {metadata?.date || "Unknown date"}
-            {metadata?.author && ` • ${metadata.author}`}
-          </p>
-          
-          {/* Display document type and genre if available */}
-          {(metadata?.documentType || metadata?.genre) && (
-            <p className="text-xs text-center text-slate-600 font-medium">
-              {metadata?.documentType && metadata?.genre 
-                ? `${metadata.documentType} • ${metadata.genre}`
-                : metadata?.documentType || metadata?.genre}
-            </p>
-          )}
-          
-          {metadata?.summary && (
-            <p className="text-xs text-center text-slate-600 italic max-w-64">
-              {metadata.summary}
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  }
-};
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -318,6 +174,9 @@ const extractYear = (dateStr: string): string => {
             </div>
             
             {/* Right side controls */}
+
+    
+
             <div className="flex items-center space-x-4">
               {/* Loading indicator */}
               {isLoading && (
@@ -340,13 +199,21 @@ const extractYear = (dateStr: string): string => {
       {/* Main content with three-panel layout */}
       <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
         {/* Left Panel - Tools */}
-        <div className="w-full md:w-1/4 overflow-y-auto bg-gradient-to-b from-slate-100 to-slate-50 border-b md:border-b-0 md:border-r border-slate-200">
+        <div className={`w-full ${roleplayMode ? 'md:w-1/4' : 'md:w-1/4'} overflow-y-auto bg-gradient-to-b from-slate-100 to-slate-50 border-b md:border-b-0 md:border-r border-slate-200`}>
           {/* Modular boxes in left panel */}
           <div className="p-4 grid grid-cols-1 gap-4">
 
-            {/* Portrait Box */}
             <div className="shadow-sm rounded-lg ">
-              {renderPortrait()}
+<DocumentPortrait
+  sourceFile={sourceFile}
+  sourceType={sourceType}
+  metadata={metadata}
+  roleplayMode={roleplayMode}
+  // Pass the error states:
+  portraitError={portraitError}
+  setPortraitError={setPortraitError}
+/>
+
             </div>
             
             {/* Analysis Tools Box */}
@@ -373,24 +240,30 @@ const extractYear = (dateStr: string): string => {
           </div>
         </div>
         
-       {/* Center Panel - Content changes based on mode */}
-    <div className={`w-full ${
-  activePanel === 'references' || activePanel === 'extract-info'
-    ? 'md:w-2/3' // Wider when references or extract-info is active
-    : (detailedAnalysis && activePanel === 'detailed-analysis') || activePanel === 'counter'
-      ? 'md:w-1/3' // Narrower when detailed analysis is shown or counter-narrative is active
-      : 'md:w-3/5' // Normal width otherwise
+
+{/* Center Panel - Content changes based on mode */}
+<div className={`w-full ${
+  roleplayMode 
+    ? 'md:w-3/4' // Wider when in roleplay mode
+    : activePanel === 'references'
+      ? 'md:w-2/3' // Wider when references is active
+      : (detailedAnalysis && activePanel === 'detailed-analysis') || activePanel === 'counter'
+        ? 'md:w-1/3' // Narrower when detailed analysis is shown or counter-narrative is active
+        : 'md:w-3/5' // Normal width otherwise
   } transition-all duration-300 overflow-y-auto bg-white shadow-inner`}>
+
   {activePanel === 'extract-info' ? (
-    // Show Extract Info panel
     <div className="p-4">
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mb-4">
-        <h2 className="text-lg font-medium text-indigo-900 flex items-center mb-4">
-          <svg className="w-5 h-5 mr-2 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-          </svg>
-          Extract Information
-        </h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-medium text-indigo-900 flex items-center">
+            <svg className="w-5 h-5 mr-2 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            Extract Information
+          </h2>
+          <ExtractPanelToggle />
+        </div>
         <ExtractInfoPanel />
       </div>
     </div>
@@ -465,34 +338,44 @@ const extractYear = (dateStr: string): string => {
       </div>
       
       {/* Source Box */}
-<div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mb-4">
-  <div className="flex justify-between items-center mb-4">
-    <h2 className="text-lg font-medium text-indigo-900 flex items-center">
-      <svg className="w-5 h-5 mr-2 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-      Primary Source
-    </h2>
-    
- <SaveToLibraryButton 
-  type="source"
-  data={{
-    content: sourceContent,
-    metadata: metadata || {
-      date: 'Unknown date',
-      author: 'Unknown author',
-      title: 'Untitled Source'
-    },
-    type: sourceType || 'text'
-  }}
-  className="px-2 py-1 text-sm !bg-green-50 !text-green-700 hover:!bg-green-100 !border !border-green-200 !rounded-md flex items-center gap-1 transition-colors"
-  iconOnly={false}
-/>
-  </div>
-  <div className="font-serif bg-slate-50 p-4 rounded-md border border-slate-100">
-    <SourceDisplay />
-  </div>
-</div>
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mb-4">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-medium text-indigo-900 flex items-center">
+            <svg className="w-5 h-5 mr-2 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Primary Source
+          </h2>
+          
+          {sourceContent && metadata && (
+            <SaveToLibraryButton 
+              type="source"
+              data={{
+                content: sourceContent,
+                metadata: metadata || {
+                  date: 'Unknown date',
+                  author: 'Unknown author',
+                  title: 'Untitled Source'
+                },
+                // Add category from metadata if available
+                category: metadata?.academicSubfield || metadata?.documentType || 'Uncategorized',
+                // Convert tags string to array if needed
+                tags: metadata?.tags ? 
+                  (Array.isArray(metadata.tags) ? 
+                    metadata.tags : 
+                    String(metadata.tags).split(',').map(tag => tag.trim())
+                  ) : [],
+                type: sourceType || 'text'
+              }}
+              className="px-2 py-1 text-sm !bg-green-50 !text-green-700 hover:!bg-green-100 !border !border-green-200 !rounded-md flex items-center gap-1 transition-colors"
+              iconOnly={false}
+            />
+          )}
+        </div>
+        <div className="font-serif bg-slate-50 p-4 rounded-md border border-slate-100">
+          <SourceDisplay />
+        </div>
+      </div>
       
       {/* Source metadata with expanded fields */}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
@@ -599,36 +482,59 @@ const extractYear = (dateStr: string): string => {
         
        {/* Right Panel - Analysis Results */}
 <div className={`w-full ${
-  activePanel === 'counter'
-    ? 'md:w-2/3' // Much wider for counter-narrative
-    : detailedAnalysis && activePanel === 'detailed-analysis'
-      ? 'md:w-3/5' // Wider when detailed analysis is shown
-      : 'md:w-1/3' // Normal width otherwise
-  } transition-all duration-300 overflow-y-auto bg-gradient-to-b from-slate-100 to-slate-50 border-t md:border-t-0 md:border-l border-slate-200`}>
+    activePanel === 'counter'
+      ? 'md:w-2/3' // Much wider for counter-narrative
+      : activePanel === 'extract-info'
+        ? 'md:w-1/5' // Very narrow for extract-info
+          : activePanel === 'roleplay'
+        ? 'md:w-1/6' // Very narrow for roleplay
+      : detailedAnalysis && activePanel === 'detailed-analysis'
+        ? 'md:w-3/5' // Wider when detailed analysis is shown
+        : 'md:w-1/3' // Normal width otherwise
+    } transition-all duration-300 overflow-y-auto bg-gradient-to-b from-slate-100 to-slate-50 border-t md:border-t-0 md:border-l border-slate-200`}>
   <div className="p-4">
+
+
     {/* Analysis Box */}
-    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-      <h2 className="text-lg font-medium text-indigo-900 flex items-center mb-4">
-        <svg className="w-5 h-5 mr-2 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={
-            activePanel === 'counter' 
-              ? "M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4" 
-              : activePanel === 'roleplay'
-              ? "M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
-              : activePanel === 'references'
-              ? "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-              : "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          } />
-        </svg>
-        {activePanel === 'counter' 
-          ? "Counter-Narrative" 
-          : activePanel === 'roleplay' 
-          ? "Analysis" 
-          : activePanel === 'references'
-          ? "References Information"
-          : "Analysis"}
-      </h2>
-      <div className="bg-slate-50 p-4 rounded-md border border-slate-100">
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-medium text-indigo-900 flex items-center">
+          <svg className="w-5 h-5 mr-2 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={
+              activePanel === 'counter' 
+                ? "M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4" 
+                : activePanel === 'roleplay'
+                ? "M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
+                : activePanel === 'references'
+                ? "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                : "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            } />
+          </svg>
+          {activePanel === 'counter' 
+            ? "Counter-Narratives" 
+            : activePanel === 'roleplay' 
+            ? "Analysis" 
+            : activePanel === 'references'
+            ? "References Information"
+            : "Analysis"}
+        </h2>
+        
+        {/* Add the InfoButton component */}
+       <InfoButton 
+         sourceLength={sourceContent?.length || 0}
+         modelId={llmModel || 'Unknown model'}
+         provider={llmModel?.includes('gpt') ? 'OpenAI' : llmModel?.includes('claude') ? 'Anthropic' : 'Google'}
+        truncated={sourceContent ? sourceContent.length > 130000 : undefined}
+         wordCount={Math.round((sourceContent?.length || 0) / 6.5)}
+         truncatedLength={processingData?.truncatedLength}
+         processingData={processingData || {}}
+         additionalInfo={{
+           perspective: perspective || 'Default',
+           activePanel: activePanel
+         }}
+       />
+      </div>
+      <div className="bg-slate-50 p-3 rounded-md border border-slate-100">
         {activePanel === 'references' 
           ? <ReferencesExplanation />
           : <AnalysisPanel />
@@ -636,29 +542,6 @@ const extractYear = (dateStr: string): string => {
       </div>
     </div>
             
-            {/* Box for follow-up questions or conversation history */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mt-4">
-              <h2 className="text-lg font-medium text-indigo-900 flex items-center mb-4">
-                <svg className="w-5 h-5 mr-2 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Previous questions
-              </h2>
-              <div className="text-sm text-slate-600">
-                {conversation.length > 0 ? (
-                  <div className="space-y-2">
-                    {conversation.filter(msg => msg.role === 'user').slice(-3).map((msg, idx) => (
-                      <div key={idx} className="bg-slate-50 p-2 rounded border border-slate-100">
-                        <p className="italic text-xs mb-1">Your question:</p>
-                        <p>{msg.content}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="italic text-center">Selected questions will appear here</p>
-                )}
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -726,6 +609,8 @@ const extractYear = (dateStr: string): string => {
 
       {/* Metadata Modal */}
       {showMetadataModal && <MetadataModal />}
+
+
     </div>
   );
 }
