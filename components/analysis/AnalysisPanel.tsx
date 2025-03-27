@@ -460,12 +460,9 @@ case 'roleplay':
 {/* text highlights panel */}
      case 'highlight':
   return (
-
       
       
         <HighlightPanel />
-
-
   );
       
     case 'detailed-analysis':

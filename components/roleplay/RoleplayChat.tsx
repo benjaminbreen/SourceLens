@@ -472,7 +472,7 @@ export default function RoleplayChat({ initialMessage }: RoleplayChatProps) {
         </div>
         
         {/* Input area with improved contrasts and responsive sizing */}
-        <div className="p-4 md:p-6 mb-4 border-t-2 mr-1 gap-2 border-1 border-slate-300 text-lg bg-slate-50 rounded-b-lg border-b-6 border-b-slate-200 rounded-b-xl">
+        <div className="p-4  md:p-6 mb-4 border-t-2 mr-1 gap-2 border-1 border-slate-300 text-lg bg-slate-100 rounded-b-lg border-b-6 border-b-slate-200 rounded-b-xl">
           <form onSubmit={handleSendMessage} className="flex text-slate-900 space-x-2">
             <input
               ref={inputRef}
@@ -480,7 +480,7 @@ export default function RoleplayChat({ initialMessage }: RoleplayChatProps) {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={`Ask ${metadata.author} a question...`}
-              className="flex-1 py-2.5 md:py-3 px-3 md:px-4 bg-white border-2 border-amber-600 rounded-l-lg focus:ring-3 focus:ring-amber-500 focus:border-amber-500 transition-colors placeholder-amber-500/70 text-slate-800 font-medium"
+              className="flex-1 py-2.5 md:py-3 px-3 md:px-4 bg-slate-50/90  border-2 border-amber-600 rounded-l-lg focus:ring-3 focus:ring-amber-500 focus:border-amber-500 transition-colors placeholder-amber-500/70 text-slate-800 font-medium"
               disabled={isLoading}
             />
             <button
@@ -488,7 +488,7 @@ export default function RoleplayChat({ initialMessage }: RoleplayChatProps) {
               disabled={!message.trim() || isLoading}
               className={`px-4 md:px-5 py-2.5 md:py-3 rounded-r-lg font-medium transition-all ${
                 !message.trim() || isLoading
-                  ? 'bg-amber-300/50 text-amber-500 cursor-not-allowed'
+                  ? 'bg-amber-300/50 text-amber-900 cursor-not-allowed'
                   : 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm hover:shadow'
               }`}
             >

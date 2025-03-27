@@ -32,6 +32,9 @@ import InfoButton from '../ui/InfoButton';
 import DocumentPortrait from '../ui/DocumentPortrait';
 import HighlightPanel from '../highlight/HighlightPanel';
 import HighlightExplanation from '../highlight/HighlightExplanation';
+import SummaryButton from '../ui/SummaryButton';
+import SummarizeText from '../text/SummarizeText';
+
 
 export default function MainLayout() {
   const { 
@@ -59,6 +62,7 @@ export default function MainLayout() {
   const [chatExpanded, setChatExpanded] = useState(false);
   const [portraitError, setPortraitError] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [fontSize, setFontSize] = useState(16);
 
   const toggleDarkMode = () => {
   setDarkMode(!darkMode);
@@ -73,6 +77,11 @@ export default function MainLayout() {
 
 
 
+
+const handleFontSizeChange = (newSize: number) => {
+  setFontSize(newSize);
+};
+
 const extractYear = (dateStr: string): string => {
   // Try to match a 4-digit year
   const yearMatch = dateStr.match(/\b\d{4}\b/);
@@ -84,6 +93,8 @@ const extractYear = (dateStr: string): string => {
   const numMatch = dateStr.match(/\d+/);
   return numMatch ? numMatch[0] : dateStr;
 };
+
+const [showSummary, setShowSummary] = useState(false);
 
 
 
@@ -342,41 +353,36 @@ const extractYear = (dateStr: string): string => {
       
       {/* Source Box */}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mb-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-medium text-indigo-900 flex items-center">
-            <svg className="w-5 h-5 mr-2 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Primary Source
-          </h2>
-          
-          {sourceContent && metadata && (
-            <SaveToLibraryButton 
-              type="source"
-              data={{
-                content: sourceContent,
-                metadata: metadata || {
-                  date: 'Unknown date',
-                  author: 'Unknown author',
-                  title: 'Untitled Source'
-                },
-                // Add category from metadata if available
-                category: metadata?.academicSubfield || metadata?.documentType || 'Uncategorized',
-                // Convert tags string to array if needed
-                tags: metadata?.tags ? 
-                  (Array.isArray(metadata.tags) ? 
-                    metadata.tags : 
-                    String(metadata.tags).split(',').map(tag => tag.trim())
-                  ) : [],
-                type: sourceType || 'text'
-              }}
-              className="px-2 py-1 text-sm !bg-green-50 !text-green-700 hover:!bg-green-100 !border !border-green-200 !rounded-md flex items-center gap-1 transition-colors"
-              iconOnly={false}
-            />
-          )}
-        </div>
-        <div className="font-serif bg-slate-50 p-4 rounded-md border border-slate-100">
-          <SourceDisplay />
+       
+<div className="flex justify-between items-center mb-4">
+  <h2 className="text-lg font-medium ml-2 text-indigo-900 flex items-center">
+   
+    Primary Source
+
+  </h2>
+  
+  <div className="flex items-center mr-2 space-x-5">
+   
+    {/* Document Actions Button */}
+   <DocumentActions 
+  darkMode={darkMode} 
+  toggleDarkMode={toggleDarkMode}
+  onFontSizeChange={handleFontSizeChange}
+  currentFontSize={fontSize}
+  onSummarizeComplete={() => {
+    // This will be called when summarization is completed
+    console.log("Summary completed");
+  }}
+/>
+
+  </div>
+</div>
+        <div className="bg-slate-50 p-4 rounded-md border border-slate-100">
+         <SourceDisplay 
+  darkMode={darkMode}
+  toggleDarkMode={toggleDarkMode}
+  fontSize={fontSize}
+/>
         </div>
       </div>
       
@@ -547,19 +553,38 @@ const extractYear = (dateStr: string): string => {
         }
       </div>
     </div>
-    <button
-  onClick={() => setActivePanel('highlight')}
-  className={`flex items-center w-full p-2 mt-4 rounded-md mb-2 transition-all ${
-    activePanel === 'highlight'
-      ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-  }`}
->
-  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-  </svg>
-  <span className="text-sm">Highlight Text</span>
-</button>
+
+{/* Button Row - Side by side buttons with consistent styling */}
+<div className="flex gap-2 mt-4">
+  {/* Highlight Text Button */}
+  <button
+    onClick={() => setActivePanel('highlight')}
+    className="flex-1 flex items-center justify-center p-2 rounded-md bg-white border border-amber-300 text-amber-700 shadow-sm transition-all duration-200 hover:bg-amber-50 hover:border-amber-400 hover:shadow group"
+  >
+    <svg className="w-5 h-5 mr-2 transition-transform duration-300 group-hover:scale-110 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+    </svg>
+    <span className="text-sm font-medium">Highlight Text</span>
+  </button>
+  
+  {/* Summary Button */}
+  <button
+    onClick={() => setShowSummary(true)}
+    className="flex-1 flex items-center justify-center p-2 rounded-md bg-white border border-emerald-300 text-emerald-700 shadow-sm transition-all duration-200 hover:bg-emerald-50 hover:border-emerald-400 hover:shadow group"
+  >
+    <svg className="w-5 h-5 mr-2 transition-transform duration-300 group-hover:scale-110 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+    </svg>
+    <span className="text-sm font-medium">View Summary</span>
+  </button>
+</div>
+
+{/* Summarize Modal */}
+{showSummary && (
+  <SummarizeText 
+    onClose={() => setShowSummary(false)} 
+  />
+)}
             
           </div>
         </div>

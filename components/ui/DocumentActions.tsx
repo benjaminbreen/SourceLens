@@ -1,5 +1,6 @@
 // components/ui/DocumentActions.tsx
-// Updated to emit a state change when summarization is completed
+// Button menu system that provides actions for the primary source document
+// Includes dark mode toggle, text cleanup, translation, highlighting and font size control
 
 'use client';
 
@@ -12,19 +13,25 @@ interface DocumentActionsProps {
   onAction?: (action: string) => void;
   darkMode?: boolean;
   toggleDarkMode?: () => void;
-  onSummarizeComplete?: () => void;  // Add this new prop
+  onSummarizeComplete?: () => void;
+  onFontSizeChange?: (size: number) => void;
+  currentFontSize?: number;
 }
 
 export default function DocumentActions({ 
   onAction, 
   darkMode, 
-  toggleDarkMode, 
-  onSummarizeComplete 
+  toggleDarkMode,
+  onSummarizeComplete,
+  onFontSizeChange,
+  currentFontSize = 16, // Default font size
 }: DocumentActionsProps) {
+  const { setActivePanel, activePanel } = useAppStore();
   const [isOpen, setIsOpen] = useState(false);
   const [showCleanup, setShowCleanup] = useState(false);
   const [showSummarize, setShowSummarize] = useState(false);
   const [showAnimation, setShowAnimation] = useState(true);
+  const [fontSize, setFontSize] = useState(currentFontSize);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   
@@ -64,6 +71,12 @@ export default function DocumentActions({
     setIsOpen(false);
   };
 
+  const handleHighlightClick = () => {
+    setActivePanel('highlight');
+    setIsOpen(false);
+    if (onAction) onAction('highlight');
+  };
+
   const handleTranslateClick = () => {
     alert('Translation feature coming soon!');
     setIsOpen(false);
@@ -83,6 +96,15 @@ export default function DocumentActions({
     // Notify parent component that summarization is complete
     if (onSummarizeComplete) {
       onSummarizeComplete();
+    }
+  };
+
+  // Handle font size change
+  const handleFontSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newSize = parseInt(e.target.value);
+    setFontSize(newSize);
+    if (onFontSizeChange) {
+      onFontSizeChange(newSize);
     }
   };
 
@@ -107,7 +129,7 @@ export default function DocumentActions({
       {isOpen && (
         <div 
           ref={menuRef}
-          className="absolute right-0 mt-1 bg-white rounded-lg shadow-xl border border-slate-200 w-52 py-1 z-50 origin-top-right animate-in fade-in-50 zoom-in-95 duration-200"
+          className="absolute right-0 mt-1 bg-white rounded-lg shadow-xl border border-slate-200 w-60 py-1 z-50 origin-top-right animate-in fade-in-50 zoom-in-95 duration-200"
           style={{ transformOrigin: 'top right' }}
         >
           <button
@@ -120,7 +142,7 @@ export default function DocumentActions({
             Clean up text
           </button>
           
-          {/* New Summarize Button */}
+          {/* Summarize Button */}
           <button
             onClick={handleSummarizeClick}
             className="flex items-center w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
@@ -129,6 +151,17 @@ export default function DocumentActions({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg>
             Summarize text
+          </button>
+          
+          {/* Highlight Button */}
+          <button
+            onClick={handleHighlightClick}
+            className="flex items-center w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+          >
+            <svg className="w-4 h-4 mr-3 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            Highlight text
           </button>
           
           <button
@@ -141,10 +174,30 @@ export default function DocumentActions({
             Translate text
           </button>
           
+          {/* Font Size Slider */}
+          <div className="px-4 py-2.5 text-sm border-t border-slate-100">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-slate-700">Font Size</span>
+              <span className="text-slate-500 text-xs">{fontSize}px</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-slate-400">A</span>
+              <input 
+                type="range" 
+                min="12" 
+                max="24" 
+                value={fontSize} 
+                onChange={handleFontSizeChange}
+                className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer"
+              />
+              <span className="text-base text-slate-400">A</span>
+            </div>
+          </div>
+          
           {/* Dark Mode Toggle */}
           <button
             onClick={handleToggleDarkMode}
-            className="flex items-center w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+            className="flex items-center w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 border-t border-slate-100"
           >
             {darkMode ? (
               <>

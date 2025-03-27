@@ -29,12 +29,19 @@ export interface Metadata {
 
 }
 
+export interface SpecialLensRequest {
+  lensType: 'voice' | 'place' | 'provenance' | null;
+  instructions: string;
+  autoGenerate?: boolean; 
+}
+
 export interface HighlightedSegment {
   text: string;         // The actual text segment
   startIndex: number;   // Character position where segment starts in original text
   endIndex: number;     // Character position where segment ends in original text
   score: number;        // Relevance score from 0 to 1
   explanation: string;  // Brief explanation of why this segment matches
+  id: number;
 }
 
 export interface ExtractInfoConfig {
@@ -77,11 +84,16 @@ interface AppState {
   perspective: string;
   referencesModel: string;
 
+   sourceThumbnailUrl: string | null;
+
   //text segment color coding
    highlightedSegments: HighlightedSegment[];
   highlightQuery: string;
   isHighlightMode: boolean;
 
+specialLensRequest: SpecialLensRequest | null;
+
+setSpecialLensRequest: (request: SpecialLensRequest | null) => void;
 
 // dark mode
 isDarkMode: boolean;
@@ -159,6 +171,7 @@ setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
   setHighlightQuery: (query: string) => void;
   setHighlightMode: (active: boolean) => void;
   clearHighlights: () => void;
+   setSourceThumbnailUrl: (url: string | null) => void;
  
  }
 
@@ -192,6 +205,9 @@ summaryOverall: '',
 highlightedSegments: [],
   highlightQuery: '',
   isHighlightMode: false,
+  specialLensRequest: null,
+    sourceThumbnailUrl: null,
+
    
 };
 
@@ -265,6 +281,9 @@ setSummaryOverall: (summary) => set({ summaryOverall: summary }),
   setHighlightQuery: (query) => set({ highlightQuery: query }),
   
   setHighlightMode: (active) => set({ isHighlightMode: active }),
+
+  setSpecialLensRequest: (request) => set({ specialLensRequest: request }),
+  setSourceThumbnailUrl: (url) => set({ sourceThumbnailUrl: url }),
   
   clearHighlights: () => set({ 
     highlightedSegments: [], 

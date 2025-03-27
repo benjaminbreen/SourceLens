@@ -554,13 +554,22 @@ useEffect(() => {
     emoji: "𒀭",
     title: "Sumerian Complaint Tablet to Ea-nāṣir",
     description: "Ancient Mesopotamian complaint about poor quality copper, history's first customer service dispute",
-    text: `Tell Ea-nasir: Nanni sends the following message:
+    text: `
+
+## "Complaint to Ea-nasir." 
+### Clay tablet letter, Ur, Mesopotamia, circa 1750 BCE. 
+##### *Translated by A. Leo Oppenheim, currently held by the British Museum.*
+
+
+Tell Ea-nasir: Nanni sends the following message:
 
 When you came, you said to me as follows: "I will give Gimil-Sin (when he comes) fine quality copper ingots." You left then but you did not do what you promised me. You put ingots which were not good before my messenger (Sit-Sin) and said: "If you want to take them, take them; if you do not want to take them, go away!"
 
 What do you take me for, that you treat somebody like me with such contempt? I have sent as messengers gentlemen like ourselves to collect the bag with my money (deposited with you) but you have treated me with contempt by sending them back to me empty-handed several times, and that through enemy territory. Is there anyone among the merchants who trade with Telmun who has treated me in this way? You alone treat my messenger with contempt! On account of that one (trifling) mina of silver which I owe you, you feel free to speak in such a way,
- while I have given to the palace on your behalf 1,080 pounds of copper, and Umi-abum has likewise given 1,080 pounds of copper, apart from what we both have had written on a sealed tablet to be kept in the temple of Samas.
+while I have given to the palace on your behalf 1,080 pounds of copper, and Umi-abum has likewise given 1,080 pounds of copper, apart from what we both have had written on a sealed tablet to be kept in the temple of Samas.
+
 How have you treated me for that copper? You have withheld my money bag from me in enemy territory; it is now up to you to restore (my money) to me in full.
+
 Take cognizance that (from now on) I will not accept here any copper from you that is not of fine quality. I shall (from now on) select and take the ingots individually in my own yard, and I shall exercise against you my right of rejection because you have treated me with contempt.`,
     metadata: {
   date: '1750 BCE',
@@ -1273,7 +1282,7 @@ const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-
     useAppStore.getState().setRoleplayMode(true);
   }
 
-   // Special handling for extract-info panel
+  // Special handling for extract-info panel
   if (targetPanel === 'extract-info' && demoExtractConfigs[demoIndex]) {
     // Set the extract info configuration for this specific demo
     useAppStore.getState().setExtractInfoConfig(demoExtractConfigs[demoIndex]);
@@ -1297,25 +1306,23 @@ const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-
     // Define the message we'll pre-populate
     let suggestedQuestion = "";
     
-      
-      // Set appropriate initial questions based on demo index
-      switch(demoIndex) {
-        case 0: // Ea-nasir complaint
-          suggestedQuestion = "Tell me more about the inferior quality of the copper ingots.";
-          break;
-        case 5: // Freud's cocaine treatise
-          suggestedQuestion = "Herr Doktor Freud, Guten Tag. Could you tell me more about your personal experiences with coca?";
-          break;
-        case 7: // Margaret Mead's notes
-          suggestedQuestion = "Who are you, what time is it, and what are you seeing in this moment?";
-          break;
-        case 4: // Delaware oral tradition
-          suggestedQuestion = "Imagine you are Manhattan Island, narrating your own history. Begin.";
-          break;
-        default:
-          suggestedQuestion = "Could you tell me more about this document?";
-      }
-      
+    // Set appropriate initial questions based on demo index
+    switch(demoIndex) {
+      case 0: // Ea-nasir complaint
+        suggestedQuestion = "Tell me more about the inferior quality of the copper ingots.";
+        break;
+      case 5: // Freud's cocaine treatise
+        suggestedQuestion = "Herr Doktor Freud, Guten Tag. Could you tell me more about your personal experiences with coca?";
+        break;
+      case 7: // Margaret Mead's notes
+        suggestedQuestion = "Who are you, what time is it, and what are you seeing in this moment?";
+        break;
+      case 4: // Delaware oral tradition
+        suggestedQuestion = "Imagine you are Manhattan Island, narrating your own history. Begin.";
+        break;
+      default:
+        suggestedQuestion = "Could you tell me more about this document?";
+    }
     
     // Wait for the page to load, then find and populate the input
     setTimeout(() => {
@@ -1330,8 +1337,75 @@ const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-
         // Try to focus the input so it's ready for the user to press Enter
         inputElement.focus();
       }
-    }, 3000); // Increased to 3 seconds for better reliability
+    }, 5000); // Increased to 3 seconds for better reliability
   }
+  
+  // Special handling for counter narratives with lens modal
+  if (targetPanel === 'counter') {
+    // If this is the Manhattan narrative demo (index 4)
+    if (demoIndex === 4) {
+      // Wait for the page to load, then open the Place lens modal with pre-filled text
+      setTimeout(() => {
+        // Find and click the Place lens button
+        const placeLensButton = document.querySelector('button[data-lens="place"]') as HTMLButtonElement;
+        if (placeLensButton) {
+          placeLensButton.click();
+          
+          // Wait for the modal to open, then fill in the text field
+          setTimeout(() => {
+            const instructionsField = document.querySelector('#lens-instructions') as HTMLTextAreaElement;
+            if (instructionsField) {
+              instructionsField.value = "Imagine you are Manhattan Island, insouciantly narrating your own history up to the 1960s. You really hate Robert Moses. Begin.";
+              
+              // Force React to recognize the change
+              const event = new Event('input', { bubbles: true });
+              instructionsField.dispatchEvent(event);
+              
+              // Automatically click the Generate button
+              const generateButton = document.querySelector('button:contains("Generate Narrative")') as HTMLButtonElement;
+              if (generateButton) {
+                generateButton.click();
+              }
+            }
+          }, 2000);
+        }
+      }, 5000);
+    }
+  }
+};
+
+
+const handleManhattanNarrative = () => {
+  // This is the index of the Delaware oral tradition about Manhattan in your demoTexts array
+  const manhattanDemoIndex = 4;
+  
+  // Disable metadata detection temporarily
+  setDisableMetadataDetection(true);
+  
+  // Load the demo content
+  setSelectedDemo(manhattanDemoIndex);
+  setTextInput(demoTexts[manhattanDemoIndex].text);
+  setLocalMetadata(demoTexts[manhattanDemoIndex].metadata);
+  
+  // Prepare the source content for analysis
+  useAppStore.getState().setSourceContent(demoTexts[manhattanDemoIndex].text);
+  useAppStore.getState().setMetadata(demoTexts[manhattanDemoIndex].metadata);
+  useAppStore.getState().setLoading(true);
+  useAppStore.getState().setActivePanel('counter');
+  
+  // Store special lens info in the app store for CounterNarrative component to use
+  useAppStore.getState().setSpecialLensRequest({
+    lensType: 'place',
+    instructions: "Imagine you are Manhattan Island, insouciantly narrating your own history up to the 1960s. You really hate Robert Moses. Begin."
+  });
+  
+  // Re-enable metadata detection after a delay
+  setTimeout(() => {
+    setDisableMetadataDetection(false);
+  }, 1000);
+  
+  // Navigate to analysis page
+  router.push('/analysis');
 };
 
   
@@ -1677,24 +1751,16 @@ const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-
           Discover alternative interpretations that challenge conventional views and surface overlooked aspects of history.
         </p>
         <div className="mt-4 flex flex-wrap gap-2 justify-start">
-  <button
-    className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
-    onClick={() => {/* Implement function */}}
-  >
-    <svg className="w-3.5 h-3.5 mr-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4" />
-    </svg>
-    Margaret Mead's forgotten Balinese assistant
-  </button>
-  <button
-    className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
-    onClick={() => {/* Implement function */}}
-  >
-    <svg className="w-3.5 h-3.5 mr-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-    </svg>
+
+ <button
+  className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
+  onClick={handleManhattanNarrative}
+>
+  <svg className="w-3.5 h-3.5 mr-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+  </svg>
   What if Manhattan narrated its own history?
-  </button>
+</button>
 </div>
       </div>
     </div>

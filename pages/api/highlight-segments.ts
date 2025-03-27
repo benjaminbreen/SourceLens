@@ -21,11 +21,12 @@ const DEFAULT_MODEL = 'gemini-flash';
 
 // Interface for highlighted segments
 export interface HighlightedSegment {
-  text: string;         // The actual text segment
-  startIndex: number;   // Character position where segment starts in original text
-  endIndex: number;     // Character position where segment ends in original text
-  score: number;        // Relevance score from 0 to 1
-  explanation: string;  // Brief explanation of why this segment matches
+  id: number;          // Unique identifier for the segment
+  text: string;        // The actual text segment
+  startIndex: number;  // Character position where segment starts in original text
+  endIndex: number;    // Character position where segment ends in original text
+  score: number;       // Relevance score from 0 to 1
+  explanation: string; // Brief explanation of why this segment matches
 }
 
 export default async function handler(
@@ -68,7 +69,7 @@ export default async function handler(
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.2,
         response_format: { type: "json_object" },
-        max_tokens: 2000,
+        max_tokens: 6000,
       });
       
       rawResponse = response.choices[0]?.message?.content || '';
@@ -84,7 +85,7 @@ export default async function handler(
       console.log(`Using Anthropic model: ${modelConfig.apiModel}`);
       const response = await anthropic.messages.create({
         model: modelConfig.apiModel,
-        max_tokens: 2000,
+        max_tokens: 6000,
         system: "You are a JSON API that returns valid JSON only, with no additional text.",
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.2,
@@ -115,7 +116,7 @@ export default async function handler(
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.2,
         response_format: { type: "json_object" },
-        max_tokens: 2000,
+        max_tokens: 6000,
       });
       
       rawResponse = response.choices[0]?.message?.content || '';
@@ -140,10 +141,24 @@ export default async function handler(
       segments = segments.slice(0, numSegments);
     }
     
+    // Add IDs to segments (required for proper highlighting)
+    const segmentsWithIds = segments.map((segment, index) => ({
+      ...segment,
+      id: index
+    }));
+    
+    // Validate if text segments actually exist in content
+    const validatedSegments = segmentsWithIds.filter(segment => {
+      // Only keep segments whose text actually appears in the content
+      return content.includes(segment.text);
+    });
+    
+    console.log(`Found ${validatedSegments.length} valid segments out of ${segments.length} total`);
+    
     return res.status(200).json({
-      segments,
+      segments: validatedSegments,
       query,
-      totalSegments: segments.length,
+      totalSegments: validatedSegments.length,
       rawPrompt: prompt,
       rawResponse
     });
