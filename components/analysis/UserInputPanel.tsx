@@ -36,54 +36,6 @@ export default function UserInputPanel() {
   const [isCardDropped, setIsCardDropped] = useState(false);
   const [cardText, setCardText] = useState('');
 
-  // Simple function to get a friendly model description
-  function getModelDescription(modelId: string): string {
-    const model = models.find((m) => m.id === modelId);
-    if (!model) return 'Unknown model selected';
-
-    const descriptions: Record<string, string> = {
-      'claude-haiku':
-        "Claude 3.5 Haiku is Anthropic's fastest model, ideal for quick analyses with sub-second response times.",
-      'claude-sonnet':
-        "Claude 3.7 Sonnet is Anthropic's most advanced model, providing nuanced analysis for in-depth tasks.",
-      'gpt-4o-mini':
-        'GPT-4o Mini balances speed and accuracy, ideal for basic analysis at a lower cost.',
-      'gpt-4o':
-        "GPT-4o is well-rounded with excellent reasoning. It works well across diverse analysis types.",
-      'gpt-4.5-preview':
-        "GPT-4.5 Preview is cutting-edge, recommended for complex counter-narratives and thorough analyses.",
-      'gemini-flash':
-        "Gemini 2.0 Flash by Google is speedy and strong in context handling, great for historical documents.",
-      'gemini-flash-lite':
-        "Gemini 2.0 Flash Lite is a faster, budget-friendly variant of Flash 2.0 with solid reasoning.",
-      'o3-mini':
-        "O3 Mini is a lightweight OpenAI model for quick initial analyses with simpler texts.",
-      'gemini-2.0-pro-exp-02-05':
-        "Google's newest experimental model, offering top-tier reasoning and context handling.",
-    };
-
-    return (
-      descriptions[model.id] ||
-      model.description ||
-      `${model.name} by ${
-        model.provider === 'anthropic'
-          ? 'Anthropic'
-          : model.provider === 'openai'
-          ? 'OpenAI'
-          : 'Google'
-      }`
-    );
-  }
-
-  // Helper to choose the correct logo image from public folder
-  function getModelLogo(modelId: string): string {
-    if (modelId.includes('claude')) return '/anthropic.png';
-    if (modelId.includes('gpt') || modelId.includes('o3')) return '/openai.png';
-    if (modelId.includes('gemini')) return '/gemini.png';
-    // fallback
-    return '/anthropic.png';
-  }
-
   // Handler for perspective input
   const handlePerspectiveSubmit = () => {
     setPerspective(perspectiveInput);
@@ -195,7 +147,7 @@ export default function UserInputPanel() {
     <div className="space-y-6">
       {/* Analysis Perspective */}
       <div>
-        <h3 className="font-medium mb-2 text-slate-800">Analysis Perspective</h3>
+        <h3 className="font-medium mb-1 text-slate-800">Analysis Perspective</h3>
         {showPerspectiveInput ? (
           <div className="space-y-2">
             {isCardDropped ? (
@@ -232,7 +184,7 @@ export default function UserInputPanel() {
                   className={`w-full p-2 border rounded focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 transition-colors ${
                     isDragOver ? 'border-amber-400 bg-amber-50/30' : 'border-slate-200'
                   }`}
-                  placeholder="E.g., Marxist analysis, feminist reading..."
+                  placeholder=""
                   value={perspectiveInput}
                   onChange={(e) => setPerspectiveInput(e.target.value)}
                   onDrop={(e) => {
@@ -278,7 +230,7 @@ export default function UserInputPanel() {
                   setIsCardDropped(false);
                   setCardText('');
                 }}
-                className="px-3 py-1 text-sm font-medium text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-md transition-all"
+                className="px-3 py-1 text-sm font-medium text-slate-700 bg-amber-200 hover:bg-amber-300 rounded-md transition-all"
               >
                 Cancel
               </button>
@@ -417,24 +369,14 @@ export default function UserInputPanel() {
               : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
-          Begin Roleplay
+          Simulation Mode
         </button>
+
+        
       </div>
 
       {/* Model Info Panel with provider logo */}
-      {llmModel && (
-        <div className="mt-4 p-3 bg-slate-50 rounded-md border border-slate-200 text-xs flex items-start space-x-2">
-          <img
-            src={getModelLogo(llmModel)}
-            alt="Provider Logo"
-            className="w-8 h-8 mt-0.5"
-          />
-          <div>
-            <h4 className="font-medium text-slate-700 mb-1">About Selected Model</h4>
-            <p className="text-slate-600">{getModelDescription(llmModel)}</p>
-          </div>
-        </div>
-      )}
+    
     </div>
   );
 }

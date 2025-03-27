@@ -548,12 +548,11 @@ useEffect(() => {
   
 
   const demoTexts = [
-  // Lincoln's Gettysburg Address (existing)
 
   // Sumerian tablet
   {
-    emoji: "😡",
-    title: "Complaint to Ea-nasir",
+    emoji: "𒀭",
+    title: "Sumerian Complaint Tablet to Ea-nāṣir",
     description: "Ancient Mesopotamian complaint about poor quality copper, history's first customer service dispute",
     text: `Tell Ea-nasir: Nanni sends the following message:
 
@@ -580,10 +579,122 @@ Take cognizance that (from now on) I will not accept here any copper from you th
     }
   },
 
+  // Late medieval theological treatise
+{
+  emoji: "👹",
+  title: "Types of Demons",
+  description: "A 1504 Latin text on demons and spiritual temptation",
+  text: `Quanto autem inuidiosae et blasphemias bono inspirans quale illud in lib. 4 Reg. xxii. ait:  
+Egrediar et ero spiritus mendax in ore omnium prophetarum.  
+Praeterea firmissime Cassianus diuitio suis audit de­mones nunquam sursum ascendere.  
+Dicit etiam Luciferi, secundum Sanctum Alexium, et Beelzebub dicuntur ad effectum in obsedes fingendi,  
+quia eos quod obsidere faciunt mutuos furibundos et eosdem ab hominibus qualificari potuisse.  
+Serio autem alij sunt incentores libidinis, vt Asmodeus de quo Tobiae iii.  
+et alij uanitatum et insaniae. Dan. vi.  
+Et spiritus de cæliby vicio est vt demon superbiæ vocitatur Lucifer et judicis luxuriae.  
+Irae Sathanas, Baal zebub sed est de multitudine multitatis.  
+
+Haec de speciebus et de causis status sum dixero, vide ubi Demon generatur.  
+De primo alij dicunt demones meridianos alij nocturnos qui alij dicuntur timit.  
+Psal.: non timebis a timore nocturno, a sagitta volante in die, a incursu a daemonio meridiano.  
+Ubi Lyra dicit Rabbini falso monere quod in deserto haberent ficte ab hebraeis tabernacula in tenebris  
+et concubitu vastari a meridie.  
+
+Et quod ipsa sunt nocturna demonium quod permissa est primo propter illa maggia noctidiana  
+in tenebris sibi obiecto.  
+Altero vero quod conceditur magistra in meridie vel clara die.  
+Ait idem Lyra quod videt probabile satis non esse demones angeli  
+sed sunt occupandi ad peccatores fidelius et vanos facere tentationes  
+quia gaudent diversis temporibus et pro oppositu malitiae certare multipliciter.  
+
+Vti ergo supra excerpta verba Psalmista dixit distingui quinque genera tentationum  
+secundum quinque dicta in Psalm.:  
+Timor et occultatione significat timorem nocturnum.  
+Secunda tenuis et malefica qui per sagittam volat in die.  
+Tertium latere occulto designatur per negotiis perambulantem in tenebris.  
+Exaudire aperta est demonium meridianum id est Diabolo aperta alicui sunt demonum  
+ut dicit Augustinus *De divinatione demonium*.  
+
+Qui corpora humana non sentiendo penetrat et se cogitationibus corporum hominum quantum per arma animae  
+quae est imaginatione varia multisfice vigilantis sive dormientis.  
+Et ita in virtute imaginationis quae est ab hominibus diabolo permissa imagine principalibus  
+ut dicit alias in carnali concupiscentia.  
+
+Jam ergo quod demones nominis istis non est ob demonum.  
+Nono alij sunt demones vt dicit Cassianus ubi supradictus.  
+Si energumenis non veritas aliqua adeo ut ea quae geruntur vel loquuntur  
+neque nos intelligantur aliqua non rationem et postea recordantur.  
+Dicunt autem energumeni propter quod demones veraciter vt nisi possint operationes naturales  
+exercere per solum libertatis quod obsessis quibus aliquid aboleas externa mania vexantur  
+et obsident ad modum castigare videlicet viduare demones nisi secundum reperiuntur  
+bonos accipitur indifferenter per altero.  
+
+Vnde in Magistrum in distinctione vii. et secundum diabolo potestates hominum  
+aliqui solis corporibus aliis quibus non est diabolicis est autem virtute concedendo molestare.  
+Aliqui solum mentalibus per permittitur molesti tale.  
+Aliqui utrumque et hoc diabolicum est per aliisque.  
+
+**Quare tentatores demones primitus cade non ostendet cui et maxime eos post secundam ad cunctis manifeste vexantur**;  
+unde non sunt. Rhadet firmissime Cassianus in collatione.  
+Primo objiciendo quoniam in eis demoniis veraciter debemus credere.  
+Secundo quoniam si operationes similis hominis a demonio nullo veritatis vel veras esse  
+quia omnia demoni non ab ipsis motu proprio et medico in eis ad voluntario integrum quod est bonum  
+sed generaliter regula cenando est.  
+
+Tertio quia certationes debeo bono obsidens et amittere nisi demon sit sua bonitate  
+nos nil per voluntarie inertia vappulare sicut beatus Hieronymus vi. vi. vi.  
+in plerisque leuissimis eis videtur sicut dolosa et praetexit noscere per aliter purum sunt certe facere.  
+
+Et ipsa bona docmus sui venduntur veraciter regem secundum quod nos demonum malignus est,  
+quia non est de industria per voluntatem obediential sed ab aliquo per daemonium vincitur ista.  
+
+4 Regum xxii. Et certissimum est abbas Moyses quibus bonus respondens respondent sancti Macharii  
+bonorum coram demonium infestibus mobil pluribus leguntur in vita patrum.  
+
+Secundo obiiciunt quod imperfecte fiducie Cassianus in sententia non sunt despicientes  
+sed a demonibus vexantur quia non sunt perfecte spe­mina praecauenda ignorantiose iudicatur.  
+Si aliqui ut Augustinus *De Trinitate* libro iii. habent causam.  
+
+Tertium certo puero baptizato et innocentibus ut veraciter a demonio hoc permittitter,  
+ut videatur manifestissime miseria hominum vitae quam incurrimus per peccatum primo parentum.  
+Et etiam sit fortiter per merita et purgationem propriam ex demonio causis ut patrum vita.  
+
+Quarto quia ad usum ridet firmissime Cassianus dicit quod lucis ista (unde) demonicae artes dicuntur certas  
+ipse et Augustinus plenum simulatorem agminium in deo non dat ociositas versantes  
+sed ut ipsi faciunt rationes per quam sua sibi laborat ammirentur in pluribus.  
+
+Et enim sui gaudio sunt tristitia quia perfusissim fides sua gaudio dat ut contraria.  
+Certum (ut dicit) divinum potentia sua vellicet odiosius demoniaca miseria aspectibus substraxit.  
+Primo nec per corporibus corporibus veraciter ita cernore nos intolerabilis timore perterramur maxime  
+quia per voluntarie sua ad libitus et transformatum inuit ut tremulis.  
+
+Secundo hoc eis ita odioso videtur faciente quidem incautio illo qui credulus.  
+Tertio nec intimi hominibus ad demonica fieret quidem amicicia familiaris  
+tam per participationis cuius modo eo voluntarie quod aliqui querunt bonis  
+qualia etiam solet fieri inter maleficos congressus.  
+
+**Deus laudabilis etc.**`,
+  metadata: {
+    date: '1504',
+    author: 'Pelbartus de Themeswar',
+    researchGoals: 'Investigate late medieval demonology, angelology, and the psychology of temptation in monastic theology',
+    additionalInfo: 'Excerpted from Pelbartus’s posthumous theological synthesis published in the early 16th century as part of the Rosarium series.',
+    title: 'De Daemonibus et Tentationibus',
+    documentEmoji: '👿',
+    documentType: 'Book',
+    genre: 'Demonology',
+    placeOfPublication: 'Hagenau, Holy Roman Empire',
+    academicSubfield: 'Theology / Moral Philosophy',
+    tags: ['Demonology', 'Cassianus', 'Pelbartus', 'Spiritual Temptation', 'Rosarium', 'Latin Scholasticism'],
+    summary: 'Complex Latin theological discourse on the nature, classification, and function of demons in temptation, possession, and divine permission.',
+    fullCitation: 'Pelbartus de Themeswar. *Secundus Liber Rosarii Theologiae Aurei: ad Sententiarum secundum librum accommodatissimus.* Hagenau: 1504.'
+  }
+},
+
    // Spanish colonial document
   {
     emoji: "🌵",
-    title: "Inquisition Peyote Ban",
+    title: "Mexican Inquisition Peyote Ban",
     description: "1620 Spanish colonial edict banning the use of the psychedelic peyote cactus",
     text: `NOS LOS INQVISIDORES CONTRA LA HERETICA PRAVEDAD, Y APOSTASSIA
 EN LA Ciudad de Mexico estados, y Prouincias de la Nueua Espafia, nueua Galicia, Guate-
@@ -707,7 +818,7 @@ The revenue or stock of a Kingdom by which it is provided of forraign wares is e
  // Native oral tradition source
 {
   emoji: "🪶",
-  title: "Delaware Oral Tradition",
+  title: "Delaware Oral Tradition of Manhattan",
   description: "Indigenous account of first European contact at Manhattan Island",
   text: `The following account of the first arrival of Europeans at York Island (now Manhattan) was related to me 
 by aged and respected Delawares, Monseys, and Mahicanni (also called Mohicans or Mahicanders), around forty years ago. 
@@ -787,6 +898,75 @@ But the whites returned, asking for more and more land—until, as they say, the
       summary: 'A concise dedication honoring Union soldiers'
     }
   },
+
+  // Philosophical experience report - 19th century consciousness studies
+{
+  emoji: "🌀",
+  title: "William James's Nitrous Oxide Trip",
+  description: "William James’s 1882 philosophical reflections under nitrous oxide intoxication",
+  text: `# Subjective Effects of Nitrous Oxide
+
+
+Some observations of the effects of nitrous-oxide-gas-intoxication which I was prompted to make by reading the pamphlet called *The Anaesthetic Revelation and the Gist of Philosophy* (Blood, 1874), have made me understand better than ever before both the strength and the weakness of Hegel's philosophy. I strongly urge others to repeat the experiment, which with pure gas is short and harmless enough. The effects will of course vary with the individual, just as they vary in the same individual from time to time; but it is probable that in the former case, as in the latter, a generic resemblance will obtain. 
+
+With me, as with every other person of whom I have heard, the keynote of the experience is the tremendously exciting sense of an intense metaphysical illumination. Truth lies open to the view in depth beneath depth of almost blinding evidence. The mind sees all the logical relations of being with an apparent subtlety and instantaneity to which its normal consciousness offers no parallel; only as sobriety returns, the feeling of insight fades, and one is left staring vacantly at a few disjointed words and phrases, as one stares at the cadaverous-looking snow peak from which the sunset glow has just fled, or at the black cinder left by an extinguished brand.
+
+The immense emotional sense of reconciliation which characterizes the "maudlin" stage of alcoholic drunkenness — a stage which seems silly to lookers-on, but the subjective rapture of which probably constitutes a chief part of the temptation to the vice — is well-known. The centre and periphery of things seem to come together. The ego and its objects, the *meum* and the *tuum*, are one. Now this, only a thousand-fold enhanced, was the effect upon me of the gas: and its first result was to make peal through me with unutterable power the conviction that Hegelism was true after all, and that the deepest convictions of my intellect hitherto were wrong.
+
+Whatever idea of representation occurred to the mind was seized by the same logical forceps, and served to illustrate the same truth; and that truth was that every opposition, among whatsoever things, vanished in a higher unity in which it is based; that all contradictions, so-called, are of a common kind; that unbroken continuity is of the essence of being; and that we are literally in the midst of an infinite, to perceive the existence of which is the utmost we can attain. Without the same as a basis, how could strife occur? Strife presupposes something to be striven about; and in this common topic, the same of both parties, the differences merge. 
+
+From the hardest contradiction to the tenderest diversity of verbiage, differences evaporate; yes and no agree at least in being assertions; a denial of a statement is but another mode of stating the same. Contradiction can only occur of the same thing — all opinions are thus synonyms, and synonymous, are the same. But the same phrase by difference of emphasis is two; and here again difference and no-difference merge in one.
+
+It is impossible to convey an idea of the torrential character of the identification of opposites as it streams through the mind in this experience. I have sheet after sheet of phrases dictated or written during the intoxication, which to the sober reader seem meaningless drivel, but which at the moment of transcribing were fused in the fire of infinite rationality.
+
+God and devil, good and evil, life and death, I and thou, sober and drunk, matter and form, black and white, quantity and quality, shiver of ecstasy and shudder of horror, vomiting and swallowing, inspiration and expiration, fate and reason, great and small, extent and intent, joke and earnest, tragic and comic — and fifty other contrasts figure in these pages in the same monotonous way. 
+
+The mind saw how each term belonged to its contrast through a knife-edge moment of transition which it effected, and which, perennial and eternal, was the *nunc stans* of life. The thought of mutual implication of the parts in the bare form of a judgment of opposition — as "nothing—but," "no more—than," "only—if," etc. — produced a perfect delirium of the theoretic rapture. And at last, when definite ideas to work on came slowly, the mind went through the mere form of recognizing sameness in identity by contrasting the same word with itself, differently emphasized, or shorn of its initial letter. Let me transcribe a few sentences:
+
+- "What's mistake but a kind of take?"  
+- "What's nausea but a kind of -usea?"  
+- "Sober, drunk, -unk, astonishment."  
+- "Everything can become the subject of criticism —  
+- How criticize without something to criticize?"  
+- "Agreement — disagreement!!"  
+- "Emotion — motion!!!!"  
+- "By God, how that hurts! By God, how it **doesn’t** hurt!"  
+- "Reconciliation of two extremes."  
+- "By George, nothing but *othing*!"  
+- "That sounds like nonsense, but it is pure *on*sense!"  
+- "Thought deeper than speech...!"  
+- "Medical school; divinity school, *school*! **SCHOOL**!"  
+- "Oh my God, oh God; oh God!" 
+
+The most coherent and articulate sentence which came was this:  
+
+"**There are no differences but differences of degree between different degrees of difference and no difference.**"
+
+But now comes the reverse of the medal. What is the principle of unity in all this monotonous rain of instances? Although I did not see it at first, I soon found that it was in each case nothing but the abstract genus of which the conflicting terms were opposite species. In other words, although the flood of ontologic emotion was Hegelian through and through, the ground for it was nothing but the world-old principle that things are the same only so far and not farther than they are the same, or partake of a common nature — the principle that Hegel most tramples under foot.
+
+At the same time the rapture of beholding a process that was infinite, changed (as the nature of the infinitude was realized by the mind) into the sense of a dreadful and ineluctable fate, with whose magnitude every finite effort is incommensurable and in the light of which whatever happens is indifferent. This instantaneous revulsion of mood from rapture to horror is, perhaps, the strongest emotion I have ever experienced. I got it repeatedly when the inhalation was continued long enough to produce incipient nausea; and I cannot but regard it as the normal and the inevitable outcome of the intoxication, if sufficiently prolonged.
+
+A pessimistic fatalism, depth within depth of impotence and indifference, reason and silliness united, not in a higher synthesis, but in the fact that whichever you choose it is all one — this is the upshot of a revelation that began so rosy bright.
+
+Even when the process stops short of this ultimatum, the reader will have noticed from the phrases quoted how often it ends by losing the clue. Something "fades," "escapes"; and the feeling of insight is changed into an intense one of bewilderment, puzzle, confusion, astonishment. I know no more singular sensation than this intense bewilderment, with nothing left to be bewildered at save the bewilderment itself. It seems, indeed, a *causa sui*, or "spirit become its own object."
+
+My conclusion is that the togetherness of things in a common world, the law of sharing, of which I have said so much, may, when perceived, engender a very powerful emotion; that Hegel was so unusually susceptible to this emotion throughout his life that its gratification became his supreme end, and made him tolerably unscrupulous as to means he employed; that indifferentism is the true outcome of every view of the world which makes infinity and continuity to be its essence; and that pessimistic or optimistic attitudes pertain to the mere accidental subjectivity of the moment. Finally, that the identification of contradictories, so far from being the self-developing process which Hegel supposes, is really a self-consuming process, passing from the less to the more abstract, and terminating either in a laugh at the ultimate nothingness, or in a mood of vertiginous amazement at a meaningless infinity.`,
+  metadata: {
+    date: '1882',
+    author: 'William James',
+    researchGoals: 'Explore consciousness, metaphysical insight, and philosophical implications of anesthetic states',
+    additionalInfo: 'Originally inspired by Benjamin Paul Blood’s 1874 pamphlet *The Anaesthetic Revelation and the Gist of Philosophy*.',
+    title: 'Some Observations of Nitrous-Oxide-Gas-Intoxication',
+    documentEmoji: '🌀',
+    documentType: 'Journal Article',
+    genre: 'Trip Report',
+    placeOfPublication: 'Oxford, England',
+    academicSubfield: 'Philosophy of Mind / Psychology of Mysticism',
+    tags: ['William James', 'Nitrous Oxide', 'Altered States', 'Metaphysics', 'Hegel', 'Consciousness Studies'],
+    summary: 'James’s firsthand account of the metaphysical euphoria and horror induced by nitrous oxide intoxication and its implications for Hegelian philosophy',
+    fullCitation: 'William James. "The Subjective Effects of Nitrous Oxide." *Mind*, Vol. 7, No. 27 (Jul. 1882), pp. 186–208.'
+  }
+},
 
   // Medical text - 19th century pharmacology
 {
@@ -1021,22 +1201,25 @@ Returned later to arrange a series of partly completed *Damas*—he understood t
 ];
 
 const demoExtractConfigs: Record<number, ExtractInfoConfig> = {
-  0: { // Gettysburg Address
-    listType: "What people or groups are mentioned in Lincoln's speech?",
-    fields: [
-      "Name or group mentioned",
-      "Context in which they appear", 
-      "Significance to Lincoln's argument",
-      "Line number or paragraph where mentioned"
-    ]
-  },
-  1: { // Ancient Complaint
+  
+  0: { // Ancient Complaint
     listType: "What are Nanni's specific complaints?",
     fields: [
       "Specific complaints",
       "Severity level in context of Sumerian society",
       "Relevent quote in source",
     ]
+  },
+   1: { // Pelbartus demon text
+    listType: "Make a table of the demons and spiritual entities mentioned in this text",
+    fields: [
+      "Latin name for demon",
+      "English translation",
+      "Characteristics", 
+      "Key quote in Latin (5-6 words)",
+      "Translation"
+    ],
+    format: 'table'
   },
   2: { // Thomas Mun
     listType: "What countries does Mun mention in this source?",
@@ -1088,6 +1271,12 @@ const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-
   
   if (targetPanel === 'roleplay') {
     useAppStore.getState().setRoleplayMode(true);
+  }
+
+   // Special handling for extract-info panel
+  if (targetPanel === 'extract-info' && demoExtractConfigs[demoIndex]) {
+    // Set the extract info configuration for this specific demo
+    useAppStore.getState().setExtractInfoConfig(demoExtractConfigs[demoIndex]);
   }
   
   // Prepare the source content for analysis
@@ -1345,15 +1534,15 @@ const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-
 {/* multiple perspectives example demos */}
 
  <div className="mt-4 flex flex-wrap gap-2 justify-start">
-        <button
-          className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition-colors"
-          onClick={() => {/* Implement auto-summarize */}}
-        >
-          <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          List all demons in a 17th century grimoire
-        </button>
+    <button
+      className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition-colors"
+      onClick={() => handleQuickDemo(1, 'extract-info')} // Index 1 is the Pelbartus de Themeswar demon treatise
+    >
+      <svg className="w-3.5 h-3.5 mr-1 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      </svg>
+      List all demons in a 16th century treatise
+    </button>
         <button
           className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition-colors"
           onClick={() => {/* Implement language detection */}}
@@ -1566,7 +1755,7 @@ const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-
 {showDemoOptions && (
   <div 
     id="demo-dropdown"
-    className="absolute top-full right-0 mt-2 bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-slate-200 p-5 z-50 w-[380px] sm:w-[380px] max-h-[400px] overflow-y-auto" // Added max-height and overflow
+    className="absolute top-full  right-0 mt-2 bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-slate-200 p-5 z-50 w-[480px] sm:w-[440px] max-h-[540px] overflow-y-auto" // Added max-height and overflow
     style={{
       animation: 'dropdownAppear 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
       transformOrigin: 'top right'
@@ -1599,7 +1788,8 @@ const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-
       .demo-item:nth-child(2) { animation-delay: 0.1s; }
       .demo-item:nth-child(3) { animation-delay: 0.15s; }
       .demo-item:nth-child(4) { animation-delay: 0.2s; }
-      .demo-item:nth-child(5) { animation-delay: 0.25s; }
+      .demo-item:nth-child(5) { animation-delay: 0.23s; }
+            .demo-item:nth-child(6) { animation-delay: 0.28s; }
       
       @keyframes fadeRotateIn {
         0% { opacity: 0; transform: rotate(-90deg); }
@@ -1619,7 +1809,7 @@ const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-
       }
     `}</style>
     
-    <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+    <div className="flex items-center justify-between mb-1 pb-2 border-b border-slate-100">
       <h4 className="text-base font-semibold text-slate-800">Choose an example</h4>
       <button 
         onClick={() => setShowDemoOptions(false)}
@@ -1631,46 +1821,57 @@ const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-
         </svg>
       </button>
     </div>
+
+     {/* demo object rendering */}
     
     <div className="flex flex-col gap-2">
-      {demoTexts.map((demo, index) => (
-        <div key={index} className="relative group demo-item">
-          <button
-            onClick={() => {
-              loadDemoContent(index);
-              setShowDemoOptions(false);
-            }}
-            className={`flex items-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-all duration-300 hover:shadow-md ${
-              selectedDemo === index ? 'ring-2 ring-amber-500 shadow-amber-100/50' : 'shadow-sm'
-            } w-full text-left group`}
-          >
-            <div className="flex items-center w-full">
-              <div className="flex items-center justify-center min-w-12 h-12 bg-slate-50 text-2xl transition-all duration-300 group-hover:bg-amber-50 group-hover:text-amber-600"> 
-                <span className="transition-transform duration-300 group-hover:scale-110">
-                  {demo.emoji}
-                </span>
-              </div>
-              <div className="px-3 py-2 text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">
-                {demo.title}
-                <p className="text-xs text-slate-500 mt-0.5 line-clamp-1 group-hover:text-slate-600">
-                  {demo.description || "Explore this historical text"}
-                </p>
-              </div>
-              <div className="ml-auto pr-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
-            
-          {/* Hover effect overlay */}
-              <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-amber-100/0 to-amber-100/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-100/20 to-transparent translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-              </div>
-            </button>
+  {demoTexts.map((demo, index) => (
+    <div key={index} className="relative group demo-item">
+      <button
+        onClick={() => {
+          loadDemoContent(index);
+          setShowDemoOptions(false);
+        }}
+        className={`flex items-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-all duration-300 hover:shadow-md ${
+          selectedDemo === index ? 'ring-4 ring-amber-500 shadow-amber-100/50' : 'shadow-sm'
+        } w-full text-left group overflow-hidden`}
+      >
+        <div className="flex items-center w-full">
+          {/* Emoji container for demos */}
+          <div className="flex items-center justify-center min-w-14 h-14 bg-slate-50 text-2xl transition-all duration-300 group-hover:bg-amber-100 group-hover:text-amber-600 overflow-hidden"> 
+            <span className="transition-all duration-300 group-hover:scale-130 group-hover:ring-amber-500 ">
+              {demo.emoji}
+            </span>
           </div>
-        ))}
-      </div>
+          
+          {/* Content area for demo */}
+          <div className="px-4 py-2.5 text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">
+            <span className="block tracking-tight">{demo.title}</span>
+            <p className="text-xs text-slate-500 mt-0.5 line-clamp-1 group-hover:text-slate-600 transition-all">
+              {demo.description || "Explore this historical text"}
+            </p>
+          </div>
+          
+          {/* Arrow indicator for demos */}
+          <div className="ml-auto pr-3 text-amber-500 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+        
+      
+        <div className="absolute inset-0 pointer-events-none rounded-lg border border-transparent group-hover:border-amber-200/40 transition-all duration-300"></div>
+        
+        {/* Subtle gradient effect that appears on hover */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-50/0 to-amber-50/0 group-hover:via-amber-200/10 group-hover:to-amber-100/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+      </button>
+    </div>
+  ))}
+</div>
+
+
+
               
               <div className="mt-3 pt-2 border-t border-slate-100 text-xs text-center text-slate-500">
                 You can also upload your own document. Try it!
@@ -1678,21 +1879,10 @@ const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-
             </div>
           )}
         </div>
+
       </div>
 
-          {/* Tooltips rendered OUTSIDE the scrollable container */}
-    {demoTexts.map((demo, index) => (
-      <div key={`tooltip-${index}`} className={`opacity-0 fixed right-0 top-0 mr-4 w-64 p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200 z-[100] group-hover:opacity-100 transition-all duration-300 pointer-events-none`}
-           id={`tooltip-${index}`}
-      >
-        <div className="relative">
-          <div className="absolute right-[-12px] top-3 w-3 h-3 bg-white rotate-45 border-r border-t border-slate-200"></div>
-          <p className="text-[13px] italic text-slate-600">
-            {demo.description || "Explore this historical text with SourceLens"}
-          </p>
-        </div>
-      </div>
-    ))}
+     
  
               
       {/* Enhanced Tabs with Indicator Animation */}

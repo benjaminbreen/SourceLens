@@ -30,6 +30,8 @@ import ExtractPanelToggle from '@/components/extract/ExtractPanelToggle';
 import DocumentActions from '../ui/DocumentActions';
 import InfoButton from '../ui/InfoButton';
 import DocumentPortrait from '../ui/DocumentPortrait';
+import HighlightPanel from '../highlight/HighlightPanel';
+import HighlightExplanation from '../highlight/HighlightExplanation';
 
 export default function MainLayout() {
   const { 
@@ -48,7 +50,8 @@ export default function MainLayout() {
     processingData,
     llmModel, 
     perspective,
-    sourceFile
+    sourceFile,
+    setActivePanel,
   } = useAppStore();
 
   const [animateHeader, setAnimateHeader] = useState(false);
@@ -510,13 +513,16 @@ const extractYear = (dateStr: string): string => {
                 : "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             } />
           </svg>
-          {activePanel === 'counter' 
-            ? "Counter-Narratives" 
-            : activePanel === 'roleplay' 
-            ? "Analysis" 
-            : activePanel === 'references'
-            ? "References Information"
-            : "Analysis"}
+        {activePanel === 'counter' 
+          ? "Counter-Narratives" 
+          : activePanel === 'roleplay' 
+          ? "Analysis" 
+          : activePanel === 'references'
+          ? "References Information"
+          : activePanel === 'highlight'
+          ? "Text Highlighting"
+          : "Analysis"}
+
         </h2>
         
         {/* Add the InfoButton component */}
@@ -541,9 +547,23 @@ const extractYear = (dateStr: string): string => {
         }
       </div>
     </div>
+    <button
+  onClick={() => setActivePanel('highlight')}
+  className={`flex items-center w-full p-2 mt-4 rounded-md mb-2 transition-all ${
+    activePanel === 'highlight'
+      ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+  }`}
+>
+  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+  </svg>
+  <span className="text-sm">Highlight Text</span>
+</button>
             
           </div>
         </div>
+
       </div>
 
       {/* About SourceLens Logo Modal */}

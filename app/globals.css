@@ -18,6 +18,17 @@
 }
 
 
+  
+  
+  .bg-radial-gradient {
+    background: radial-gradient(circle, var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to));
+  }
+  
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }

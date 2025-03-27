@@ -29,6 +29,14 @@ export interface Metadata {
 
 }
 
+export interface HighlightedSegment {
+  text: string;         // The actual text segment
+  startIndex: number;   // Character position where segment starts in original text
+  endIndex: number;     // Character position where segment ends in original text
+  score: number;        // Relevance score from 0 to 1
+  explanation: string;  // Brief explanation of why this segment matches
+}
+
 export interface ExtractInfoConfig {
   listType: string;
   fields: string[];
@@ -68,6 +76,11 @@ interface AppState {
   metadata: Metadata | null;
   perspective: string;
   referencesModel: string;
+
+  //text segment color coding
+   highlightedSegments: HighlightedSegment[];
+  highlightQuery: string;
+  isHighlightMode: boolean;
 
 
 // dark mode
@@ -109,7 +122,7 @@ setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
   
   // UI state
   isLoading: boolean;
- activePanel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info';
+ activePanel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info'| 'highlight';
   showMetadataModal: boolean;
   rawPrompt: string | null;
   rawResponse: string | null;
@@ -133,7 +146,7 @@ setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
    addMessage: (message: Omit<ConversationMessage, 'timestamp'>) => void;
    clearConversation: () => void;
    setLoading: (loading: boolean) => void;
-   setActivePanel: (panel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info') => void;
+   setActivePanel: (panel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info' | 'highlight') => void;
    setShowMetadataModal: (show: boolean) => void;
    setRawPrompt: (prompt: string | null) => void;
    setRawResponse: (response: string | null) => void;
@@ -142,6 +155,10 @@ setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
    setReferencesModel: (model: string) => void;
    setDetailedAnalysisLoaded: (loaded: boolean) => void;
    resetDetailedAnalysisLoaded: () => void;
+    setHighlightedSegments: (segments: HighlightedSegment[]) => void;
+  setHighlightQuery: (query: string) => void;
+  setHighlightMode: (active: boolean) => void;
+  clearHighlights: () => void;
  
  }
 
@@ -172,6 +189,9 @@ const initialState = {
    isDarkMode: false,
    summarySections: [],
 summaryOverall: '',
+highlightedSegments: [],
+  highlightQuery: '',
+  isHighlightMode: false,
    
 };
 
@@ -239,6 +259,18 @@ export const useAppStore = create<AppState>((set) => ({
 setSummaryOverall: (summary) => set({ summaryOverall: summary }),
 
   toggleDarkMode: () => set(state => ({ isDarkMode: !state.isDarkMode })),
+  
+   setHighlightedSegments: (segments) => set({ highlightedSegments: segments }),
+  
+  setHighlightQuery: (query) => set({ highlightQuery: query }),
+  
+  setHighlightMode: (active) => set({ isHighlightMode: active }),
+  
+  clearHighlights: () => set({ 
+    highlightedSegments: [], 
+    highlightQuery: '',
+    isHighlightMode: false 
+  }),
 
   
   resetState: () => set(initialState)

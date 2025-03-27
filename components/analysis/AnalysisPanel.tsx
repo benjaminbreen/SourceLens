@@ -12,6 +12,8 @@ import SaveToLibraryButton from '../library/SaveToLibraryButton';
 import { useLibrary } from '@/lib/libraryContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import HighlightPanel from '../highlight/HighlightPanel';
+import HighlightExplanation from '../highlight/HighlightExplanation';
 
 // Add this style
 const citationLinkStyle = `
@@ -423,7 +425,9 @@ case 'counter':
 case 'roleplay':
   return (
     <div className="space-y-4">
-      {/* Header with icon */}
+
+
+      {/* simulation mode explanation panel */}
       
         <h3 className="text-md font-medium flex items-center">
          
@@ -431,7 +435,7 @@ case 'roleplay':
         </h3>
 
       
-      {/* Main content with better typography and structure */}
+    
 
         <div className="flex items-start mb-2">
           <p className="text-sm text-slate-700 leading-relaxed">
@@ -451,6 +455,17 @@ case 'roleplay':
      
       </div>
     </div>
+  );
+
+{/* text highlights panel */}
+     case 'highlight':
+  return (
+
+      
+      
+        <HighlightPanel />
+
+
   );
       
     case 'detailed-analysis':
@@ -851,9 +866,17 @@ default:
              <p className="text-slate-700">{question}</p>
            </div>
          ))}
+
+
+
        </div>
+
+
      </div>
+     
     </div>
+
+
   );
   }
 };

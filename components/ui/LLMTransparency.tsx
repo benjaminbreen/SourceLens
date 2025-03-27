@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { useAppStore } from '@/lib/store';
 import { getModelById, LEGACY_MODEL_MAPPING } from '@/lib/models';
+import { models } from '@/lib/models';
 
 // LLM Transparency component that provides visibility into AI exchanges
 // Shows model description and allows viewing of complete prompts and responses
@@ -38,6 +39,53 @@ export default function LLMTransparency({
     console.error("Error getting model info:", error);
   }
 
+  function getModelDescription(modelId: string): string {
+    const model = models.find((m) => m.id === modelId);
+    if (!model) return 'Unknown model selected';
+
+    const descriptions: Record<string, string> = {
+      'claude-haiku':
+        "Claude 3.5 Haiku is Anthropic's fastest model, ideal for quick analyses with sub-second response times.",
+      'claude-sonnet':
+        "Claude 3.7 Sonnet is Anthropic's most advanced model, providing nuanced analysis for in-depth tasks.",
+      'gpt-4o-mini':
+        'GPT-4o Mini balances speed and accuracy, ideal for basic analysis at a lower cost.',
+      'gpt-4o':
+        "GPT-4o is well-rounded with excellent reasoning. It works well across diverse analysis types.",
+      'gpt-4.5-preview':
+        "GPT-4.5 Preview is cutting-edge, recommended for complex counter-narratives and thorough analyses.",
+      'gemini-flash':
+        "Gemini 2.0 Flash by Google is speedy and strong in context handling, great for historical documents.",
+      'gemini-flash-lite':
+        "Gemini 2.0 Flash Lite is a faster, budget-friendly variant of Flash 2.0 with solid reasoning.",
+      'o3-mini':
+        "O3 Mini is a lightweight OpenAI model for quick initial analyses with simpler texts.",
+      'gemini-2.0-pro-exp-02-05':
+        "Google's newest experimental model, offering top-tier reasoning and context handling.",
+    };
+
+    return (
+      descriptions[model.id] ||
+      model.description ||
+      `${model.name} by ${
+        model.provider === 'anthropic'
+          ? 'Anthropic'
+          : model.provider === 'openai'
+          ? 'OpenAI'
+          : 'Google'
+      }`
+    );
+  }
+
+  // Helper to choose the correct logo image from public folder
+  function getModelLogo(modelId: string): string {
+    if (modelId.includes('claude')) return '/anthropic.png';
+    if (modelId.includes('gpt') || modelId.includes('o3')) return '/openai.png';
+    if (modelId.includes('gemini')) return '/gemini.png';
+    // fallback
+    return '/anthropic.png';
+  }
+
   
   
   return (
@@ -53,6 +101,20 @@ export default function LLMTransparency({
       >
         See what the AI sees
       </button>
+
+        {llmModel && (
+        <div className="mt-4 p-3 bg-slate-50 rounded-md border border-slate-200 text-xs flex items-start space-x-2">
+          <img
+            src={getModelLogo(llmModel)}
+            alt="Provider Logo"
+            className="w-8 h-8 mt-0.5"
+          />
+          <div>
+            <h4 className="font-medium text-slate-700 mb-1">About Selected Model</h4>
+            <p className="text-slate-600">{getModelDescription(llmModel)}</p>
+          </div>
+        </div>
+      )}
       
       {/* Modal */}
       {isOpen && (
