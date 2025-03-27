@@ -84,16 +84,9 @@ export default function FAQModal({ isOpen, onClose }: FAQModalProps) {
             <div className="bg-green-50 p-4 rounded-lg border border-green-100">
               <h3 className="text-lg font-medium text-green-900 mb-2">Step 4: Explore Different Perspectives</h3>
               <p className="text-slate-700 mb-3">
-                Use the "Analysis Perspective" option to view your source through different theoretical frameworks:
+                Use the "Analysis Perspective" option to view your source through different theoretical frameworks.
               </p>
-              <ul className="list-disc pl-5 text-slate-700 space-y-1">
-                <li>Feminist reading</li>
-                <li>Marxist analysis</li>
-                <li>Postcolonial perspective</li>
-                <li>Religious context</li>
-                <li>Environmental lens</li>
-                <li>And many more...</li>
-              </ul>
+              
             </div>
           </div>
           
