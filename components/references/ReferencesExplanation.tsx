@@ -30,8 +30,7 @@ export default function ReferencesExplanation() {
           Important Note
         </h4>
         <p className="text-sm text-amber-700">
-          This is an experimental feature and accuracy is not guaranteed. PLEASE be sure to verify the existence, 
-          accuracy, and relevance of these sources before citing them. These references should serve 
+          This is an experimental feature and accuracy is not guaranteed. Be sure to verify accuracy. These references should serve 
           as a starting point for deeper research that YOU perform.
         </p>
       </div>

@@ -11,7 +11,7 @@ import AboutModal from '@/components/ui/AboutModal';
 import FAQModal from '@/components/ui/FAQModal';
 import { useAppStore, Metadata, ExtractInfoConfig } from '@/lib/store';
 import UploadProgress from '@/components/upload/UploadProgress';
-
+import AnalysisFooter from '../components/ui/AnalysisFooter';
 
 export default function Home() {
   const router = useRouter();
@@ -90,7 +90,10 @@ const handleTextAreaDragOver = (e: React.DragEvent<HTMLTextAreaElement>) => {
   }
 };
 
-
+const [expandedFields, setExpandedFields] = useState({
+  additionalInfo: false,
+  researchGoals: false 
+});
 
 // Add this to prevent default behavior when dragging leaves
 const handleTextAreaDragLeave = (e: React.DragEvent<HTMLTextAreaElement>) => {
@@ -823,6 +826,818 @@ The revenue or stock of a Kingdom by which it is provided of forraign wares is e
       fullCitation: 'Mun, Thomas. England\'s Treasure by Forraign Trade. London: Thomas Clark, 1664.'
     }
   },
+
+  {
+  emoji: "🍵",
+  title: "An 18th century drug guide",
+  description: "A Portuguese apothecary's guide to exotic drugs",
+  text: `# MEMORIAL DE VARIOS SIMPLICES
+
+Que da India Oriental, da America, & de outras par-
+tes do mundo vem ao nosso Reyno para reme-
+dio de muytas doenças, no qual se acharão as virtudes de cada hum, & o modo com
+que se devem usar.
+
+A India, & de outras partes da Europa vem para este Reyno muytos remedios de singulares virtudes, conteudas, & annexas a differentes pedras, raizes, páos, seméntes, & frutos; mas porq́ nem das doenças para que os taes remedios servem, nem do modo com que se devem applicar, haja algum roteyro impresso que o ensine; daqui procede, que tendo muytas pessoas em suas casas os ditos remedios, & padecendo varias enfermidades, que facil-mente se podião curar com elles, por falta de noticia dos pres-timos que tem os ditos remedios ficão sem utilidade algũa, & os doentes sem saude: esta consideração, & sentimento incitou a minha curiosidade, & o zelo do bem commum, para que a cus-to de grandes diligencias buscasse não só a algumas pessoas, que assistírão na India, & ou-
+tras terras do mundo; mas descobrisse varios papeis manuscritos, para que informando me de huns, & outros, soubesse com fundamento as virtudes das sobreditas pedras, páos, rai-zes, & frutos, & fizesse este Memorial em soccorro da natureza humana; se por este servi-ço que faço ao bem publico não merecer agradecimento, não merecerey reprehensão, & se ma derem, acabarey de entender que ha homens tam ingratos, & de animo tam deprava-do, que fazem por malicia, o que os meninos fazem por innocencia, mamão o leyte, & mordem o peyto.
+
+Os remedios que vem da India Oriental, & de outras partes, ou sejão pedras, páos, ossos, frutos, sementes, ou raizes, se dão moidos, ou roçados em agua commua; outros os dão misturados em agua de arroz, a que os naturaes daquellas terras chamão Ambatacanja; al-guns os dão em çumo de limão gallego; & aquelles que se dão para as febres, se bebem à en-trada, & à despedida dellas.
+
+A experiencia dos Mouros, & Gentios da Asia, foy a mestra, que deo o conhecimento para o uso dos taes remedios. Tambem a experiencia de alguns curiosos tem mostrado os grandes proveytos, que muytas vezes resultão das suas operações, não encontrando as ge-raes evacuações da Medicina, de que os Panditos, que assistem naquellas terras, tambem usão desde o principio das enfermidades com qualquer descarga precedente, não dilatando tempo em os applicar, & nesta fórma curão as mais agudas, & malignas doenças, regulan-do o tempo da sangria, purga, ajuda, ou vomitorio para o tempo do cordeal, de maneyra que se não applique tudo no mesmo instante, nem se encontre hum remedio com outro, an-tes faça cada hum o seu effeyto livremente.
+
+Muytos Medicos, & outras pessoas que o não são, tem para si que os bezoarticos, & re-medios que vem da India, & de outras terras, nam fazem em Portugal as mesmas maravi-lhas, que fazem na India, & nas terras em que se criárão, assim pela differença do clima, co-mo porque quando chegão cà, jà não tem aquelle vigor, que tinhão nas terras em que nas-cerão. A esta duvida respondo, que todos os simplices conservão as virtudes, com que Deos os creou, em quanto no corpo dos taes simplices nam entra corrupção. Vemos, & experimentamos, que dos simplices, que vem das Conquistas para as boticas do nosso Rey-no, se fazem muytos remedios compostos, & tornão para as mesmes Conquistas para servi-ço dos enfermos, & là fazem os mesmos bons effeytos, que fizerão em Portugal, vindo de diversos climas, & sendo muytos simplices das boticas, mais sugeytos à corrupçaó, que nenhum dos bezoarticos da India, que tem duração muyto mais larga, & perduravel.
+
+Nem falta homem curioso, que poderà mostrar muytos remedios, que vierão da India ha mais de trinta annos, que estão hoje com as mesmas virtudes, com que vierão daquelle Estado, & fazem os mesmos bons effeytos em Portugal, que fazião na India.
+
+Isto supposto como verdade experimentada, iremos tratando de cada hum dos simpli-ces com relação individual de suas virtudes, começando pela pedra Bazar, que he a mais conhecida, & usada, assim em Portugal, como em todo o mundo.
+
+
+
+## PEDRA BAZAR SIMPLEZ.
+
+**Regimento, & virtudes da Pedra Bazar Simplez, ou natural, que nas-ce nos buxos de huns animaes, muy semelhantes aos cabritinhos.**
+
+He necessario examinar com grande cuydado se a pedra Bazar he ver-dadeyra, ou falsa, porque, se he verdadeyra, obra excellentes effeytos, com tal con-dição, que se deve dar em quantidade de vinte & quatro grãos de cada vez, porque dando somente tres, ou quatro grãos, como costumão dar os barbeyros, que saõ os Medicos da gente ordinaria, nenhum effeyto faz, pela pouca quantidade em que a dão, & deste modo ficão o remedio infamado, a vida do doente perdida, & o dinheyro malgastado; & não suc-cederia assim, se a pedra fosse verdadeyra, & a dessem na quantidade sobredita.
+
+He necessario que os Medicos principiantes advirtão duas cousas muyto importantes. A primeyra, que a dita pedra se deve misturar com cinco, ou seis onças de agua commua cozida com escorcioneyra, ou com papoulas, ou com cardo santo, porque os que dão a dita pedra misturada com aguas destilladas, errão no alvo em claro, pelas razões que os curiosos pódem ver na minha Palyanthea da segunda impressão trat. 2. cap. 128. fol 770. & seq.
+
+A segunda cousa, que devem advertir os que derem a dita pedra, he, que a misturem com cinco, ou seis onças de agua commua cozida com qualquer das cousas sobreditas, por-que os que a dão misturada com duas colheres de agua, como fazem os barbeyros, tambem erram no alvo, porque tam pouca quantidade de agua nam he vehiculo bastante para levar a pedra aos lugares distantes aonde ha de servir; mas misturando se com grande quantidade de agua, faz muyto bons effeytos nas ancias do coração, nos vágados, nas faltas de respira-ção, & em todas as febres agudas, & malignas, dando a a qualquer hora que a necessidade o pedir, & sobre sangrias.
+
+Nas suppressões altas da ourina tem a pedra Bazar, sendo verdadeyra, grande virtude, com tal condiçaõ, que antes de a applicar, façam tomar ao doente hum vomitorio de tres onças de agua Benedicta, ou de seis grãos de Tartaro emetico, ou de meya oytava de ca-parrosa branca, sangrando-o ao outro dia nos braços quatro vezes, no outro dia tres, & ao outro outras tres, porque como este caso he tam perigoso, & apressado, he necessario faze-rem se os remedios com grande brevidade, porque se nam ourinão até o septimo dia, ordi-nariamente morrem; & por esta razão requeyro da parte de Deos aos Medicos principian-tes, que comecem infallivelmente a cura das suppressões, sejam altas, ou bayxas, por vo-mitorios, & sangrias repetidas nos braços; porque este conselho se funda na experiencia de 50. annos, & nas muytas suppressiões que curey felizmente por este estylo, como os curiosos pódem ver na minha Polyanthea da segunda impressão trat. 2. cap. 81. fol. 509. a num. 36. usq. ad 40. aonde acharão nomeados os doentes que curey de suppressões altas por este estylo estando alguns delles jà ungidos quando me charmarão.
+
+Permitta se me haver feyto esta digressão, porque me obriga o zelo da vida dos proxi-mos, a dar este aviso tam importante aos presentes, & futuros Medicos.
+
+Tornando ao proposito da pedra Bazar, digo, que depois de dados os vomitorios, & san-grias altas, que são remedios precisamente necessarios, se darà a tal pedra em quantidade de 24. grãos misturados com oyto onças de agua quente, que primeyro seja cozida com huma onça de páo de faveyra seca, & em falta delle, có meya onça de eroca marinha, & em falta della com duas oytavas da erva sapinha, & melhor que tudo, com meya onça de erva chamada virga aurea. Finalmente serve a pedra Bazar, applicada na dita quantidade, para facilitar a camara aos dureyros, com tal condiçaõ que o doente a tome seis dias successivos estando em jejum, misturada com hũa oytava de cremores de Tartaro verdadeyros, desa-tando tudo em hum quartilho de agua cozida com borragens, ou ameyxas. Digo, cremo-res de tartaro verdadeyros, porque hoje vem de fóra do Reyno muytos falsificados com pedra hume, & em lugar de facilitarem a camara, a impedirão. Os que porèm quizerem li-vrarsede este escrupulo, tomem, em lugar dos cremores de tartaro, huma oytava de farro de vinho branco feyto em pó subtilissimo, & experimentaràó grande facilidade na camara.
+
+
+
+## PEDRA CORDEAL COMPOSTA.
+
+**Regimento, & virtudes das pedras Cordeaes compostas.**
+
+Estas pedras não saõ creadas pela natureza nas entranhas de alguns animaes; mas saõ compostas por artificio; constão de varios ingredientes, todos escolhidos, & dotados de grandes virtudes cardiacas, & bezoarticas; daqui procede, que o artifice, que faz estas pedras compostas, he hum Religioso da Companhia de JESUS, morador na India, que as fórma mayores, ou menores, conforme as quer fazer: estas taes pedras sendo feytas pelas mãos deste Religioso, tem virtudes singulares para curar as enfermidades seguintes.
+
+Nas febres malignas, & ardentes, quando o enfermo estiver com grandes ancias, se lhe darão 24. grãos pulverizados com seis onças de agua commua cozida com escorcioneyra, ou com papoulas, ou com cereijas negras, porque tomando a nesta quantidade mitiga a quentura, & a secura, q́ a febre causa, & faz q́ a malignidade naõ commetta o coraçaó, an-tes o defende, conforta, & alegra: & se o doente, ou pela grande fraqueza, ou pela muyta velhice appetecer vinho, se lhe darão os 24. grãos da dita pedra desfeytos em duas colhe-res de vinho generoso: nem pareça aos Medicos novatos q́ he erro, ou temeridade dar esta pedra em vinho, porque gravissimos Authores o permittem, quando a fraqueza he muyto grande, por ser o vinho generoso promptissimo remedio em reparar as forças, & alentar o coração, quando està muyto desfalecido.
+
+A qualquer tempo que a melancolia apertar com os doentes, ou com os sãos, tenhão fe-bre, ou a não tenhão, se póde dar a pedra na quantidade sobredita, se não ouver febre, em vinho excellente; & se a ouver, em agua cozida com escorcioneyra, ou com borragens.
+
+Tomada a dita pedra em agua cozida com huma oytava de raiz de contrayerva, ou de serpentaria virginiana, ou em falta destas raizes, cozida com cardo santo, he remedio effi-caz contra todo o genero de peçonha, assim bebida, como procedida de mordedura de vi-bora, de lacràos, de aranha, ou de outros animaes venenosos; & se applicarà a dita pedra sobre a mordedura.
+
+Tomada em vinho em jejum, preserva das doenças, que procederem do ar corrupto.
+
+Cura por modo de milagre aos leprosos, (não estando ainda confirmados) com tanto que se tome dous meses successivos em jejum, misturando 24. grãos della com outros 24. de antimonio diaphoretico calcinado quatro vezes, & reverberado duas horas com fogo fortissimo, dando tudo em meyo quartilho de agua commua levemente cozida com flor da arvore buxo, por ser a dita flor muyto purificativa do sangue salgado, & dos soros morda-zes, & corrosivos.
+
+Para as pessoas muyto esquentadas do figado se tomaõ 24. grãos da dita pedra, por tem-po de dous meses, em jejum, em meyo quartilho de agua cozida com a raiz da brassica ma-rina, ou do vimal, porque qualquer destas ervas tem efficacissima virtude para temperar a quentura do figado, & entranhas.
+
+Tomada a dita pedra, por 40. dias em jejum, em meyo quartilho de agua cozida com huma mão chea de folhas de espinheyro alvar, a que chamamos Rhamno, & com limadu-ras de osso de veado, mata infallivelmente as lombrigas, & cura as comichões, & costras, ou bostelas do corpo.
+
+Tomando por seis dias continuos em jejum 24. grãos do pó desta pedra em quatro onças de vinho do Rhim, ou branco, em que ouvesse estado de infusaõ hũa oytava de pó da raiz da butua, ou de páo da faveyra seca, ou da erva chamada sapinho, ourinarà o doente, & se livrarà da suppressão da ourina, por mais que seja rebelde, com tanto que tenha tomado no primeyro dia hum vomitorio de seis grãos de Tartaro emetico, ou de tres onças de a-gua Benedicta, & seis sangrias nos braços por dous dias successivos.
+
+Confesso ingenuamente, que depois que (por imercè de Deos, & boa fortuna dos doentes) inventey o meu Bezoartico chamado Curviano contra as febres malignas, bexi-gas, & doenças venenosas, não usey mais de pedra Bazar, porque supposto tenho muyto bom conceyto della, sendo verdadeyra, offerecem se me algumas duvidas, & razões muy forçosas para a não usar, porque vejo que da India vem cada anno arrobas, & arrobas del-las; & he moralmente impossivel que tanta quantidade de pedras sejão verdadeyras; & a-lèm desta razão, me consta de pessoas fidedignas, que estiverão na India muytos annos, que nem todos os animaes, em que as taes pedras se crião, as tem, & quando algum tem duas, he hũ milagre: logo razão tenho para não usar dellas, salvo me constar certamente que são verdadeyras.
+
+E no que pertence às pedras cordeaes compostas, se me offerece outra grande, & muy justificada desconfiança para não usar dellas, & he, que os mesmos Religiosos da Compa-nhia de JESUS, que em Goa as fazem verdadeyras, & merecedoras de toda a estimação, se queyxão que là se falsificão, & se espalhão por todo o mundo com o decoroso nome de se-rem feytas pelos mesmos Padres: & prouvera a Deos que só là ouvesse taes falsificadores; mas tambem em Lisboa ha quem falsifica as taes pedras, & as faz taõ parecidas, & seme-lhantes com as verdadeyras, que não se conhece o engano, & falsidade dellas, senão depois que se partem algumas, & se acha que saõ feytas de barro de que se faz a louça branca, a que chamão greda: à vista pois destes enganos, & falsidades razão tenho para não usar das pe-dras cordeaes compostas, salvo me constar certamente que são feytas pelos Padres da Com-panhia de Goa, aonde só se fazem verdadeyras, por ser segredo que foy do Padre Gaspar Antonio, & por sua morte passou ao Padre Jorge Ungarete, & hoje passou a outro Religio-so, Boticarios todos da mesma Companhia, & grandes artifices na Arte Pharmaceutica.
+
+Por me tirar pois destas duvidas, & embaraços da minha consciencia, uso sempre nas fe-bres malignas, & nas bexigas, & aonde vejo ancias do coração, do meu Bezoartico, de cujas virtudes, & maravilhosos proveytos estou certo, não só pelo que tenho visto, & ex-perimentado no discurso de 50. annos; mas pelas noticias que de todo o Reyno, & suas conquistas me tem vindo por cartas gratulatorias, que tenho guardadas para mostrar aos que duvidarem da minha verdade.
+
+Os que com o meu Bezoartico quizerem fazer curas, que pareçãomilagrosas, devem advertir tres cousas muyto necessarias. A primeyra, que o Bezoartico seja verdadeyra-mente meu, & naõ falsificado, como hoje se vende muyto nesta Corte, & em todo o Rey-no, & suas conquistas de bayxo do meu nome, sem lhes fazer escrupulo enganar aos do-entes em materia taõ importante como he a saude, vendendo hum remedio falsificado com o nome de verdadeyro, fazendo deste modo dous furtos, hum do dinheyro que devem restituir, & outro das vidas que não tem restituição. A segunda, que o tal Bezoartico, se se der em pó, se dè em quantidade de meya oytava para cada vez; & se se der misturado com o cozimento de escorcioneyra, & pevides de cidra, (como eu o dou) se deytem tres oyta-vas delle em cada meya canada do tal cozimento, & de 8. em 8. horas se de ao doente hu-ma chicara de seis onças, porque os que derem menos quantidade, ou o derem huma só vez no dia, como alguns o daõ, naõ farão grandes curas; he necessario continuallo todos os dias duas, ou tres vezes, em quanto o doente tiver ancias, ou symptomas malignos. A ter-ceyra, que se applique, tanto que o Medico vir algum sinal da febre ser perniciosa, & ma-ligna, sem esperar que os doentes estejão agonizando, como muytos fazem; donde se segué dous grandes damnos: o primeyro he, morrerem os doentes, porque lhes acudirão tarde com o remedio, que lhes poderia salvar a vida, se fosse applicado a tempo: o segundo he, infamar o remedio, & ficarem os parentes dos mortos atemorizados para o nao quererem tomarem em outras occasiões, por mais perigosos que se vejão.
+
+
+
+## Pedra de Porco Espim natural, & suas virtudes.
+
+A Pedra de Porco Espim verdadeyra, he hum dos melhores antidotos, que vem da In-dia para remedio da saude, como se deyxa ver assim pelos bons effeytos que faz, como pelo muyto dinheyro que val, porque qualquer pedra do tamanho de huma azeytona pe-quena, custa ao menos cem milreis.
+
+Entre as virtudes que a dita pedra tem, a principal he, ser grande antidoto das febres malignas, de sorte que depois do meu Bezoartico Curviano, de nenhum outro remedio tenho visto tanta utilidade como da tal pedra. O sinal de ella ser bem fina, & verdadeyra he, que metendo a em agua hum quarto de hora, a faz amargosissima, & tanto mais amar-gosa a fizer, tanto mostra que he mais fina, & excellente. A quantidade que se dà da tal agua, são tres, ou quatro colheres para cada vez, advertindo que a tal agua se deve dar pu-ra, sem se misturar em outra agua, como erradamente fazem alguns barbeyros, & a gente rude, dando por razão que he quente, & que para lhe moderar a quentura, & o amargor, a destemperão com outra agua; & não advertem estes pobres homens, cegos na luz do meyo dia, que ao passo que lhe abatem o grande amargor, lhe enfraquecem, & tirão a vir-tude; & que quando os doentes podião salvar a vida, & vencer a febre, se tomassem a dita a-gua pura, & com toda a sua virtude, & amargor, se achão enganados, & presos com os grilhões da morte. Naõ faço estas advertencias para os Medicos doutos, & experimétados, faço-a para os principiantes, & para os Cirurgiões, que curão em terras aonde não ha Me-dico, & para as pessoas leygas, & ignorantes da Medicina, porque estas como conhecem as cousas superficialmente, & só pela casca, cuydão que se derem a dita agua pura, & com todo o seu amargor, que matarão aos doentes, ou lhes augmentaràó a febre, & por esta ra-zão a destemperão, & lhe tirão a virtude, do mesmo modo que a tirarião, os que tirassem o amargor à quina quina: & agora saberáő a razão porque são taõ prohibidos os doces, & os azedos aos que tomão quina quina, ou agua de Inglaterra; porque como a virtude da quina quina consiste no amargor, quem lho tirar, ou rebater com muyta quantidade de do-ce, ou de azedo, a deytou a perder. Disse, muyta quantidade de doce, ou de azedo; porque se o doce for tam pouco como huma azeytona, ou como huma avelãa, nenhum damno faz, porque para o fazer era necessario que o doce, ou azedo fossem tantos que rebatessem, ou a-pagassem o amargor da quina quina; mas como sendo o doce pouco o naõ rebate, naõ póde fazer damno, como me consta por mil experiencias; porque os permitto àquelles doentes, que estaõ costumados a nao beber agua sem doce. Vejão os curiosos a minha Polyanthea da segunda impressão sobre este ponto tract. 2. fol. 627. num. 23.
+
+Nem só he este o erro que fazem os que destemperam a agua de Porco Espim, para lhe ti-rar o amargor, & quentura; outro commettem muyto peyor, & he, que levados do rustico medo, de que a agua de Porco Espim he quente, não se atrevem a dar mais que huma co-lher della para cada vez, sem advertirem que tam pouca quantidade he pequeno remedio para vencer huma doença taõ venenosa, como he huma febre maligna: eu nunca dou me-nos de quatro colheres para cada vez; & tive alguns doentes, para quem fuy chamado es-tando ungidos, & agonizando por causa de febres malignas, a quem dey tres onças da dita agua, & com ella os livrey da morte.
+
+Hum caso destes observey em casa de Manoel de Castro Guimarães, Escrivaõ do De-sembargo do Paço. Outro caso succedeo com Dona Antonia Mauricia, Religiosa de San-ta Clara, para quem fuy chamado estando com o scirro na garganta, & com o officio da a-gonia rezado, & dando lhe por meu conselho quatro colheres de agua de Porco Espim, misturada com cinco onças do meu Bezoartico, escapou da morte, & vive hoje por mercè de Deos, & beneficio deste remedio. Naõ refiro outros muytos casos felizmente succedi-dos com a agua de Porco Espim dada em mayor quantidade, & misturada com o meu Be-zoartico, por não enfadar aos Leytores; portanto digo, que nas febres malignas, & ancias do coração se devem dar ao menos tres colheres de cada vez, sem ser destemperada.
+
+Nos soluços, ou sejão procedidos da febre ser maligna, ou de ventosidades, obra a dita agua effeytos maravilhosos, de que pudera allegar innumeraveis exemplos, senão temera enfadar.
+
+Nos accidentes uterinos he a agua de Porco Espim remedio tão efficaz, que parece di-vino, como me consta por alguns casos, a que me achey presente, em os quaes dey tres on-ças da dita agua, & obrou effeytos maravilhosos.
+
+Nas dores de colica, a que os Naturaes da India chamão Mordexim, obra tambem a dita agua presentaneos proveytos.
+
+Nas dores, & pontadas causadas de frios se tomão duas onças de agua de macella, em que a pedra de Porco Espim estivesse de infusaõ seis Ave Marias, & obra por modo de encanta-mento.
+
+Finalmente se a Medicina tem espadas de mais de marca, que sejão capazes de resistir, contender, & vencer as febres malignas, são só a pedra de Porco Espim, & o meu Bezoar-tico Curviano, porque de todos os mais remedios, de que o povo faz grande estimaçaó, faço eu tão pouco caso, como da lama da rua. Isto diz hum Medico, que sobre 50. annos de experiencia, & 79. de idade, tem livrado da morte com estes dous remedios a infinitos doentes, que por causa de febres malignas, & de veneno que lhes derão para os matar, es-tavão expirando, como os curiosos pódem ver na minha Polyanthea da segunda impressao de fol. 654. até 662. aonde acharão nomeadas as pessoas, que tirey da sepultura com os di-tos remedios, & pódem ser testemunhas desta verdade.
+
+
+
+## Dente de Porco Espim, & suas virtudes.
+
+Roçado o dente de Porco Espim em pedra de sular, ou feyto em pó subtilissimo, tem grande virtude contra as febres, contra as dores de colica, & dores de pedra; he grande contraveneno, & faz grande proveyto nas dores, & torceduras da barriga.
+
+## Pedra de Cananor, & suas virtudes.
+
+A pedra de Cananor ou he verde como limos do rio, ou amarella como enxofre; ambas saõ boas, & de ambas usão os Medicos; mas a verde se estima mais. De qualquer des-tas pedras moidas, ou suladas muyto subtilmente, se faz com agua da fonte huma agua chamada de Cananor, ou de pedra fria: desta agua se usa geralmente em todas as febres, & he muyto bom cordeal; mas serà muyto mais singular, se a agua, em que a tal pedra se pre-parar, for primeyro ferrada com ouro virgem, & deste modo usando se della por algumas manhas em jejum, he excellente para os doentes esquentados do figado, & para os que pa-decem amargores de boca, os quaes ordinariamente procedem de grandissima quentura das entranhas, & do figado, ou de comerem muyta quantidade de doces, porque se con-vertem em colera.
+
+Tambem se usa della para a inflammação dos olhos, sem ser ferrada, & para a inflamma-ção da garganta, & boca, gargarejando com ella; desta agua se costuma dar meyo quarti-lho para cada vez, & se póde repetir duas vezes no dia, ou na declinaçaõ da febre, ou algu-mas horas antes de entrar; refresca muyto, & adoça a acrimonia dos humores, por certa virtude occulta absorbente, abranda os incendios do figado, & entranhas naturaes, com manifesto alivio dos enfermos.
+
+Se as amendoadas, q́ se dão aos que não pódem dormir por causa do grande incendio das febres, ou pelos vapores, que havião de conciliar o somno, subirem muyto quéntes ao cere-bro, se fizerem na dita agua de Cananor, terão os que assim as tomarem, conhecido alivio.
+
+He maravilhosa para curar as ictericias, tomada nove dias em jejum, & misturada com a agua que deytar de si huma clara de ovo fresco bem batido.
+
+## Pedra Candar, & suas virtudes.
+
+A Pedra Candar, chamada vulgarmente pedra Quadrada, porque verdadeyramente o he, tem o feytio de hum dado, & tem cor de ferro, & he muyto pesada; trazem a dos confins da Tartarea aos Jogues, os quaes dizem que tem muytas virtudes, & por esta razão a furão, & pendurão ao pescoço cahidas sobre os peytos, chegada à carne.
+
+Serve esta pedra, atada ao musculo da perna esquerda, para facilitar o parto, estando a mulher em termos de parir, porque a experiencia tem mostrado, que applicada neste esta-do obra o que se deseja. E no caso que esta diligencia não baste, esfregaràó a dita pedra, meyo quarto de hora, com huma onça de oleo de gergelim quente, & o darão a beber á mulher, & logo parirà, & deytarà as pareas, & a criança sem risco, nem perigo da mây; ad-vertindo, que tanto que a mulher parir, & deytar a criança, & as pareas, se tire logo logo a dita pedra, porque se a deyxarem ficar atada muyto tempo, sahirà a madre fóra do seu lugar, & as entranhas todas, como eu vi, & observey em huma mulher na rua das Ga-veas, à qual estando muyto apertada sem poder parir, se applicou a dita pedra, & porque se -descuydarão de a tirar tanto que pario, sahio a madre fóra do seu lugar, & foy necessario applicalla em sima, para que a madre se recolhesse.
+
+E porque algumas mulheres saõ melindrosas, & inimigas de tomar remedios pela boca, -bastarà que com o oleo de gergelim, em que se esfregou a dita pedra hum quarto de ho-ra, lhe esfreguem todo o ventre, & o embigo à roda, com a mesma condição, que tanto que a mulher parir, se alimpe muyto bem o azeyte.
+
+Serve a agua da sua infusaõ, ou em que estiver raspada qualquer migalha da dita pedra, bebida por tempo de hum mes, para curar os fluxos de sangue das almorreymas, por mais copiosos, & teymosos que sejão, com duas condições: a primeyra, que o doente nem beba vinho, nem coma iguarias adubadas com especiarias quentes: a segunda, que a agua em que se fizer a infusaõ, seja primeyro cozida com huma mão chea de erva poligano, chamada dos Herbolarios erva andorinha.
+
+He excellente para curar as vertigens, & desmayos, com tal condição, que se deyte de infusaõ por tempo de duas horas, ou se esfregue tempo de vinte Ave Marias em tres onças de agua de cereijas negras, ou em agua ordinaria, em que primeyro se cozesse levemente meya oytava de mangerona. Quem tomar este remedio por 20. dias successivos, conhece-rà grande alivio. He boa para a melancolia, deytada de infusaõ em agua de borragens, ou de erva cidreyra.
+
+Para as dores de cabeça se bebem alguns dias em jejum duas onças de agua de cardo san-to, em que a dita pedra estivesse duas horas de infusaõ.
+
+Nas pontadas, nas colicas, nas dores de ventre, & nos Pleurizes, tem a dita pedra pro-digiosa vintude, se deytada de infusaõ, ou roçada em quatro onças de agua destillada das cabeças de macella, a derem a beber aos que tiverem qualquer queyxa destas. Nem faça medo aos Medicos medrosos o ser a agua da macella quente, para deyxarem de a applicar; porque Eustachio Rudio, que foy Lente de prima em Padua, & Galeno, que foy Oraculo da Medicina, louvão por soberano remedio para os Pleurizes, & inflammações internas a tal agua, ainda sem ser ajudada da virtude da pedra Candar; quanto melhor serà acompa-nhada com ella? Galeno lib. 3. simplic. medicam. 30. & Eustachio lib. 1. cap. 45. de Pleuritide, mihi fol. 173.
+
+Nas dores de pedra, & difficuldades de ourinar, obra effeytos admiraveis com tal condição, que o doente tenha tomado primeyro hum vomitorio de agua Benedicta, ou de Tartaro emetico, & algumas sangrias nos braços; & feyta esta preparação, se roçarà a pedra por hum quarto de hora em quatro onças de vinho do Rhim, se o ouver, & em sua falta, em vinho branco, ajuntando a este vinho huma onça de çumo de limão a-zedo; & se o doente não quizer tomar o remedio em vinho, o tome em agua commua, em que se tenha cozido meya oytava da raiz da butua, ou da semente da bardana, ou da esteva.
+
+Atando esta pedra sobre o embigo, faz recolher as tripas aos quebrados, sem embargo de que eu ensino outro remedio muyto mais experimentado para recolher as tripas, que se acharà no livro das minhas Observações Latinas, & Portuguezas, na Obs. 41. pag. 252. & 253.
+
+Para os que tem o sangue pizado, ou coalhado por causa de alguma queda ou pancada, o adelgaça outra vez, & o faz capaz para que se continue a circulação, principalmente se a tal pedra for roçada em seis onças de agua cozida com duas oytavas de raizes de vinoeto-xico, ou com folhas de cerfolio, a que ajuntem hum escropulo de spermaceti.
+
+Quem beber por seis meses flor de agua levemente cozida com huma mão chea de verbasco, na qual agua, depois de coada roçarem a pedra Candar, experimentarà maravi-lhosos effeytos nos bocios, & alporcas.
+
+Tem a dita pedra grande dominio sobre a melancolia, roçando a em agua de borragens.
+
+Para os que ourinão sangue, se dão cinco onças de agua de tanchagem, em que se roçou esta pedra.
+
+Para a asthma, roçada em agua de bosta de boy destillada em Mayo, he grande remedio.
+
+
+
+## Pedra da cabeça da Cobra de Pate, a que vulgarmente chamão de Mombaça. Virtudes que tem, & como se applica.
+
+Esta pedra he gerada na cabeça das cobras, que se crião nos bosques da Ilha de Pate; tem muytas virtudes; mas a que excede a todas, he em facilitar o parto, atando a ao musculo da perna esquerda, quando a mulher estiver apertada, em termos de parir, porque certamemte parirà logo; mas he necessario advertir, que tanto que a mulher deytar a crian-ça, & as pareas, se tire logo logo a pedra, porque de outra sorte sahirà a Madre fóra de seu lugar.
+
+Moida muyto subtilmente, & dando deste pó o peso de 20. grãos de trigo em tres on-ças de vinho branco, ou em seis onças de agua cozida com altavaca de cobra, ou com meya oytava da semente das carapetas da esteva, mitiga muyto as dores de pedra, & a faz lançar.
+
+Nas suppressões altas da ourina tem muyta virtude, com tal condição que antes de a darem, tome o doente logo logo no primeyro dia da suppressaõ hum vomitorio de tres onças de agua Benedicta, ou dous escropulos de vitriolo branco formado em pilulas; ou seis grãos de Tartaro emetico.
+
+Serve para as dores de colica, & para toda a sorte de febre, & para toda a mordedura de bichos peçonhentos, assim tomada por dentro, como applicado o pó della sobre a morde-dura.
+
+Serve tomada em vinho, ou em agua cozida com semente de bisnaga, para os acciden-tes uterinos. E finalmente serve contra toda a peçonha, ou veneno, que por erro, ou ma-licia se deo pela boca; & tem as mesmas virtudes, que se attribuem à pedra Bazar verda-deyra.
+
+Cayetano de Mello de Castro, que foy Viso-Rey da India, tem a tal pedra, que he re-donda, & cheya de escamas como casca de pinha. Certifica o dito Senhor Viso-Rey, que para facilitar o parto, tem presentanea virtude, como lhe consta por mil experiencias.
+
+## Pedra de Cobra de Dio, & suas virtudes.
+
+Estas pedras não saõ naturaes, são artificiaes, & huma familia unica de Gentios daquel-la Cidade tem o segredo, & faz toda a quatidade dellas, que se espalhão pelo mundo.
+
+A principal virtude destas pedras he contra as mordeduras dos bichos peçonhentos; posta sobre a mordedura com advertencia, que se não tiver sangue, se farà na mesma mor-dedura com o bico de hum alfeneyte, para pegar a pedra, a qual se deyxa estar pegada até cahir por si, depois se deyta em leyte, ou agua rosada, & se limparà, ou enxugarà muy-to bem, & se ha de repetir a postura em quanto pegar, & tanto que não pegar, està acaba-da a cura, & he sinal infallivel de ter jà tirado todo o veneno.
+
+Tambem serve, feyta em pó, & bebida, para a dor de colica; & posta nas bexigas tam-bem as obriga a sahir, ou inchar com presteza. Nem falta Author grave que nas febres ma-lignas, em que ouver pintas, as manda picar, & por sobre a picada as ditas pedras, pela gran-de virtude que tem de chamar para fóra o veneno, & malignidade.
+
+Desta pedra tenho visto maravilhosos effeytos posta sobre as mordeduras de aranhas, ou de quaesquer bichos venenosos, porque chupa, & attrahe para si todo o veneno; & he cousa digna de admiração ver como desfaz as inchações procedidas das mordeduras veneno-sas, por mais grandes, & disformes que sejão, sem que haja descarga alguma, nem despejo manifesto por sangrias, camaras, vomitos, suor, nem ourina, por onde a inchação se des-fizesse. He porèm de advertir, que tanto que a dita pedra cahir, se deyte logo logo em hum pouco de leyte de mulher, ou qualquer outro, porque não se deytando, fica o veneno den-tro na tal pedra, & rebenta feyta em pedaços.
+
+A hum criado do Doutor Francisco Roballo Freyre, segando erva para dar ao seu ma-cho, o mordeo hum bicho de tão venenosa qualidade, que em menos de huma hora lhe in-chou o braço tão disformemente, que foy necessario rasgar lhe a manga do gibão para lho despirem, & estando o pobre lacayo com insoportaveis ancias, & desmayos, se lhe appli-cou a dita pedra, & brevemente desinchou, & ficou saõ. A huma filha de hum livreyro, morador na rua Nova, a mordeo huma aranha emo rosto, & inchou de tal sorte que ningue a conhecia, & tendo noticia que eu tinha esta pedra, ma pedio, & pondo lha desinchou, & sarou em breves horas. O mesmo effeyto desta pedra tenho visto em varias mordeduras de aranhas.
+
+## Pedra Pauzari, & suas virtudes.
+
+Estas pedras vem de Babylonia onde se crião, & saõ raras. Pauzari quer dizer, lisa; a cor he de azeytona d'Elvas, & o feytio, mas he mayor.
+
+Posta sobre os rins tem virtude efficacissima para quebrar a pedra, & tirar a dor em bre-ves horas; para a suppressaõ bayxa, posta sobre a bexiga, He muyto estimada de todos os Principes da Asia.
+
+
+## Caranguejo de Aynão, & suas virtudes.
+
+Tem tal qualidade o lodo, ou baza do mar das terras de Aynão da Provincia da Chi-na em que està Macão, que o caranguejo que se mete naquelle lodo, se conver-te totalmente em huma dura pedra, & se enchem, & unem todas as partes delle, como se fosse huma cousa lavrada, & engastada pela natureza; o que succede em muy breve espa-ço, porque os que se metem nesta baza, ou lodo, logo ficão immoveis; o que se vè com os olhos, em quanto a marè vaza.
+
+O mate, ou baza desta praya de Aynão tem as mesmas virtudes que o caranguejo; po-rèm nem toda a praya faz esta conversaõ de caranguejo em pedra, senão huma parte desta Ilha, que he a em que viveo São Francisco Xavier.
+
+Moida esta pedra com vinagre, & applicando-a muytas vezes no dia, desfaz todo o ge-nero de inchações, & carnosidades duras, & hernias carnosas.
+
+Huma oytava de peso deste caranguejo feyto em pó subtilissimo, & misturado com seis onças de agua, tomada duas vezes cada dia, cura por modo de milagre as camaras de san-gue, & os puxos, repetindo este remedio cinco ou seis dias.
+
+Huma oytava deste caranguejo de Aynão, feyto em pó, & misturado com agua rosada, & çumo de limão gallego, serve para todo o genero de febres com abafamentos.
+
+A mesma quantidade tomada em bom vinho, serve para as camaras soltas.
+
+A mesma quantidade botada em agua destillada de cereijas negras, ou em agua cozida com raizes de valeriana agreste, tem grandissima virtude para curar os accidentes de gotta coral, continuando se muytos dias, depois do doente bem purgado.
+
+Moida em agua cura a esquinancia, untando a garganta com ella por fóra, & gargare-jando muytas vezes com a tal agua.
+
+Moida a tal pedra com vinagre, & untando o antraz, ou apostema, faz matavilhoso ef-feyto.
+
+Moida em agua se dà a todo o genero de febres, no principio, & declinaçaõ dellas, com taõ bom effeyto, & melhor que o da pedra Bazar.
+
+Moida com bom vinho serve para colicas, & mordexins, nas quaes doenças obra ma-ravilhas.
+
+Moida com agua rosada, ou ordinaria, lançando-a nos olhos dolorosos, & inflammados, os cura maravilhosamente.
+
+Os Naturaes daquella Ilha, onde se achão as pedras dos caranguejos de Aynão, se curão com ellas em todo o genero de achaques; & os mesmos effeytos fazem em todas as mais partes, como a experiencia tem mostrado.
+
+## Dente de peyxe mulher virgem, & suas virtudes.
+
+Serve para estancar os fluxos de sangue da boca, postos sobre o peyto; & para estancar os fluxos bayxos, posta pela parte bayxa.
+
+Serve trazido atado no braço esquerdo chegado à carne, cóntra o ar, accidétes, & vágados.
+
+## Costella de peyxe mulher virgem, & suas virtudes.
+
+Serve, preparada em agua, & bebida, para febres, & para as dores de Pleurizes, pon-tadas, & estupores; advertindo que naõ sendo virgem, naõ tem virtude.
+
+## Priapo, ou genital do cavallo marinho, & suas virtudes.
+
+Dando a beber meya oytava do pó do priapo do cavallo marinho misturado com seis onças de agua commũa cozida com hum páo de faveyra seca, ou com duas oytavas de raiz de Eroca Marinha, ou com cascas de rabãos, provoca muyto a ourina supprimida, com duas condições: primeyra, que o doente tenha tomado primeyro que tudo hum vo-mitorio de seis grãos de Tartaro emetico, ou de duas onças de agua Benedicta, sangran-do se ao outro dia quatro vezes nos braços, & ao outro dia tres, & observando estes con-selhos certamente ourinarà muyto.
+
+He remedio estupendo para os pleurizes, & camaras de sangue, como se tem sabido por innumeraveis experiencias, com tal condição que se darà meya oytava do dito pó mistu-rado para os Pleurizes em agua cozida com flores de papoulas, & para camaras em agua co-zida com alquitira, repetindo se este remedio tres vezes cada dia.
+
+
+## Dente de cavallo marinho, & suas virtudes.
+
+O Pó subtilissimo deste dente tem grande virtude para as suppressões da ourina, com tal condição que se darà para cada vez huma oytava delle misturado com meyo quartilho de agua cozida com raiz de espargo, ou com raiz de rilha boy, chamada dos la-tinos Ononis, ou Remora aratri, ou com páo de virga aurea: aproveyta muyto para as fe-bres da dita na mesma quantidade misturado na agua das tisanas; trazido junto da carne, tem çerta qualidade occulta contra o ar.
+
+## Dente de dentro da boca do Elefante, & suas virtudes.
+
+Serve para toda a especie de febre, para as dores de costado, & para as dores de rheuma-tismo, & preparando-o tambem em fórma que se cubra com a massa, ou polme do dén-te preparado em agua, & se for rosada, serà melhor, mas deve ser morna.
+
+## Unha do grão besta, & suas virtudes.
+
+A Grão besta he hum animal, que na lingua dos Ethiopes Mouros se chama Nhumbo, & na lingua Portugueza val o mesmo que animal fermoso. A sua fórma he de hum perfeyto cavallo em tudo menos: a sua cauda tem muy pouco pelo, & o casco he fene-dido como unha de cabra; ordinariamente naquelles contornos saõ manchados como Ti-gres; alguns, que saõ raros, de cor castanho claro.
+
+Só as unhas do pé esquerdo saõ as que tem virtude; as outras, sendo do mesmo animal, não tem serventia; & muytas vezes se dà qualquer das ditas unhas, ou vende, & sendo de mesmo animal naõ tem prestimo; & tem a circunstancia de que ha de ser tirada a unha sem ser metida no fogo, nem em agua quente, porque perde a virtude.
+
+O animal he sugeyto a accidentes repetidos, & tem tal instincto, que assim como se vè ameaçado do accidente, mete a unha do pé esquerdo no ouvido, & assim lhe passa logo a força delle.
+
+Serve a unha do grão besta, trazendo a junto à carne no musculo do braço esquerdo, ou ao pescoço, & ainda sobre o peyto, ou no dedo da mão esquerda, engastoada em ouro, de sorte que a unha toque na carne; serve contra os accidentes de gotta coral, & vágados, & contra o ar. Preparada em agua, & bebida serve contra o veneno, & contra as febres inter-mittentes.
+
+Nos accidentes de asthma se darà hum escropulo de pó da dita unha misturado com hu-ma chicara de agua de cereijas negras, por quanto a asthma he hũ accidente de gotta coral do bofe, como diz Vanhelmoncio: Asthma est caducum pulmonis.
+
+## Ossos do espinhaço da Cobra Zuchi, ou Zuichi, & suas virtudes.
+
+Em Angola se crião humas cobras, a que os naturaes chamão Zuichi, que quer dizer melancolia, ou sejão porque a fazem fugir, ou seja como as vezes acontece, que quando se vè perseguida dos que a querem matar, esguicha da boca hũ cuspinho tão delgado, & taõ alvo, que em qualquer parte que cahe a faz logo muyto branca, & para deytar o tal cuspinho ergue o collo, & enche o papo, & deyta o cuspinho direyto aos olhos de quem a persegue, & se lhe não acodem logo com leyte, penetra o seu veneno pelos olhos de sorte, que os cega, & muytas vezes os mata.
+
+Sem embargo porèm da dita cobra ter esta maldade, poz lhe Deos nos ossos do seu espi-nhaço huma grande virtude, que secão, & curão as alporcas, com tal condição, que o do-ente os traga ao pescoço junto da carne por tempo de hum anno.
+
+Para se tirarem estes ossos, depois de îmortaa cobra, se enterra, & como passão quinze dias apodrece a carne, & com facilidade se despegão, & se limpão muyto bem de alguma carne, se lhe ficou pegada, & se guardão; & quando quizerem applicallos a algum doente desta enfermidade, ou q́ tenhão dores de garganta, se infião em hum fio de retroz, & se pen-durão ao pescoço a modo de huma gargantilha. Muytas saõ as pessoas que tem visto, & ex-perimentado a grande virtude destes ossos para as sobreditas enfermidades.
+
+
+
+## Dentes de Engala, & suas virtudes.
+
+Em Angola se crião huns animaes da corpulencia de hű porco, na boca destes se achão dous dentes fortes à maneyra de dentes de porco javali; saõ do comprimento de hum palmo, pouco mais, ou menos; o pó destes dentes tem grandissima virtude para rebater as febres malignas, & naõ falta quem diga, que he melhor que a pedra Bazar verdadeyra: faz madurar, & abrir os apostemas, & leicensos, applicando-o sobre elles em fórma de polme tres, ou quatro vezes cada dia: ajuda muyto a sahirem as bexigas, & os sarampãos: constão de muyto sal volatil, & por isso nos Pleurizes faz tão bons effeytos como o dente de porco montez, com tal condiçaõ, que se dè de cada vez meya oytava do seu pó subtilissimo mistu-rado com huma onça de lambedor de papoulas morno, bebendo lhe em sima meyo quarti-lho de agua cozida cõ flores de papoulas, & com cascas de raiz de Bardana. Posso assegurar com a experiencia de 51. annos, que nos Pleurizes he grande remedio, com tal condição, que se applique duas, ou tres vezes cada dia até que o doente acabe de sarar. No meu Pe-culio revelo hum grande remedio para Pleurizes, no capitulo, Pleurizes.
+
+## Raiz da Manica, & suas virtudes.
+
+Esta raiz he de grandissima estimação, assim por ser criada entre o ouro no Reyno da Manica, donde tomou o nome, como tambem por suas admiraveis virtudes.
+
+Serve esta raiz para febres, dar ido te bem moida em quantidade de hum escropulo, mis-turada com seis onças de tisana: dà-se no principio do trio, do mesmo modo que se dà a a-gua de Inglaterra; & se a febre entrar sem frio, se darà do mesmo modo no fim da febre, pa-ra fazer suar!
+
+He admiravel contraveneno, porque o rebate efficazmente.
+
+Serve para toda a sorte de fraqueza do estomago, para conservar o comer nelle, de sorte que se naõ vomite.
+
+Serve para despazer as ventosidades procedidas de causa fria.
+
+Serve para quem tem fastio, tomada duas horas antes de comer, porque conforta o esto-mago, excita a vontade de comer, & he grande remedio para impedir os vomitos.
+
+Serve para feridas frescas, moida com agua, de modo que fique como polme, applican-do-o cada 24. horas, enchendo o vãoda ferida com elle, & brevemente ficarà o doente saõ.
+
+Serve para chagas podres moida do mesmo modo, & applicada à chaga em lugar de un-guento; & isto se farà huma vez cada dia, & sararà em breve tempo, sem necessitarde ou-tra cura, ou remedio humano.
+
+Tambem a dita Manica he hum remedio, ou antidoto muy efficaz contra herpes, mo-endo-se, & pondo-se os pós sobre a ferida, & applicando-se tambem da parte de sima, para que os herpes naõ subão, nem vão por diante.
+
+Serve para dor de colica, chamada nas terras da India, xeringosa, roçada em pedra com çumo de limão, & lançada por ajuda.
+
+He grande contrapeçonha, moida subtilissimamente, & dada a beber com çumo de li-mão gallego.
+
+Serve para mal de Loanda, moida, & dada com agua; & untando com aquelle polme as gengivas muytas vezes no dia, sararão enfermo maravilhosamente.
+
+Serve da mesma forte moida, & applicado o dito polme na face, & na cova do dente que doer, porque tira de todo a dor delle.
+
+Serve para dor de ouvidos, moendo-a com agua, & aquentada em huma colher de pra-ta, & lançando tres, ou quatro gottas no ouvido saõ primeyro, & depois no que tiver a dor.
+
+Pessoas fidedignas que estiverão na India, affirmão que o pó desta raiz subtilissima-mente pulverizado, & misturado com o que for necessario de agua rosada, para fazer hum polme, borrando a testa, & fontes da cabeça com elle, abranda muyto as ditas dores.
+
+Serve para estancar os fluxos de sangue, ou seja tomada pela boca misturada em agua de tanchagem, ou seja deytada por ajuda.
+
+Pessoa ouve taõ confiada, que se atreveo a dizer que o pó subtilissimo desta raiz, toma-do muytos dias em jejum com xarope de hera terrestre, ou de ungula caballina, curava certaméte as chagas do bofe; eu lhe naõ dou inteyro credito; mas em doença, em que a cer-teza da morte (por causa da chaga do bofe) he infallivel, naõ duvidaria eu de fazer o reme-dio, porque se lhe não aproveytar, não farà damno.
+
+Para as feridas frescas com sangue, enchendo o vãoda ferida com o pó fino desta raiz, & curando-as abertas, obra taõ maravilhosamente como o oleo de ouro.
+
+Finalmente he a raiz da Manica remedio supremo para rebater todo o genero de vene-no; advertindo que se tenha grande cuydado, & cautela, que quem tomar esta raiz, não toque qualquer genero de oleo, ou azeyte, porque infallivelmente se converterà em vene-no presentaneo.
+
+
+## Raiz da Madre de Deos, & suas virtudes.
+
+O pó desta raiz misturados com quatro onças de agua cozida com o páo da faveyra seca, ou com hum molho de folhas de cerfelio, provoca a ourina suppri-mida. Serve o pó desta raiz para todo o genero de febre, principalmente para as que entra-rem com frio, dando se duas vezes cada dia: para grandes dores de cabeça se applica o pol-me desta raiz feyto com çumo de limão gallego nas capelladas dos olhos, & nas fontes: serve esta raiz para inflammações do bofe, como he a Peripneumonia; contra quaesquer outras inflammações interiores: he esta raiz muyto cordeal, & resiste ao veneno das fe-bres malignas, & às mordeduras das cobras venenosas.
+
+## Raiz do Cypò, & suas virtudes.
+
+Esta raiz, a quem os Portuguezes chamão Cypò, chama o Gentio da America Pica-quanha, que he o mesmo, que dizer Pica de cão: ha duas sortes de Cypò, hum he mais grossio, mais branco, & mais forte, outro he mais delgado, mais escuro, & mais be-nigno no obrar: ambas estas raizes tem virtude tão maravilhosa para curar camaras de san-gue, que rarissimas vezes faltão com o effeyto desejado; advertindo, que as taes raizes tem virtude de provocar vomito, a branca o provoca com mais violencia, o remedio para que o não provoquem, he deytallas 24. horas de infusao em vinagre forte; a quantidade que se dà de pó de qualquer destas raizes, he de dous escropulos até huma oytava, toma-se em caldo de galinha, & se repete quatro, ou seis dias.
+
+## Raiz de Solor, & suas virtudes.
+
+Esta raiz com as outras sobreditas, tambem he de singular estimação; usa-se della para toda a especie de febres, & pontadas, & para o veneno, & para dores Nephriticas.
+
+Tambem serve, tomando bochechas, para alimpar a lingua grossa, & para abrir a vontade de comer, quando o enfermo tem fastio, levando algumas bochechas para bayxo.
+
+## Raiz da Calumba, & suas virtudes.
+
+Esta raiz serve para todas as febres moida com agua por quasi hum quarto de hora, & se dà pela manhãa, & à tarde, & ainda que seja mais quantidade de quartilho, não importa; & para febres, & frios se moerà com çumo de limão gallego.
+
+Serve para mordechim, & para dores de colica, & indigestões do estomago; se forem de frio, se darà com vinho; & se forem de quentura, se darà em agua pela manhãa em jejum, ou a toda a hora que a necessidade o pedir.
+
+Nas suppressões de ourina, altas, ou bayxas, he remedio que obra effeytos maravilho-sos, com tal condição, que o doente tenha tomado primeyro hum, ou dous vomitorios de seis grãos de Tartaro emetico, ou de meya oytava de caparrosa branca, ou de duas onças de agua Benedicta, & se tenha sangrado depois disso oyto vezes nos braços. Dá-se o pó deste remedio em agua cozida com os pàos da faveyra seca, ou com raizes de espargo.
+
+Serve para camaras moida com çumo de limão gallego, & destemperada com agua, & se untaràő a barriga com o polme desta raiz pela manhãa, & à tarde.
+
+Serve para mulher que estiver de parto, ainda que esteja mortal, & lhe darão moida com vinho, & lançarà a criança, ainda que esteja morta.
+
+Serve para mordedura de todos os bichos peçonhentos, moida com agua; & se não ou-ver tempo de se moer, tome-se hum pedaço, & mastigue-se, & engulir o çumo, & se dey-tarà delle na mordedura, & se for muyto refinada a peçonha, se darà a alguma pessoa a dita raiz para que a mastigue, & tendo a na boca.
+
+Serve para toda a peçonha que se der no comer, ou beber moida com agua; & se não ou-ver tempo para isso, tome hum pedaço na boca, & mastigue-o, levando o çumo, ou cus-po para bayxo.
+
+Serve para quem tomar Anfião misturado com azeyte, porque então se converte o dito Anfião em refinado veneno: seu unico remedio he dar ao doente hum pouco de pó desta raiz misturado com agua. Tambem he grande remedio esfregar os dentes com o pó desta raiz. Anfião he o mesmo que Opio, como diz o Doutor Francisco Roballo Freyre, que foy Fisico mòr no Estado da India, & D. Rafael Bluteau no primeyro tomo do seu Voca-bulario Portuguez, & Latino fol. 373. col. 1.
+
+Serve para uzagre do mesmo modo, fazendo primeyro lavatorio.
+
+Serve para provocar o sangue mensal, com tal condição, que a mulher a quem faltar o dito sangue, tome oyto dias em jejum quatro onças da agua, em que tenhão cozido meya oytava do pó da dita raiz.
+
+Serve para quem tiver dor de dentes, metendo na cova do dente hum pedacinho desta raiz, tirarà a dor.
+
+Serve para erysipela, moida com çumo de limão gallego, untando com ella o lugar que tiver a dor, ou inchação; não havendo febre, se poderà beber em agua.
+
+Serve para quem for tocado do ar, moida com çumo de limão gallego, para se untar.
+
+Serve para a pessoa, que estiver com ventosidades, moida com vinho; & se forem de quentura, com agua, & se beberà. Nas terçans, & quartans tam rebeldes, que se não ti-rão com a quina quina, obra maravilhosos effeytos, tomando-a cinco, ou seis dias.
+
+
+
+## Serpentaria virginiana, & suas virtudes.
+
+Esta erva naõ he nascida na India Oriental, mas he natural das Indias de Castella; he muyto usada na India na febres malignas, & soccorre às doenças venenosas. Tem estupenda virtude, & he o mayor remedio que tem o mundo para ven-cer o mortal veneno das mordeduras da cobra de Cascavel, a que os Inglezes chamão Rat-tle-Snakes.
+
+## Raiz de Sapuche, & suas virtudes.
+
+Esta raiz tambem he de grande estimação, & he o mais fino contraveneno para as cobras que se tem descuberto: quando nasce esta planta, as cobras lhe costumão tirar a folha por instincto natural, para que se naõ conheça; mas por isso mesmo he conhecida; atada ao braço chegada à carne, està livre quem a trouxer, (ainda que durma na charneca) de lhe toccar bicho peçonhento.
+
+He excellente antidoto contra todo o veneno de bichos, & contra os outros venenos: preparada em agua, & bebida, cura aos enfermos de dores do estomago: & bebida pelas manhas em jejum desfaz todas as obstrucções, & ajuda a circulação do sangue.
+
+## Raiz de João Lopes Pinheyro, & suas virtudes.
+
+Serve, preparada em agua, & bebida, contra febres; & preparada em pó subtil; para as feridas frescas com o sangue, fazendo cura aberta; & para as caneladas frescas, cobrin-do-as com os pós.
+
+Serve para as pontadas, moida, & misturada com vinho, untando com o tal polme a pontada, a cura bem.
+
+Serve preparada em agua, & bebida, para desfazer as opilações do ventre sendo conti-nuada; & para as obstrucções do estomago.
+
+Serve, preparada em agua, & tomada em bochechas repetidas, para dor de dentes: faz effeytos milagrosos naquellas pessoas a quem mordeo huma casta de viboras que ha na In-dia taõ venenosas, que se ferem a alguma pessoa, logo cahe por terra amortecida, & des-mayada, que naõ pode fallar, nem se move, nem tem acção alguma de vivente; cujo unico remedio, & esperança de vida consiste em fazer lhe huma pequena ferida no alto da cabeça com huma lanceta, ou alfinete, de sorte que faça sangue, & deytando hũa migalha daquel-le pó na tal ferida, logo de improviso falla o homem, & fica livre do perigo.
+
+
+
+## Raiz da Butua, & suas virtudes.
+
+Esta raiz tomou o nome do Reyno da Butua onde se cria; chama-se assim nos Rios de Sena entre o Gentio; entre os Portuguezes se chama Parreyra brava, ou Raiz da Butua.
+
+Serve o pó desta raiz, misturado com agua commua, para beberem as pessoas, que tive-rem algum apostema, ou abscesso interior, porque se o tal apostema, ou abscesso for novo, & estiver ainda no principio, o resolverà, & desfarà em poucos dias; mas se for jà velho, ou tiver jà materia, o farà abrir, & rebentar, & deytar fóra toda a materia por sima, ou por bayxo, pela camara, ou pela ourina.
+
+Tambem o pó da dita raiz misturado com vinagre destemperado de modo que fique em fórma de polme, applicado sobre os apostemas, ou abscessos exteriores, os resolve, & des-faz, com tal condiçaõ, que se applique sete, ou oyto dias successivos: assim o observey muytas vezes, principalmente na mulher de Manoel de Araujo, morando junto da Igreja da Annunciada: tinha a dita mulher huma perna inchada com taõ excessiva deformidade, que a todos pareceo impossivel escapar da morte, & applicando sobre a inchação o polme desta raiz, sarou dentro de seis dias, sem necessitarde outro remedio.
+
+Serve para o Pleuriz, dando a beber o pó della em agua quente, que primeyro seja cozi-da com papoulas, ou com cevada. Tambem se unta, ou esfrega a pontada com o polme da tal raiz, porque faz resolver, & descoalhar o sangue, que por estar reprezado, & gros-so, se naõ póde circular, & porque se naõ circula, se azeda, & por se azedar, faz a dor, & pontada do Pleurız.
+
+Serve para pancadas, & quedas, dando a beber meya oytava do seu pó, misturado com a-gua cozida com huma raiz de tormentilla, chamada vulgarmente solda, ou pentafilão, un-tando por alguns dias a parte dolorosa com o polme da dita raiz.
+
+Serve para esquinencia, ou garrotilho, dando a beber o seu cozimento, fazendo com el-le gargarismos, & untando a garganta com o seu polme.
+
+Serve para fazer deytar as pareas, dando a beber a agua em que for cozida; tambem faci-lita o parto, & faz deytar as molas com facilidade.
+
+Serve para desinchar toda a sorte de tumor, untando por oyto dias a parte com o dito polme.
+
+Serve para erysipelas bem cozida em agua commua, applicando-a muytas vezes no dia em pannos picados mornos, com condição que os naõ deyxem secar.
+
+Serve para toda a chaga, ou inflammaçaõ do figado cozida em agua commua, lavando a parte queyxosa repetidas vezes com o tal cozimento; advertindo que quando se quizer co-zer, se farà em lasquinhas miudas, ou se machucarà, para largar melhor na agua a sua gran-de virtude.
+
+Serve para curar hernias ventosas, aquosas, & carnosas, applicando-se sobre a parte quey-xosa o cozimento da dita raiz quente, repetindo se muytas vezes no dia pannos ensopados na dita agua quente, porque logo mitiga a dor, & a inflammação. Confesso que esta raiz tem grande virtude para curar hernias; mas o mayor remedio que se sabe depois que Deos creou o mundo, para hernias, he o oleo verdadeyro de canela, como o poderà certificar o Doutor Mathias Mendes Ouvidor da Alfandega. Nao he menos efficaz para as quebradu-ras o oleo das gemas de ovos, de que possio apontar muytos exemplos.
+
+Serve para dor de dentes o cozimento desta raiz, tomando-o na boca, ou metendo na cova do dente o pó desta raiz, misturado com agua da Rainha de Hungria, de que tenho visto maravilhosos proveytos.
+
+Serve para dores de cabeça, & dexaqueca, misturando se o pó da tal raiz com agua rosa-da, ou de murta, & barrar toda a testa de orelha a orelha com este polme.
+
+Serve para curar as dores de colica, & de barriga, que procederem de ventosidades, ou de causa fria, bebendo o cozimento da dita raiz, & untando o ventre com o seu polme.
+
+Serve para desfazer as inchações do baço, & da barriga, tomando em vinte manhãs hũ escropulo do seu pó subtilissimo, misturado com duas onças de bom vinho branco agua-do, & fazendo com este remedio algum exercicio, se o doente o puder fazer.
+
+Serve para curar as camaras, principalmente as de sangue, bebendo o seu pó misturado com agua de tanchagem, ou có agua commua cozida com alquitira, usando deste remedio por cinco, ou seis dias successivos pela manhãa, & à noyte. Luis Serrão Pimentel, Cas-mografo mòr do Reyno, póde ser testemunha desta verdade, pois estando elle sem espe-ranças de remedio humano, sarou de camaras com o pó desta raiz. O mesmo admiravel proveyto vi em huma mulher moradora à Boa Vista na rua chamada o Poço das taboas; ti-nha a dita mulher camaras taõ desenfreadas, & antigas, que suspeyto u lhe tinhão dado al-gum feytiço, que a fossem atando lentamente, & tomando esta raiz em seis dias depois de mil remedios baldados, sarou por modo de milagre.
+
+Serve para as dores de estomago, & para azedumes da boca, bebendo a agua em que for cozida, misturando o seu pó com a ourina do mesmo doente, & untando o estomago com o polme da dita raiz feyto com a sua ourina.
+
+Serve para as carnosidades, bebendo por muytos dias a agua da sua infusao, & siringan-do o cano com ella.
+
+Serve para todas as suppressoens da ourina, dando a beber ao doente a agua que for le-vemente cozida com a tal raiz, mas com tal condição que antes de usar desta agua, tome o primeyro dia hum vomitorio de tres onças de agua Benedicta, ou seis grãos de Tartaro e-metico, & nos dous dias seguintes tome seis sangrias nos braços, & no terceyro comeceo o doente a tomar a tal agua, & conhecerão o muyto que me devem por lhes dar este conse-lho.
+
+Serve para as purgações da madre, de qualquer cor que sejão, bebendo por 30. dias em jejum, & à noyte seis onças da agua da sua infusao, a que ajuntem doze grãos de pó subtil da dita raiz. Toda a casa do Senhor de Aguasbellas pode ser testemunha desta verda-de, porque estando na dita casa huma criada, que havia nove annos padecia a dita purga-ção, que a nenhum remedio obedecia, só com esta raiz sarou.
+
+Serve a agua desta raiz, tomada por vinte dias em jejum, para provocar a conjunção às mulheres, que por falta desta descarga padecem mil achaques; mas he necessario fazer com o tal remedio exercicio de huma hora.
+
+Serve para abafamentos, & flatos melancolicos, dando a beber a agua da dita raiz.
+
+Serve para caneladas, untando-as com o polme da dita raiz.
+
+Serve para curar feridas frescas, lançando nellas o pó finissimo da dita raiz.
+
+Serve contra o garrotilho, & esquinencia, untando toda a garganta com o polme que se faz da raiz da Butua pulverizada subtilmente, & misturada com vinagre.
+
+Serve o cozimento desta raiz para curar fogo salvagem, & leycenços, lavando-se muy-tas noytes com elle.
+
+Serve, em falta do meu Bezoartico, para rebater toda a sorte de veneno; & he grande remedio para os apestados, com tal condição que se deve beber o seu cozimento, & untar a parte offendida com o polme da dita raiz.
+
+Serve contra todas as mordeduras de cão danado, & bichos peçonhentos, bebendo se a agua da sua infusao, & untando a mordedura com o seu polme.
+
+O Doutor Francisco Roballo Freyre, Cavalleyro professo da Ordem de Santiago, & Fisico mór no Estado da India, certifica que dera em tres dias successivos o cozimento desta raiz a huma mulher, que tinha na região da madre huma inchação fleumonosa, que se naõ pode curar em largos tempos, & só com o cozimento da raiz da Butua se amadurou o apostema, rebentou, & deytou muyto humor, & ficou saa.
+
+
+## Raiz Divina, & suas virtudes.
+
+Esta raiz nasce em Portugal, em hum lugar vizinho a Cetuval, a que chamão Troya: naõ sabemos que haja Author que escrevesse della; porèm a experiencia dos bons ef-feytos que obra em algumas enfermidades, saõ as mais qualificadas testemunhas das suas virtudes. He a dita raiz inclinante a quente, por cuja causa se naõ deve usar della muyto cozida, mas com huma moderada fervura, de sorte que com duas canadas de agua se coza huma oytava da dita raiz levemente machucada: desopila muyto as veas, provoca a con-junçaõ das mulheres, & aproveyta nas inchações do ventre das mulheres que parecem hydropicas: não duvido tenha outras muytas virtudes, que o tempo irà descobrindo; mas por hora fallo só naquellas, de que jà temos experiencias. Chama-se esta raiz Divina pelos seus grandes prestimos.
+
+## Maçãa do Leão, & suas virtudes.
+
+Assim como no bucho de algumas vacas se gera huma maçãa do tamanho de huma la-ranja pequena, tambem no bucho de alguns Leões se cria huma bola, ou maçãa do tamanho de hum ovo; esta bola roçada em agua, ou vinho, ou hum pouco pó della dado às mulheres que naõ pódem parir, no mesmo instante parem, & deytão as pareas; & pro-voca efficazmente a conjunçaõ dos meses.
+
+## Maçãa do Elefante, & suas virtudes.
+
+Nos buchos dos Elefantes muyto velhos se achão muytas vezes humas maçãs, ou bo-las tamanhas como hum ovo de gallinha; desta pedra, ou maçãa se tem achado que he taõ boa como a mais excellente pedra bazar que vem da India; he verdade que amarga muyto quando se toma, & este he hum grande sinal de ella ser boa; a quantidade em que se toma saõ de 10. grãos até 16. toma se misturada com quatro onças de agua de cardo santo, ou de papoulas, & se abafa o doente muyto bem para suar; aproveyta muyto para as dores de barriga, para febres, para dores de costado, abre as opilações do figado.
+
+## Oleo do Elefante, & suas virtudes.
+
+As canelas, & mãos do Elefante depois de tirada a carne se pendurão com o osso pa-ra bayxo, & pondo-as ao sol, & destes ossos que saõ esponjosos destilla, ou faz hum oleo, que se apara em hum vazo limpo, & se guarda em vazo de vidro bem fechado, & se es-tima como remedio especifico, & admiravel para asthma, & faltas de respiração; appli-ca-se quente ao peyto esfregando-o com brandura por tempo de vinte Ave Marias, porque deste modo communique melhor a sua virtude; tambem aproveyta muyto esfregando com elle a parte em que estiver alguma dor de causa fria, advertindo, que quando se appli-car este oleo, seja com grande resguardo do ar frio, porque he muyto penetrativo.
+
+## Cobra de Cascavel, & suas virtudes.
+
+Nas terras do Brasil se crião humas cobras tam venenosas, que mordendo em qual-quer parte do corpo, communicão repentinamente huma qualidade tam pestilente ao sangue, que o adelgaça, & faz sahir do corpo com tal furia, que sahe pelos ouvidos, pe-la boca, pelo nariz, pelos olhos, pelo cano da ourina, até lhe esgotar, & morrer a pessoa mordida. Chama-se esta cobra naquellas terras Xenninga, & entre os Inglezes se chama Ratthe-Snakes. Tem na cabeça hum cascavel, que a natureza lhe criou, para que vindo tangendo se ouça de longe, & tenha a gente tempo para fugir. Este cascavel trazido ao pescoço, affirmão os naturaes daquella terra, que tem virtude de preservar de accidentes de gotta coral, & de vágados. O remedio com que escapão da morte as pessoas mordidas por esta venenofissima cobra, he tomar huma oytava de pó do unicorne da Ave chamada Inhume, ou Anhume, ou huma oitava de pó da raiz de serpentaria virginiana, & em falta destes remedios, póde tomar hum pouco de esterco de homem acabado de sahir do corpo; & não tem outros remedios este veneno.
+
+## Maçãa da Vaca, & suas virtudes.
+
+Nos buchos de algumas vacas se crião hũas bolas redondas como laranjas, que saõ de cor parda muyto leves, & por dentro estãocheyas de cabellos: esta bola, ou maçãa roçada com agua até que faça hum polme, dada por alguns dias aos camarentos, os alivia muyto.
+
+
+
+## Pedra que se cria dentro no fel da vaca, & suas virtudes.
+
+Dentro no fel de algumas vacas se crião humas pedras taõ amarellas como he o aça-frão; estas taes pedras tem grande virtude para curar a Ictericia, com tal condiçaõ, que o doéte esteja primeyro bem evacuado: tomão-se vinte grãos da tal pedra pulverizada, quinze dias em jejum, misturando-a com seis onças de agua cozida com folhas de moran-gos, ou com raizes de grama.
+
+Em minha casa tenho hum remedio, ou segredo taõ efficaz para curar a Ictericia, que sendo eu Medico ha cincoenta annos, ainda nao achei outro taõ certo como este, & o tenho em minha casa só a fim de tirar a occasião a alguns Boticarios pouco escrupulosos, para que naõ vendão o tal remedio, dizendo, que lho revelei, como dizem hoje muytos, que eu lhes revelei o meu Bezoartico, & outros remedios que inventou a minha curiosidade, & que ninguem sabe como saõ compostos, nem os ingredientes que entrão na fabrica delles, & sem embargo disso, raras saõ as boticas aonde se peça o Bezoartico do Curvo, & outros segredos mais, que naõ digão que o tem, sem fazer escrupulo dos graves damnos, que se se-guem de vender os remedios adulterados por verdadeyros.
+
+## Páo de Largis.
+
+A Arvore chamada Largis he pequena como hum pessegueyro; as suas folhas saõ córa-das, cria-se nos confins da Persia junto a Turquia; são poucas, & muy raras as ditas arvores.
+
+A principal virtude da casca desta arvore he contra a Ictericia, trazida no pescoço junto à carne; naõ se toma cozida, nem preparada em agua, como cà se tem introduzido. Da casca desta arvore, chamada Largis, com raiz de losna, & uvas passadas se faz hum quasi divino xarope para Ictericias, como se póde ver na minha Polyanthea da segunda impressão trat. 2. cap. 64. fol 409. num. 13. Este xarope, em que entra Largis, he taõ efficaz para a Ictericia, como he a quina quina para as sezões, & como he a salsaparrilha, & o azougue para o gallico. O modo com que se faz o dito xarope para a Ictericia, & a quantidade em que se toma, acharão os curiosos no lugar citado da minha Polyanthea.
+
+## Páo Cobra, & suas virtudes.
+
+Este páo na lingua do Gentio, se chama Dangya Catenga, outros lhe chamão Catubia; o nome de páo Cobra lhe derão os Portuguezes, por ser o mais efficaz remedio do mundo para as mordeduras das cobras mais venenosas.
+
+Serve o pó deste páo sulado, ou moido muyto subtilmente, para remedio das grandes febres, dando-o a beber em agua, & untando com o seu polme o corpo: serve para qual-quer dor quente, ou fria, ou inchação, ou gotta, untando com o seu polme a parte dolo-rosa.
+
+Dizem os naturaes daquellas terras, que esta raiz se deve colher no minguante da Lua, tomando a raiz que fica para a parte do nascente, porque a do poente nao tem virtude; an-tes dizem, que he prejudicial.
+
+Do pó desta raiz se póde dar meya oytava misturada com agua.
+
+Applica-se com grande utilidade sobre as pontadas, tomando-o tambem pela boca.
+
+Na inchaçaõ das pernas faz o tal polme consideravel proveyto.
+
+O pó desta raiz misturado com a agua em que tiverem cozida a erva Anagalis, a que cha-mamos Marugem, ou misturado com espirito de vinho alcanforado, cura por modo de encantamento as Erysipelas, có tal condiçaõ que se applique morno, & não se deyxe seca.
+
+Nas parlesias se póde dar pela boca a agua em que for sulada esta raiz, untando tam-bem a parte paralitica com o seu polme muytas vezes no dia.
+
+Nas dores de estomago faz maravilhoso proveyto o tal polme jà bebido, jà untando-o com elle: doente ouve, que estando desesperado com dores de estomago, o untou com o polme da tal raiz, & porque o doente molhou a maõ no dito polme para esfregar com elle o lugar da dor, naõ só melhorou della, mas tendo a mam com gotta, se tirou a gotta, nem a teve mais em sua vida.
+
+Nas feridas obra maravilhosos effeytos deytando lhes os ditos pós: serve este pó para dores da madre, jà bebido, jà untando o pentem com elle.
+
+Alimpa os rins de areas.
+
+
+
+## Páo Quiriato, & suas virtudes.
+
+Ralado em pó subtilissimo, & dado a beber em agua, he grande contrapeçonha, & contra mordeduras venenosas.
+
+## Raiz de Monguż, & suas virtudes.
+
+Esta raiz tomou o nome de hum animalejo, que tem a fórma, & corpo de hum furão; este costuma pelejar com as cobras, & tanto que se sente ferido, larga a peleja, & vay buscar a raiz, & mastigando-a volta a continuar a briga, & assim se cura, & defende das mordeduras da cobra, até que a mata, & o Monguz fica salvando a vida nesta fórma.
+
+Serve moida em agua, & bebida, & posta sobre a mordedura, contra todas as feridas de bichos peçonhentos.
+
+Serve na mesma fórma, bebida em pequena porção, contra toda a outra especie de ve-neno, & contra as febres, & dores Nephriticas; & farà muyto melhor os seus effeytos, se se der a beber depois que o doente tiver tomado tres onças de agua Benedicta, ou seis grãos de Tartaro emetico.
+
+Serve, trazida no braço junto à carne, para defensivo dos bichos peçonhentos; & pre-parada em azeyte sem sal, serve para curar as inflammaçoens, & bostelas da cabeça.
+
+## Coco de Maldiva, & suas virtudes.
+
+Este coco nasce no fundo do mar, tem a fórma de rim, & nascem na arvore dous pega-dos, a casca negra, & o miolo com a casquinha parda; he branco como o coco que se come, ou de branco para pardo; da casca se fazem pucaros como barquinhas, com pés, & azas de prata para beber, porque he grande contraveneno; & os Mouros, & Gentios da Asia fazem delles grande estimação: a onça deste coco tem mais de dobrado valor da pe-dra Bazar.
+
+Serve, preparado em agua, & bebido, contra todo o veneno, & para as febres, & para ventosidades melancolicas, & para as obstrucções; & he admiravel cordeal para as bexi-gas.
+
+Tem virtude para absorber os humores venenosos, & circular o sangue, usando delle; & tambem faz grandes effeytos nas febres malignas, & nas febres procedidas de Pleurizes.
+
+## Coquinho de Melinde, ou Macoma, & suas virtudes.
+
+He fruto de huma arvore chamada Macomeyra, & tem huma casca muyto dura, que se naõ corta senaõ com serra; he muy felpuda, & dentro tem o coquinho, como o co-co de comer.
+
+Applica-se contra as ventosidades bebido em agua. Tambem se usa delle na mesma fór-ma contra os flatos, & para abater a colera, & confortar o estomago resfriado, ou relaxado.
+
+## Raiz de Mil-homens, & suas virtudes.
+
+Cria-se esta raiz no interior do Certão do Brasil, & se applica contra toda a especie de veneno, & sendo de bichos peçonhentos, bebendo-a preparada em agua, & pon-do os pós da raiz na ferida.
+
+Serve, bebida na mesma fórma, contra febres malignas, & contra inflam.mações do figa-do, & bofe; & os pós preparados, & lançados nas chagas da gangrena, he remedio excel-lente, & curativo; posta tambem a raiz da parte para onde querem que naõ corra a gangre-na; & usa-se della para toda a enfermidade; & por ser universal a sua virtude, lhe derão o nome de Mil-homens.
+
+Dado o pó desta raiz em huma onça de agua ardente cura presentaneamente as dores de colica, tem virtude vomitiva, & por esta razãó cura muytas doenças com grāde felicidade. Provoca vomitos, & por este caminho aproveyta em muytas enfermidades.
+
+
+## Raiz de Tambuape, & suas virtudes.
+
+Nasce na Bahia, & tem grande virtude contra veneno; preparada, & bebida em agua serve contra as dores de estomago, & lombrigas.
+
+## Batatas do campo, & suas virtudes.
+
+Estas Batatas naõ se achão senaõ no interior do certão do Brasil, onde tambem se crião a Tambuape, & Milhomens, & saõ raras.
+
+A sua virtude não he outra mais que hum finissimo contraveneno para as mordeduras de bichos peçonhentos, tomando a batata preparada com agua, & pondo-a na ferida.
+
+## Fava de Melinde, & suas virtudes.
+
+He excellente remedio (preparada em agua, ou em vinho, & bebida) contra o mor-dexim, & contra dores do estomago, & do ventre. Tambem se applica para ventosi-dades, & para quartans.
+
+## Raiz do Queijo, & suas virtudes.
+
+He esta raiz muyto quente, & por isso se applica às enfermidades, que procedem de frieza; he melhor, para quem tem falta de somno, he melhor para os lethargicos, & modorrentos: para dar despertar os humores frios, grossos, & humidos, se ha de moer em pó subtilissimo, ou roçar em huma pedra com çumo de limão gallego, ou com qualquer outro, de sorte que fique hum polme muyto liquido, & deste polme se deytão cinco, ou seis gottas nos lagrimaes dos olhos: o qual remedio o-bra maravilhosos effeytos nos accidentes de gotta coral, porque repentinamente tira o ac-cidente, & entra o enfermo em seu perfeyto juizo, como certamente me consta.
+
+Serve o pó desta raiz, misturado com humas gottas de çumo de limão azedo, para o ar; mas ha de deytar se dentro nos olhos, no mesmo dia que der o accidente, porque desta sor-te nem irà o mal por diante, nem tornarà a dar mais vezes.
+
+Do mesmo modo se applica o pó da dita raiz para todo o genero de peçonha, assim co-mo mordedura de cobra, ou de outros quaesquer bichos peçonhentos, untando com o polme da tal raiz a parte onde o bicho mordeo; sendo que o principal remedio he, tomar o tal pò pela boca misturado com meyo quartilho de agua rosada, ou de escorcioneyra: & se a pessoa, a quem morderão os taes bichos, estiver tam desacordada que pareça morta, fa-ção lhe tres, ou quatro sarrafaçaduras entre as sobrancelhas, ou na moleyra; & se deytar sangue, untem-o muyto bem sobre a mordedura, & com o favor Divino tornarà em si, & vivirà.
+
+Serve mais para assombrados, & endemoninhados, & a estes se applica para que se và o Demonio, porque naõ ha de esperar que se lhe deyte em os olhos quatro vezes.
+
+Serve o polme desta raiz, feyto com çumo de limão azedo, & deytado nos lagrimaes, para despertar os bebados.
+
+Serve tambem para madurar, & fazer vir a furo os apostemas, untando se aquella parte que quizerem que arrebente, com o polme da dita raiz.
+
+Serve para a dor de enxaqueca, feyta a raiz em pó, & tomada pela venta contraria onde està a dor, como se toma o tabaco.
+
+Serve para fazer vir a regra às mulheres, & para os accidentes da madre, chamados ute-rinos, a que as mulheres ignorantemente dizem que lhes subio a madre à garganta, & que as afoga.
+
+Se com o pó desta raiz misturarem outro tanto pó de gengibre, & meterem huma pou-ca desta mistura pelas ventas do doente que tem modorra, infallivelmente acordarà do somno, & espirrarà; & se nem acordar, nem espirrar, he sinal de morte.
+
+Soccorre grandemente àquellas pessoas, a quem se deo algum veneno, pondo lhe o pó da tal raiz nos olhos com çumo de limão, & dar lhe tambem a beber huma pouca quantidade della.
+
+Aproveyta muyto aos camarentos, com tal condiçaõ, que naõ se applique nos primey-ros dias das camaras, porque as póde estancar logo, & não he seguro reprezar logo os hu-mores, mas convem deyxar descarregar a natureza.
+
+Sobre todas as virtudes da raiz do Queijo, a que leva a palma, he que acorda aos doentes, que tem modorra, ou somno taõ profundo, que naõõ sentem as ventosas sarjadas; no qual caso o pó subtil da raiz do Queijo, misturado com tantas gottas de limão azedo, que fique hum polme, deytado este nos lagrimaes dos olhos, os acorda de sorte que ficão capazes de se confessar, & fazer testamento; mas porque nem em todas as terras se acharà a raiz do Queijo, quero, em soccorro dos que tiverem somnos pesadissimos, ensinar lhes outro re-medio facil, com que certa, & infallivelmente acordarão, & naõ poderàõ tornar a dormir, sem tomarem amendoadas. O remedio he, dar ao doente por tres dias em jejum quatro on-ças de infusaõ dos trociscos de Alhandal, coada por papel mata borrão. Os que quizerem certificar se da quasi milagrosa virtude que este remedio tem para vencer todas as mo-dorras, & affectos soporosos, vejão a minha Polyanthea da segunda impressão trat. 2. cap. 15. pag. 123. num. 1. aonde acharão nomeados os doentes, que depois de estarem ungidos, & pranteados por causa de modorras invenciveis, livrey da morte com o sobredito remedio. Peço pelas chagas de Christo a todos os Medicos que naõ desprezem a este remedio, porque no discurso de 50. annos ainda naõ achey outro tam efficaz para vencer as modo-rras como he a dita infusaõ.
+
+
+## Raiz de Ginsaõ, & suas virtudes.
+
+Esta raiz vem da China, & se faz della grande estimação; tem virtude contra febres a-gudas, & querem que seja tomada cozida com frangão, para aquelles enfermos que estão nos ultimos paroxismos. Mas a razão diz, que tomada pequena porção em agua da fonte, & bebida no mesmo caldo de frangão, ou franga, he admiravel remedio para qualquer enfermo prostrado, des-falecido, ou esfalfado. Ajuda muyto aos fastientos, porque lhes excita o appetite de comer.
+
+## Raiz de Moçuaquim, & suas virtudes.
+
+Esta raiz se cria na costa de Moçambique defronte das Ilhas de Querimba; he singular, porque as suas virtudes saõ de contacto.
+
+Trazida ao pescoço cahida sobre a carne, preserva de toda a erysipela na cara, & de todo o genero de maleficios, & do ar; & suspende a erysipela, posta da parte para onde naõ que-rem que corra.
+
+## Aranhas do Peru, & suas virtudes.
+
+No Peru, ou Indias de Castella ha humas aranhas muyto grandes, taõ venenosas, & peçonhentas, que em breves horas matão as pessoas a quem mordem. O remedio mais certo, & infallivel, que se tem achado contra hum veneno taõ presentaneo, he untar a mordedura cinco, ou seis vezes cada dia com o leyte que deytar de si huma folha de fi-gueyra daquellas terras, cortando-a com huma faca. Digo, figueyra daquellas terras; por-que sendo as taes figueyras muy semelhantes, & parecidas com as de Portugal, differem com tudo, em que as de Portugal perdem as folhas tanto que chega o Inverno; mas as do Peru as conservão verdes todo o anno; o que sem duvida foy altissima providencia de Deos; porque como o leyte das suas folhas he o total remedio das taes mordeduras, quiz Deos que todo o anno as ouvesse para soccorro dos homens, & remedio das ditas morde-duras.
+
+## Páo de Angariari, & sua semente.
+
+Esta arvore se cria em o Reyno de Angola: o páo da dita arvore, & os frutos, que saõ huns caroços compridos como caroços de tamaras, tem grandissima virtude para provocar a ourina, & para desfazer a pedra dos rins, & da bexiga; alimpa todas as difficul-dades, & humores seculentos, que se crião nas sobreditas partes, deitando-os pelas ouri-nas. Tem muyta virtude na cura das hydropefias, de qualquer casta, & condição que sejão.
+
+O modo de usar deste páo ou frutos, para que fação o bem que se pertende, he o seguin-te. Duas oytavas deste pão limado, ou feyto lasquinhas miudas, se deytaràõ em huma pa-nela de barro com huma canada de agua da fonte, & se deyxarão estar de infusaõ por tem-po de 24. horas, no fim das quaes se ferverà de modo, que de quatro quartilhos fiquem tres, & desta agua coada darão ao doente meyo quartilho em jejum, & outro ao sol posto, naõ comendo nem bebendo cousa alguma, menos que tenhão passado tres horas; adver-tindo, que para este remedio fazer os grandes proveytos que costuma nas suppressioens de ourina, deve o doente ter tomado primeyro dous vomitorios de Tartaro emetico, ou de caparrosa branca, sangrando se no seguinte dia quatro vezes, & no terceyro tres; porque este caso he taõ perigoso, & summario, que se lhe nao acodem com grande pressa, mata dentro de oyto, ou nove dias. Eu tenho huma tam grande crença, & experiencia dos vo-mitorios de Tartaro emetico, ou de vitriolo branco para remedio das suppressoens, ou se-jão altas, ou bayxas, que os anteponho, & uso primeyro que as sangrias. Advirto que se este remedio falhar, que eu tenho hum segredo tam maravilhoso, que tornarey o dinhey-ro, que me derem por elle, se dentro de quatro dias naõ fizer o effeyto desejado; mas com tal condiçaõ, que o doente tome primeyro que tudo os vomitorios de Tartaro emetico, ou de quintilio, & oyto sangrias nos braços: os q́ quizerem certificar se da verda-de, & virtude do dito remedio, vejam a minha Polyanthea da 2ª impressao trat. 2. cap. 81. fol. 509. de num. 36. até 42. aonde acharàõ nomeadas as pessoas que estando ungidas, & tidas por incuraveis, livrey de suppressoens altas por mercè de Deos, & beneficio do meu se-gredo.
+
+
+
+## Unicorne da testa da Ave chamada Inhuma, ou Anhuma, & do espo-rão que tem no encontro das azas, & suas virtudes.
+
+Nas lagoas, & Rio de Sao Francisco das Capitanias do Brasil andão humas aves, a que os Naturaes chamão Anhuma, ou Inhuma: tem as ditas aves na testa hum corno delgado, da grossura de hum bordão de arpa, & do comprimento de quasi hum pal-mo; & nos encontros das azas tem hum esporão triangular do comprimento de hum dedo, tam duro como se fora hum osso: estes esporões, & corno da testa da dita ave tem maravi-lhosa virtude bezoartica contra todo o veneno, & contra toda a malignidade dos humo-res, chamando-os por suor de dentro para fóra, com tanto, que se deve dar hum escropu-lo do dito esporão, ou corno feyto em pó misturado com quatro, ou cinco onças de agua de cardo santo, ou de escorcioneyra.
+
+He remedio muyto celehrado naõ só contra todos os venenos; mas he infallivel remedio para os mordidos da cobra de Cascavel, cujo veneno he tam refinado, & activo, que no mesmo instante em que a dita cobra mordeo em qualquer parte, faz sahir todo o sangue do corpo, assim pela boca, como pelos olhos, pelos ouvidos, pelo cano da ourina, pelo nariz, pelas unhas, & pelo trazeyro; assim o mostrão as experiencias de Guilherme Pisão lib. 3. histor. natur. sect. 2. de Avibus fol. 91. Soube-se da grande virtude do unicorne da ave Inhuma, porque bebendo naquellas lagoas varios bichos venenosos, o instincto natu-ral ensinou aos animaes que vivem naquelles contornos, que se ajuntassem todos ao pe daquelle rio, & nao bebessem sem que a ave Inhuma metesse primeyro a sua ponta, & es-porão das azas na dita lagoa, mas depois que a mete, bebem todos confiadamente, sem que corrão perigo.
+
+E se algum dia acontecer que a cobra de Cascavel (que he venenofissima) morder algu-ma pessoa, & naõ tiver o unicorne, ou esporão das azas da sobredita ave Inhume, póde to-mar hum pouco de pó da raiz da serpentaria virginiana, que na opiniã de Roberto Boi-le, & de outros Authores graves, he o mayor de todos os antidotos contra estas, & outras mordeduras venenosas; & na falta de qualquer destes dous antidotos, se póde tomar hum pouco de esterco fresco da mesma pessoa mordida, porque sem embargo de que he reme-dio horroroso, he admiravel, como tem mostrado a experiencia dos que forão mordidos da dita cobra, ou de qualquer outro bicho peçonhento.
+
+## Jamvarandim, & suas virtudes.
+
+Na Bahia, ou em Pernambuco nascem humas raizes delgadas, & compridas, que os Naturaes daquellas terras chamão Jamvarandim, cuja virtude he milagrosissima contra todas as mordeduras de animaes venenosos, pizando-a, ou verde, ou seca, & pon-do a sobre a parte mordida; provoca muchissimo as ourinas; faz cuspir muyto mascando-a; he grande contraveneno, & tem outras infinitas virtudes, que pouco a pouco se vão desco-brindo com o tempo.
+
+## Da tinta negra, que vem da China, que roçando-a levemente com agua commua, faz huma tinta muyto mais excellente que aquella, com que escrevemos em Portugal.
+
+Da China vem para a India humas talhadinhas negras, estreytas, & chatas, do compri-mento de hum dedo, das quaes humas saõ douradas, & outras não; cujo prestimo ordinariamente he para servirem de tinta para escrever; porèm tem outra serventia taõ ad-miravel, que todo o dinheyro do mundo he pouco para se pagar; porque quando os olhos se esbugalhão, de sorte que parece querem rebentar, & saltar fóra do rosto, faz a tal tinta hum effeyto taõ estupendo, & milagroso, como eu vi em huma filha de Cayetano de Mel-lo de Castro Viso-Rey da India. Deo a esta menina huma dor taõ repentina em o olho di-reyto, que de improviso inchou, & se fez tamanho como huma laranja, & quando todos temião que o olho rebentasse, pela grandeza a que tinha crescido a inchação, se sulou hu-ma migalha da dita talhadinha em hum didal de agua da fonte, & com esta agua, ou polme negro se untou a palpebra de sima, & de bayxo, & foy cousa como de encanto, porque em duas horas se desfez a inchação, & a vermelhidão, & sarou por modo de milagre. He su-perior remedio para estancar todos os fluxos de sangue do peyto, misturando-a em agua de tanchagem, de sorte que fique a agua bem preta, & grossa como polme.
+
+--- END CHUNK 18 ---
+
+--- START CHUNK 19 ---
+
+## Raiz da Maranga, & páo da mesma arvore, que tem semelhante vir-tude como tem a sua casca.
+
+Serve para curar todas as feridas penetrantes, ou sejão de armas, ou de balas, applica-da na sóma seguinte.
+
+Far se ha em pó muyto fino, & deste pó se formarà huma mecha, como se usa na Cirur-gia, & molhada esta com a saliva, se pulverizarà destes pós, & se meterà nas feridas; po-rèm advirta se que a mecha ha de ser do tamanho, & comprimento da mesma ferida, para que a penetre toda, & pelo contrario se solapara, porque tem tal virtude, que logo fecha; & em cada cura se irà diminuindo a mecha, dando lugar a que cresça a carne; & com esta cura se escusão outros medicamentos; & ainda que a ferida tenha sangue pizado, naõ ha mister mais medicamento que os mesmos pós, os quaes consomem, & espalhão todo o san-gue pizado que tiver a ferida; & ainda que seja penetrante, & no peyto, depois della fecha-da naõ ha mister lambedores, nem mais remedios.
+
+Serve mais para curar toda a chaga velha, & rebelde, ainda que haja mister cauterizada, applicando-se à chaga os pós da dita casca, & todas as vezes que se curar, se lavarà a chaga com agua morna, & depois pulverizarà muyto bem com os ditos pós; & tambem cortão todos os labios da chaga, & carne podre, que fica como cauterizada, dando algu-ma molestia como ardor, que naõ dura mais que meya hora.
+
+He tambem efficaz remedio para cursos de sangue, tomando a casca cozida com hum frangão recheado com ella, & sem sal, nem tempero algum, se darà o caldo a beber ao en-fermo pela manhãa em jejum, & de tarde, & brevemente sararà.
+
+Tambem he proveytoſa a dita cura para dor de olhos, & ainda que seja com grande detri-mento do enfermo pelo grande ardor que causa, aproveyta muyto applicada na fórma se-guinte. Mandarão mastigar esta casca por qualquer pessoa de manhãa em jejum antes de lavar a boca, & depois de bem mastigada, a pessoa que a mastigou, bafejarà com a sua boca nos olhos do enfermo repetidas vezes, & continuando todos os dias com esta cura, breve-mente sentirà melhoria.
+
+Tem propriedade a raiz, & páo desta arvore para afugentar todas as cobras, & viboras, & quem a trouxer com sigo està isento de que o offendão os taes bichos, porque em lhes dando o faro, ou cheyro daquella arvore, logo fogem.
+
+Para as cutiladas abertas se applicão os mesmos pós com a cautela que fica dito, calcan-do bem a ferida, para que os pós cheguem ao fundo della; porque ficando alguma parte a que os pós naõ cheguem, solaparà logo de tal maneyra que serà necessario tornar a abrir a ferida, por ser tal a sua virtude, que logo cria carne nova, com que se une, & fecha a fe-rida.
+
+## Raiz das febres, que vem do Canara, & suas virtudes.
+
+Chamão os Portuguezes a esta raiz, Raiz Presta, & hoje por devoção se chama Raiz de Nossa Senhora das Febres, & assim serve para todo o genero dellas, que padece o corpo humano, mas para a maligna tem mais efficacia, & a sara em breve tempo sem al-gum outro medicamento: porèm se ha de advertir, que se o enfermo estiver abundante de sangue, depois de tomada a dita raiz tres vezes, fica huma febre sinhalenta, sinal de haver sangue demasiado nas veas, & assim depois de tomada por tres dias continuos, he bom to-mar algumas sangrias, & depois alguma purga conforme o temperamento do sugeyto; & se a quizer escusar, continue com a mesma raiz, & terà perfeyta saude: mas se a febre pro-ceder de abundancia só de humores, sem duvida se despede só com a primeyra vez que se toma a dita raiz; mas sempre he necessario tomalla tres vezes ao menos; & assim tendo malig-nas, ou terças simplices, ou dobres, ou continuas, ou quartãs, infallivelmente se despedi-rão; advertindo, que se ouver obstrucções grandes, como do baço, ou da boca do estoma-go inchada, tomada a raiz assim para lhe tirarem as febres, depois he necessario preparar ao doente com xaropes aperientes, & depois disso algumas apozemas de raizes frescas com cousas purgativas, a fim de ficar o sugeyto com mais perfeyta saude, & mais isento de tor-nar a adoecer.
+
+Advirta-se, que se esta raiz se der para quartans, deve ser depois dellas continuarem dous ou tres meses, que he quando o humor de que ellas procedem, estarà jà cozido: & se as quartans forem dobres, ou vierem todos os dias, que he sinal de muyta carga de humor corrupto, neste se darà a raiz repetidas vezes em varios dias, porque deste modo se tem vis-to com ella admiraveis effeytos.
+
+A quantidade que se dà de cada vez, he hũ pedaço como meyo palmo, naõ sendo a raiz muyto grossa, nem muyto delgada; esta he a quantidade ordinaria para qualquer sugey-to, que virà a pesar oytava, & meya; & estando o doente no principio da enfermidade, em o qual tempo naõ faltão forças, ainda que pareça ao doente estar fraquissimo, como succe-de nas malignas, em que se postrão, ao que parece, as forças havendo as em o corpo bas-tantes, se podem dar até duas oytavas por cada vez, para obrar bem.
+
+Moe-se a dita raiz muyto bem em pedra, estando primeyro por algum tempo de molho em outra agua, & assim se moa em agua de beber; ou se o sugeyto estiver muyto facil em e-vacuar, se moa em a terceyra agua, em que lavão arroz, & assim moida, & muyto bem en-corporada se desfarà em quatro onças de agua; mas havendo sede, seja a sufficiente, com que a natureza se satisfaça, & depois de lançada a raiz moida com esta agua, se passará mansamente para outra porçola naduas ou tres vezes, para que se bote fóra alguma parte da raiz que naõ ficou bém moida.
+
+O tempo ordinario he dalla pela manhãa, como outra qualquer medicina; mas a expe-riencia tem mostrado que dada quando a cezão quer começar a declinar, em tanta agua co-mo està dito, conforme a sede do enfermo, faz prodigiosos effeytos; este he o melhor tem-po para o seu bom successo.
+
+Tambem se póde dar esta raiz, & sangrar no mesmo dia, sendo necessario; com adver-tencia, que dando se a raiz pela manhãa, serà a sangria às nove horas, ou de tarde; advertin-do tambem, que se a raiz tiver obrado muyto, nette caso nao convem a sangria no mesmo dia, porque he sinal de muyto humor; mas descansando o doente, se tornarà a dar a mes-ma raiz em menos quantidade, & sempre da primeyra vez se darà mais, que he até duas oy-tavas, & as mais vezes se dà huma oytava.
+
+O regimento de quem toma esta raiz, he o commum em todas as doenças: nos princi-pios dietas commuas: & os Portuguezes pódem comer frangãos pequenos cozidos.
+
+He tambem excellente esta raiz para aquella doença em que a lingua se faz negra, ou amarella.
+
+
+## Raiz dos Apostemas, & suas virtudes.
+
+Serve para resolver toda a sorte de apostemas, assim simplices, como compostos, inte-riores, & exteriores, & para toda a sorte de nascidas, mulas, & carbunculos; serve tam-bem para pizaduras de sangue por causa de quedas, ou pancadas.
+
+Serve para Pleuriz, & toda a sorte de pontadas de sangue, & para todos estes achaques se applica na fórma seguinte. Tomar se ha esta raiz, & se farà em migalhas quantidade de duas onças pouco mais, ou menos, & se botarà a cozer em huma panelinha nova, que naõ tenha azeyte, ou gordura alguma, & ficando a agua deste cozimento da cor de vinho tin-to, se deytarà huma pouca de farinha de arroz, & se cozerà até que fique em ponto de a-mendoada, & se darà a beber ao enfermo, que padecer qualquer dos achaques acima apon-tados, tres vezes no dia, pela manhãa, ao meyo dia, & de tarde; & esta farinha se manda deytar a respeito do muyto asco que tem a raiz; & quem puder beber o cozimento assim mesmo, se póde escusar a farinha; & na agua que o enfermo beber se deytarão humas mi-galhas desta raiz a modo de infusaõ: & se o apostema, ou outra qualquer nascida estiver ainda em sangue, se resolverà em termo de 24. horas; & se estiver a materia feyta, se resol-verà em termo de tres ou quatro dias; & ainda que se resolva com esta brevidade, bom he continuar dous annos, quãdo menos hũ; & a razão he, porque naõ torne a acudir o humor ao mesmo lugar, ou a outra parte: & advirta-se tambem que depois de se resolver o apos-tema, ou outra qualquer nascida, darão duas sangrias nos pés ao enfermo, & huma purga refrescativa, para que despeça todo o humor, & malignidade, que a raiz tiver arrancado parte donde tinhão apostema.
+
+Serve tambem para o baço, dada na fórma sobredita.
+
+## Raiz do Ar, & suas virtudes.
+
+Moida com agua, & depois de morna se untarà o corpo da pessoa que tiver o ar; & tambem se farà huma manilha, ou braçal de alguns pedaços, & se atarà no braço, ou em outra qualquer parte do corpo, & trazendo a com sigo tira a tortura que o ar faz na pessoa.
+
+Serve tambem para febres, moida com tanta quantidade de agua, que baste para lavar todo o corpo na fórma de esfregaçaõ, & depois de bem lavado se cobrirà muyto bem com roupa bastante, & suando despede logo a febre.
+
+## Arvore Quiriato, & suas virtudes.
+
+Esta arvore, a qual chamão Quiriato, ou por outro nome Fucamena, he pequena, as suas folhas saõ do tamanho de hum palmo, de mediana largura, & crespas a modo de folhas de Cajueiro: a raiz desta arvore tem particular virtude para tirar dores de cabeça, ou ao menos para as moderar; della sulada com agua se faz hum polme que applicado sobre a tes-ta, & fontes da cabeça faz bem aos que tem dores de cabeça, com tal condição que este pol-me se repita muytas vezes, naõ consentindo que se seque.
+
+## Oleo de alambre, & suas virtudes.
+
+Com razão se póde chamar este oleo o mais excellente opobalsamo por toda a Europa, porque leva ventagem a todas as outras medicinas no curar o mal do ar, & outros grandes achaques: chamava-se no tempo antigo o Oleo santo.
+
+Tomado o dito oleo no tempo de peste, todas as manhas, & noytes, seis gottas, & un-tando as ventas do nariz com elle, naõ consente pegar se veneno dos ares maos; & ao que estiver jà tocado deste mal se lhe dè a beber em agua de cardo santo, de hum até dous es-cropulos.
+
+Quem se sentir com grandes fraquezas perigosas da cabeça, como he o ar, paralysia, gotta coral, &c. tome pelas manhas em jejum oyto gottas deste oleo em agua cozida com betonica, ou com alfazema, ou mangerona. Tambem feytos huns bolinhos de açucar, misturado com humas pingas deste oleo, tem a mesma virtude. E sendo caso que huma pessoa esteja ja tocada destes males do ar, de paralysia, ou de outras grandes enfermidades, não ha remedio melhor que tomar duas pingas deste oleo. Untando com elle as ventas, fontes da cabeça, & ajūta do cachaço tira logo os ditos males, & se cobra o entendimento, & movimento como dantes. Deytadas humas pingas deste oleo sobre as brazas, & tomar este fumo pelos narizes, livra aos que estaõ jà tocados do dito mal.
+
+Tomadas algumas pingas deste oleo em agua de salsa, alimpa a via das ourinas, como de pedra, & outras immundicias.
+
+Sara os membros encolhidos, as veas, & membros apoderados da cambra, untando-os com este oleo, misturando alguns unguentos pertencentes a isso.
+
+Hum escropulo, ou meyo deste oleo, tomado em agua de artemisia, applica o parto às prenhadas.
+
+Tambem cura os corrimentos frios da cabeça, & alenta as ourinas.
+
+Untando com este oleo as ventas, & o coração, tira as grandes dores da madre; como tambem feytos huns bolinhos de açucar misturado com este oleo, & tomado algumas vezes.
+
+Tambem he bom para grandes fraquezas, & ancias do coração.
+
+Naõ fortifica só as forças do coração, senaõ tambem as aguas, & o figado, & tem gran-des forças para fazer degerir o comer do estomago.
+
+Tomadas tres pingas deste oleo em agua de cardo santo, logo pouco antes que dè o pa-roxismo, ou antes que queyrão vir as maleytas, & suando muyto bem sobre isto, sara, & as tira logo.
+
+He bom para catarro, & corrimentos.
+
+He bom para dor de dentes causadas de corrimentos, tomado em agua de tanchagem, & gargarejando com elle.
+
+He bom para tericia, tomado em agua cozida com folhas de morangos, ou com raiz de grama.
+
+He bom para a colica, tomado hum escropulo, ou meyo em caldo de gallinha.
+
+Para dores da madre, tomadas sete, ou oyto pingas em agua de erva cidreyra, ou de flor de laranja.
+
+Para fazer deytar as pareas, quando naõ querem sahir, tomar sete, ou oyto pingas em agua de artemisia, ou de sabina.
+
+Para o menstruo que naõ quer vir, tomar sete, ou oyto pingas em agua de erva cidrey-ra, ou em agua cozida com artemisia, ou com erva montaa.
+
+Serve para os que cospem, ou vomitão sangue, tomado tres pingas em agua cozida com folhas de salsa bem pizada.
+
+Serve aos que lhes foge o lume dos olhos, & ficão como atordoados; & tira o empacha-mento das aguas.
+
+Fortifica muyto a vista, tomando por muytos dias em jejum huma chicara de agua co-zida a fogo lento com meya onça de raizes de valeriana, deytando quatro pingas do dito oleo em cada chicara da dita agua. A quantidade que se da por cada vez deste oleo, he de quatro, seis, sete, ou dez gottas, conforme a comprexão, & forças do doente.
+
+Estes saõ os remedios, que mais ordinariamente nos mandão da India, & de outras ter-ras do mundo, & de que temos algumas noticias; mas porque todas saõ em confuso, & pouco seguras, trabalhey por examinar os verdadeyros prestimos dos ditos simplices, para que com melhor segurança pudessemos usar delles; queyra Deos que os effeytos sejão tam bons, como he o desejo que tenho do geral aproveytamento.
+
+--- END CHUNK 20 ---
+
+--- START CHUNK 21 ---
+
+## Ponta da Abada, & suas virtudes.
+
+Serve o pó desta ponta tomado em quantidade de meya oytava para matar lombrigas, com tal condição, que se tome cinco dias em jejum desfeyto com agua cozida de gra-ma, ou co decoço: a agua em que esta ponta estiver metida hum quarto de hora, bebida alegra o coração, & modera a sede: para esquinencias, & para as parotidas, he grande re-medio untar as taes partes com o polme que se fizer com esta ponta, repetindo esta diligen. cia muytos dias: os que padecem palpitações de coração, conhecem grande alivio beben-do a agua que estiver hum quarto de hora dentro de hum copo da ponta da Abada.
+
+## Raiz da Minhaminha, ou Quiminha, & suas virtudes.
+
+Tem esta raiz taõ presétanea virtude cóntra veneno, que iguala, ou excede ao páo Co-bra, o que experimétou hum Cirurgião estrangeiro, chamado Monsieur Estruque: deo rosalgar a duas gallinhas, & depois que tiverão o rosalgar no estomago, cahirão como mortas, & dando a hũa dellas a Minhaminha misturada com agua, & dando à outra o páo Cobra com animo de experimentar qual destas raizes tinha mais virtude contra o veneno, observou que ambas escaparão da morte.
+
+Outro Cirurgião Flamengo, chamado Alexandre, quiz examinar a virtude da Minha-minha, & para isso deo hũ pouco de solimão a hum cachorro, & depois de cahido deo a be-ber ao cão a agua em que tinha sulado a Minhaminha, & se levantou, como se naõ tivera tomado a tal peçonha. Esta arvore nasce nas partes da Embaça, he huma mata pequena, que nao faz tronco; mas cria humas vergontinhas delgadas que nascem da raiz, do com-primento de hum covado pouco mais, ou menos; a folha he pequena, & faz tres pontas: tem esta saiz hũa qualidade taõ rara, que se com ella se misturarem outras raizes ficão sem força, nem virtude alguma, porque a Minhaminha lha chupa toda, & por isto lhe chamão Minhaminha, porque na lingua de Angola Minhaminha, quer dizer engole, porque en-gole a virtude das outras; ou porque engole o veneno que acha no estomago, & o faz dey-tar fóra, & se o naõ acha, naõ faz mal.
+
+## Raiz de Mutututu, & suas virtudes.
+
+Nas terras de Angola ha humas arvores a que os Gentios chamão Mutututu, saõ as di-tas arvores muyto parecidas com o nosso Medronheyro, assim nas folhas, como nos frutos, sem embargo que os taes frutos, nem se comem, nem tem gosto; porèm a raiz des-ta arvore tem grandissima virtude para erysipelas, & inflammações dos testiculos, & de outras partes: sulada em pedra com agua ordinaria até fazer polme, & applicado mor-no sobre a erysipela, & parte inflammada, ou dolorosa, lhe faz grandissimo proveyto, com tal condição, q́ naõ se deyxe secar o dito polme, antes continue o dito remedio em quanto a doença o pedir: muytos usão deste polme para moderar as dores de gotta quente: do polme sobredito se fazem ajudas maravilhosas para as camaras de sangue, ou outras muyto quentes.
+
+## Bucho da Ema, & suas virtudes.
+
+Nos matos do Maranhão, & no grão Pará se crião, & vivem humas aves, a que chamão Ema, nem a grandeza he mayor que o mayor Perum: a tunica, ou membra-na interior do bucho desta Ave tem grande virtude para confortar o estomago, & desfa-zer a pedra da bexiga, & fazer ourinar, dando huma oytava do tal bucho feyto em pó, mis-turado com meyo quartilho de vinho do Rhim, ou em meyo quartilho de agua cozida com meya onça de Virga aurea, ou de Eroca marinha, ou de cerfolio; mas he necessario que o doente tenha primeyro que tudo tomado hum vomitorio de seis grãos de Tartaro emeti-co, ou de meya oytava de caparrosa branca, & se tenha sangrado nos braços nove vezes dentro de tres dias: os que com esta precisa preparação derem este remedio, conseguirão maravilhosos proveyto nas suppressoens da ourina.
+
+--- END CHUNK 21 ---
+
+--- START CHUNK 22 ---
+
+## Páo do Mubamgo, & suas virtudes.
+
+Mubamgo he huma arvore agreste, cuja casca he branca, a folha de huma parte he branca, & de outra verde como a folha do alemo, he compridinha, & quasi de tres dedos de largo, cheyra este páo muyto, jà quando está florido, & alguem entra pelo ma-to onde está a dita arvore, deyta de si hum cheyro deliciosissimo: o páo desta arvore he branco; a raiz roçada de sorte que faça hum polme, tem grande prestimo para as partes pa-raliticas offendidas do ar, untando as com elle quente, bebendo tambem deste polme cousa de meya colher; tambem se dá a beber aos que tem camaras de frio, & se deytão ajudas delle para o mesmo intento. Feyta esta raiz em pó, & tomada como tabaco faz espirrar tanto, ou mais que a sevadi-lha, & usado deste modo aproveyta muyto às mulheres, quando estão assaltadas com os ac-cidentes da madre. Este páo naõ falta no mato da Embaça, de Casange, & em outras partes.
+
+## Linguas de São Paulo, & suas virtudes.
+
+Estas pedras, que verdadeyramente tem o feytio de huma lingua de passaro, & saõ par-das de cor de azeytona de Elvas, achão-se nas terras de Malta, tem grande virtude contra as febres malignas, & quaesquer outras, porque feytas em pó subtilissimo miti-gão muyto o demasiado calor das febres, alivião as ancias, & algumas vezes provocão suor; attribuem lhe muytas pessoas grande virtude contra o veneno, porque consta de algũas experiencias, que dando-se veneno em certa iguaria de que comerão quatro pessoas, esti-verão todas quasi mortas, & acodindo lhe com o pó destas pedras, escaparão: o que eu pos-so certificar como testemunha de vista, he, que estádo hua mulher ungida por occasião de hũa febre malignissima, taõ vizinha da morte, & taõ desacordada, que deytando se lhe ven-tosas sarjadas cõ golpes bẽ profúdos, naõ as sentio; neste aperto lhe dey o meu cordeal, a que ajūtey o pó de duas linguas destas, lhe mandey de minha casa, & no mesmo dia escapou da morte. Esta mulher estava em casa de seu cunhado Manoel Pereyra, morador à Boa Vista, jūto ao pateo das galegas. Estas pedras se achão tambén na praya de Casondama no Reyno de Angola: tambem se achão outras pedras na mesma praya redondas do tamanho dos grãos de bico de Portugal, estas saõ pretas, como saõ as pedras da cobra de Dio, & tem a mesma virtude que as de Dio, porque postas sobre as mordeduras de qualquer bicho venenoso chupão em si o veneno: chamão-se estas taes pedras, Olho de vibora.
+
+## Páo Quifeco, & suas virtudes.
+
+Do Reyno de Benguela vem hum páo, chamado Quifeco, o polme deste pao appli-cado sobre a testa abranda muyto as dores de cabeça: a mesma virtude tem o páo cha-mado Quicongo.
+
+## Erva Quitumbata, & suas virtudes.
+
+A Raiz desta erva tem virtude taõ efficaz para suspender as camaras, que havendo al-guns doentes que as tiverão cinco, & seis meses, sem haver remedio com que se es-tancassem, só com o pó desta raiz tomado huma, ou duas vezes paràrão de sorte que foy ne-cessario deytar lhe ajudas para cursarem: o modo com que se usa desta raiz he sulando-a em huma pedra com agua até fazer polme de mediana grossura, & entao se dà hũa colher deste polme misturado com Matete frio. Esta erva he muyto conhecida naquellas terras, & ha tanta abundancia della, q́ a comem os porcos, he alastrada pelo chão, a sua folha he peque-na, & redonda, deyta huma flor pequena, & branca.
+
+## Orelha de Onça, & suas virtudes.
+
+Na Bahia em huma terra chamada Cachoeyra nasce huma erva, a que os Naturaes chamão Orelha de Onça, a raiz desta erva he cheya de nós, como he a raiz do Сypò, com differença, que os nós saõ mayores, & mais grossos que os do Cypò: certificarão-me algumas pessoas dignas de credito, q́ a tal raiz, Orelha de Onça, tem grandissima virtu-de para soccorrer aos tossigosos, & impiematicos, com tal condição, que se tome muytos dias feyta em pó subtilissimo, misturada com duas onças de assucar rosado velho, ou com cremor da cevada.
+
+
+### Peço muyto aos Leytores que yrão ponderar as seguintes razões com ani-mo desapayxonado, porque entendo darão sentença a meu favor.
+
+He costume muyto usado na Corte de París, & em outras Cortes, & Cidades do mů-do, que todas as pessoas que sabem algum remedio efficaz para curar alguma doen-ça rebelde, mandão fixar varios papeis nas partes mais publicas das Cidades, dando nel-les noticia, que fulano morador em tal rua tem este, ou aquelle remedio para curar tal, ou tal doença, & naõ contentes com esta diligencia repartem os ditos papeis com as pessoas que encontrão pelas ruas, pertendendo deste modo que em poucos dias saibão todos aonde pódem achar soccorro para as doenças taõ teymosas, que se naõ rendem aos remedios ordinarios.
+
+Este arbitrio taõ proveytoſo para o bem commum desejey muytas vezes pôr em exe-cução, & dar noticia dos particulares remedios, que com incansavel estudo alcancey no discurso de muytos annos, para que os doentes se aproveytassem delles; reprimi porèm o tal desejo até este tempo, por saber que nelle se naõ faz obra alguma, por boa que seja, que a malicia, & o amargoso fel da enveja naõ converta em veneno, julgando-a sinis-tramente: agora porèm que nem as detracções, nem os varios juizos, que se haõ de fazer sobre o meu designio, poderãó encender em mim o fogo da colera, porque naõ tenho mais que cinzas a que me reduzirão os meus annos, me resolvo a manifestar ao mundo que eu preparo doze remedios, com que tenho livrado da morte a muytos doentes, que estavaõ deyxados ao arbitrio da fortuna; & porque me consta que muytas pessoas padecem doen-ças, que ou tirão a vida, ou durão muytos annos, que se puderão curar, se tivessem noti-cia que em minha casa tenho para ellas remedios, quero apontallos aqui, para que os Se-nhores Medicos, com quem puder máis o amor Divino, que a desaffeyçaõ humana, ulem delles, quando as medicinas ordinarias naõ aproveytarem.
+
+As doenças para quem servem os taes remedios, Saõ as seguintes.
+
+Para alporcas, para febres malignas, ou bexigas, para gotta coral, para fluxos de san-gue, para suppressoens altas da ourina, para cezões intermittentes, para accidentes u-terinos, para almorreymas, para seccar o leyte, para vágados, para lombrigas; & finalme-te preparo huma massa, chamada Curviana, de grande virtude para as doenças abayxo de-claradas.
+
+E começando pelo remedio das lombrigas, digo, que rarissimas vezes deyxa de deytar fóra toda a bicharia, que ouver no corpo, tomando dous escropulos do dito remedio tres dias successivos, ou em substancia, ou em infusão de duas onças de agua commua.
+
+A massa Curviana se dà em fórma de pilulas em quantidade de huma oytava. Provoca efficazmente a conjunçaõ mensal, com tal condiçaõ, que se tome doze dias alternados, be-bendo lhe, passadas duas horas, meyo quartilho de caldo de grãos pardos, temperado com dez reis de açafrão, & doze grãos de pó de semente de salsa, ou meyo quartilho de agua cozida com erva montaa.
+
+A dita massa desopila muyto as veas, com condição, que a cada dous escropulos della a-juntem hum escropulo de crocus martis aperitivo, & se continue quinze dias.
+
+A dita massa alivia muyto aos asthmaticos, com tal condiçaõ que passadas duas horas, beba o doente huma chichara de agua bem quente, cozida com cabeças da erva hyssopo; ou tres onças de agua chamada de mil flores destillada em Mayo: toma-se seis vezes em dias alternados.
+
+Alimpa o estomago de cruezas, & humores viscosos, & se toma quatro vezes em dias al-ternados.
+
+Cura melhor que algum outro remedio as durezas, & opilações do baço, os caro-ços dos peytos das mulheres, & as alporcas, com tanto que se tomem da tal massa quatro escropulos, tegundo a ordem, que ensino na Polyanthea trat. 3. cap. 4. fol. 857.
+
+Para as dores de cabeça que procederem por causa do estomago, como muytas vezes procedem, obra a dita massa maravilhosos proveyto, com tanto que se tome cinco vezes em dias alternados, bebendo lhe em sima quatro onças de agua cozida com folhas de cardo santo.
+
+Os que quizerem saber se os sobreditos remedios saõ taõ proveytoſos como eu o digo, pódem informar se das mesmas pessoas a qué curey com elles, & ficarão desenganados, que na inculca que faço delles, tem mais parte a compayxão dos males alheyos, que o desvane-cimento, ou ambiçaõ da fama propria.
+
+Os doentes que curey de alporcas antigas, se acharáõ nomeados no livro das minhas Observações, Obs. 7. fol. 53.
+
+Os que curey de tebres malignas com o meu Bezoartico Curviano, sendo chamado pa-ra muytos delles depois de estarem ungidos, acharáõ nomeados na Polyanth. trat. 2. cap. 105. fol. 654 até 663.
+
+Os que curey de accidentes de gotta coral, em que entrou hum que os tinha heredita-rios, se acharáõ nomeados na Polyanth. trat. 2. cap. 9. fol. 08. até 81.
+
+Os que curey de fluxos de sangue se acharão nomeados no trat. 3. cap. 4. fol. 854. até 856.
+
+Os que curey de suppressoens altas da ourina, se acharão no dito livro cap. 81. fol. 509. num. 36.
+
+Aos Senhores Medicos, a que parecer que fiz serviço à Republica em lhe dar noticia de alguns remedios secretos, de que os doentes se nao aproveytavão, por lhes faltar o conhe-cimento delles, peço que yrão fazer o mesmo, dando noticia dos grandes remedios que souberem, & farão nisso huma obra de muyto merecimento para com Deos. Naõ digo que revelem a manufactura dos seus segredos, em quanto forem vivos, que tambem eu nao revelo a manufactura dos meus; mas digo que dem noticia delles para utilidade publi-ca, que isso he o que eu faço, & devem fazer todos em favor dos enfermos.
+
+FINIS, LAUS DEO, Virginique Matri.`,
+  metadata: {
+    date: '1716',
+    author: 'João Curvo Semedo',
+    researchGoals: 'Understand the globalization of the early modern drug trade',
+    additionalInfo: 'Semedo was a well-known Portuguese physician and apothecary. This text was included along with editions of his book Polyanthea Medicinal, and seems to have been a sort of advertisement.',
+    title: 'Memorial de Varios Simplices',
+    documentEmoji: '🍵',
+    documentType: 'Pamphlet',
+    genre: 'Pharmacopeia',
+    placeOfPublication: 'Lisbon, Portugal',
+    academicSubfield: 'History of Medicine',
+    tags: ['Drugs', 'Pharmacy', 'Globalization', 'Medicine'],
+    summary: 'A unique text that describes numerous drugs newly introduced into European medicine.',
+    fullCitation: 'João Curvo Semedo. *Memorial de Varios Simplices.* Lisbon: circa 1714.'
+  }
+},
  
  // Native oral tradition source
 {
@@ -904,7 +1719,8 @@ But the whites returned, asking for more and more land—until, as they say, the
       placeOfPublication: 'Gettysburg, Pennsylvania',
       academicSubfield: 'Political History',
       tags: ['Civil War', 'American History', 'Presidential Speech'],
-      summary: 'A concise dedication honoring Union soldiers'
+      summary: 'A concise dedication honoring Union soldiers',
+      thumbnailUrl: '/demo-thumbnails/gettysburg.jpg'
     }
   },
 
@@ -1261,7 +2077,7 @@ const demoExtractConfigs: Record<number, ExtractInfoConfig> = {
 
 // utility function for quick routing of links in feature cards
 
-const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-analysis' | 'counter' | 'references' | 'extract-info') => {
+const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-analysis' | 'counter' | 'references' | 'extract-info' | 'highlight') => {
   // Disable metadata detection temporarily
   setDisableMetadataDetection(true);
   
@@ -1292,6 +2108,13 @@ const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-
   useAppStore.getState().setSourceContent(demoTexts[demoIndex].text);
   useAppStore.getState().setMetadata(demoTexts[demoIndex].metadata);
   useAppStore.getState().setLoading(true);
+  
+  // IMPORTANT: If detailed analysis is requested, force detailed analysis to null
+  // This will trigger the API call when the component mounts
+  if (targetPanel === 'detailed-analysis') {
+    useAppStore.getState().setDetailedAnalysis(null);
+    useAppStore.getState().setDetailedAnalysisLoaded(false);
+  }
   
   // Re-enable metadata detection after a delay
   setTimeout(() => {
@@ -1342,8 +2165,8 @@ const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-
   
   // Special handling for counter narratives with lens modal
   if (targetPanel === 'counter') {
-    // If this is the Manhattan narrative demo (index 4)
-    if (demoIndex === 4) {
+    // If this is the Manhattan narrative demo (index 5)
+    if (demoIndex === 5) {
       // Wait for the page to load, then open the Place lens modal with pre-filled text
       setTimeout(() => {
         // Find and click the Place lens button
@@ -1375,9 +2198,9 @@ const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-
 };
 
 
-const handleManhattanNarrative = () => {
+const handleManhattanNarrative = async () => {
   // This is the index of the Delaware oral tradition about Manhattan in your demoTexts array
-  const manhattanDemoIndex = 4;
+  const manhattanDemoIndex = 5;
   
   // Disable metadata detection temporarily
   setDisableMetadataDetection(true);
@@ -1388,16 +2211,68 @@ const handleManhattanNarrative = () => {
   setLocalMetadata(demoTexts[manhattanDemoIndex].metadata);
   
   // Prepare the source content for analysis
-  useAppStore.getState().setSourceContent(demoTexts[manhattanDemoIndex].text);
-  useAppStore.getState().setMetadata(demoTexts[manhattanDemoIndex].metadata);
+  const sourceContent = demoTexts[manhattanDemoIndex].text;
+  const metadata = demoTexts[manhattanDemoIndex].metadata;
+  
+  useAppStore.getState().setSourceContent(sourceContent);
+  useAppStore.getState().setMetadata(metadata);
   useAppStore.getState().setLoading(true);
   useAppStore.getState().setActivePanel('counter');
   
-  // Store special lens info in the app store for CounterNarrative component to use
+  // Store special lens info
   useAppStore.getState().setSpecialLensRequest({
     lensType: 'place',
     instructions: "Imagine you are Manhattan Island, insouciantly narrating your own history up to the 1960s. You really hate Robert Moses. Begin."
   });
+  
+  // Navigate to analysis page
+  router.push('/analysis');
+  
+  // Give time for navigation to complete
+  setTimeout(async () => {
+    try {
+      // Directly trigger counter narrative generation
+      const response = await fetch('/api/counter-narrative', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source: sourceContent,
+          metadata: metadata,
+          perspective: '',
+          modelId: useAppStore.getState().llmModel
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        useAppStore.getState().setCounterNarrative(data.narrative);
+        setDisableMetadataDetection(false);
+      }
+    } catch (error) {
+      console.error("Error generating counter narrative:", error);
+    }
+  }, 300);
+};
+
+// Add this function after handleQuickDemo function in page.tsx
+const handleHighlightDemo = (demoIndex: number, highlightQuery: string) => {
+  // Disable metadata detection temporarily
+  setDisableMetadataDetection(true);
+  
+  // Load the demo content
+  setSelectedDemo(demoIndex);
+  setTextInput(demoTexts[demoIndex].text);
+  setLocalMetadata(demoTexts[demoIndex].metadata);
+  
+  // Set the appropriate panel and highlight mode
+  useAppStore.getState().setActivePanel('highlight');
+  useAppStore.getState().setHighlightMode(true);
+  useAppStore.getState().setHighlightQuery(highlightQuery);
+  
+  // Prepare the source content for analysis
+  useAppStore.getState().setSourceContent(demoTexts[demoIndex].text);
+  useAppStore.getState().setMetadata(demoTexts[demoIndex].metadata);
+  useAppStore.getState().setLoading(true);
   
   // Re-enable metadata detection after a delay
   setTimeout(() => {
@@ -1406,7 +2281,7 @@ const handleManhattanNarrative = () => {
   
   // Navigate to analysis page
   router.push('/analysis');
-};
+}
 
   
   return (
@@ -1414,9 +2289,9 @@ const handleManhattanNarrative = () => {
 
     {/* Hero section with background image, gradient overlay and animation */}
 
-<div className="relative shadow-2xl transition-all duration-1000 ease-out  overflow-hidden" 
-     style={{ height: animateIn ? '240px' : '0px' }}>
-  {/* banner image with enhanced overlay */}
+<div className="relative shadow-2xl transition-all duration-1000 ease-out overflow-hidden" 
+     style={{ height: animateIn ? '260px' : '0px' }}>
+  {/* Background with enhanced overlay */}
   <div className="absolute inset-0 z-0">
     <Image 
       src="/sourcelens.jpg" 
@@ -1426,49 +2301,39 @@ const handleManhattanNarrative = () => {
       className="object-cover" 
     />
 
-
-    {/* Improved gradient overlay with subtle animation */}
-    <div className="absolute inset-0 bg-gradient-to-r from-amber-900/20 via-amber-800/20 to-amber-700/60 backdrop-filter backdrop-brightness-70">
-      <div className="absolute inset-0 opacity-10 mix-blend-overlay" 
-           style={{ background: 'radial-gradient(circle at 30% 50%, rgba(255,255,255,0.15) 0%, transparent 80%)' }}></div>
+    {/* Improved gradient overlay with better contrast */}
+    <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 via-slate-800/70 to-amber-900/80 backdrop-filter backdrop-brightness-74">
+      <div className="absolute inset-0 opacity-20 mix-blend-overlay" 
+           style={{ background: 'radial-gradient(circle at 30% 50%, rgba(255,255,255,0.6) 0%, transparent 80%)' }}></div>
     </div>
-    {/* Enhanced bottom gradient for better text readability */}
-    <div className="absolute bottom-0 left-0 w-full h-0 pointer-events-none" 
-         style={{ background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.2), rgba(0,0,0,0.5))' }}></div>
+    {/* Better bottom gradient for text readability */}
+    <div className="absolute bottom-0 left-0 w-full h-20 pointer-events-none" 
+         style={{ background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.5))' }}></div>
   </div>
   
-  {/* Enhanced Header controls with glass effect */}
-  <div className="relative z-20 flex justify-between p-4">
+  {/* Header controls with improved positioning - moved to absolute positioning above everything */}
+  <div className="fixed top-0 right-0 left-0 z-50 flex justify-between p-6">
     <div className="flex items-center">
       <span className="text-white/90 text-sm bg-white/10 backdrop-blur-sm py-1.5 px-3 rounded-full">
         BETA
       </span>
     </div>
 
-
-    
-  
-
-
-    
-    {/* Menu button with hover effect */}
-    <div className=" backdrop-blur-sm p-2 rounded-xl hover:bg-white/20 transition-all duration-300">
+    {/* Menu button with consistent styling */}
+    <div className="backdrop-blur-sm rounded-full hover:bg-white/10 transition-all duration-300">
       <HamburgerMenu />
     </div>
-
   </div>
 
-
-
-  {/* Enhanced Hero content with improved typography and animations */}
-  <div className="relative z-10 max-w-3xl mx-auto px-4 flex flex-col justify-center items-center text-center" 
-       style={{ height: '28%', paddingTop: '20px' }}>
+  {/* Improved hero content with better typography */}
+  <div className="relative z-10 max-w-4xl mx-auto px-1 flex flex-col justify-center items-center text-center pt-2"
+  style={{ paddingTop: '40px' }}> {/* Added top padding to account for fixed header */}
     <h1 
-      className={`font-serif font-bold text-white mb-1 transition-all duration-1000 transform md:text-7xl ${
+      className={`font-serif font-bold text-white mb-2 transition-all duration-1000 transform md:text-6xl ${
         animateIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
       }`}
       style={{ 
-        textShadow: '0 2px 12px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.7)',
+        textShadow: '0 2px 12px rgba(0, 0, 0, 0.7)',
         letterSpacing: '-0.02em'
       }}
     >
@@ -1476,31 +2341,27 @@ const handleManhattanNarrative = () => {
     </h1>
     
     <div 
-      className={`h-0.5 w-44 bg-gradient-to-r from-amber-300/10 to-amber-200/80 my-2 transition-all duration-1000 transform ${
-        animateIn ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'
+      className={`h-0.5 w-28 bg-amber-300/70 my-1 transition-all duration-1000 transform ${
+        animateIn ? 'scale-x-100 opacity-80' : 'scale-x-0 opacity-0'
       }`}
     ></div>
-
-
     
     <p 
-      className={`text-xl md:text-2xl text-white max-w-2xl transition-all duration-1000 delay-200 transform font-light ${
+      className={`text-xl md:text-2xl text-white/95 max-w-2xl transition-all duration-1000 delay-200 transform font-light leading-relaxed ${
         animateIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
       }`}
-      style={{ textShadow: '0 3px 16px rgba(0,0,0,0.9)' }}
+      style={{ textShadow: '0 3px 12px rgba(0,0,0,0.9)' }}
     >
       Illuminate historical primary sources through multiple perspectives
     </p>
-
-
     
-    {/* Enhanced buttons for About and Beginner's Guide */}
-    <div className={`flex gap-4 mt-5 mb-5 transition-all duration-1000 delay-300 transform ${
+    {/* Enhanced buttons with consistent styling */}
+    <div className={`flex gap-4 mt-3 transition-all duration-1000 delay-300 transform ${
       animateIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
     }`}>
       <button
         onClick={() => setShowAboutModal(true)}
-        className="px-4 py-2 bg-blue-500/15 backdrop-blur-md cursor-pointer hover:bg-blue-600/40 hover:scale-105 transition-all duration-300 ease-in-out rounded-lg text-white text-sm font-medium border border-white/20 hover:border-white/40 shadow-lg hover:shadow-2xl"
+        className="px-3 py-2 bg-blue-300/20 backdrop-blur-sm text-white text-sm font-medium border-2 border-white/20 rounded-lg shadow-lg hover:bg-blue-600/40 hover:border-white/30 transition-all duration-300"
       >
         <span className="flex items-center">
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1512,7 +2373,7 @@ const handleManhattanNarrative = () => {
       
       <button
         onClick={() => setShowFAQModal(true)}
-        className="px-4 py-2 bg-amber-500/15 backdrop-blur-md cursor-pointer hover:bg-amber-600/40 hover:scale-105 transition-all duration-300 ease-in-out rounded-lg text-white text-sm font-medium border border-amber-500/30 hover:border-amber-500/50 shadow-lg hover:shadow-2xl"
+        className="px-4 py-2 bg-amber-400/20 backdrop-blur-sm text-white text-sm font-medium border-2 border-amber-500/30 rounded-lg shadow-lg hover:bg-amber-600/40 hover:border-amber-500/40 transition-all duration-300"
       >
         <span className="flex items-center">
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1524,7 +2385,7 @@ const handleManhattanNarrative = () => {
       
       <button
         onClick={() => router.push('/library')}
-        className="px-4 py-2 bg-purple-500/15 backdrop-blur-md cursor-pointer hover:bg-purple-600/40 hover:scale-105 transition-all duration-300 ease-in-out rounded-lg text-white text-sm font-medium border border-white/20 hover:border-white/40 shadow-lg hover:shadow-2xl"
+        className="px-4 py-2 bg-purple-400/20 backdrop-blur-sm text-white text-sm font-medium border-2 border-white/20 rounded-lg shadow-lg hover:bg-purple-600/40 hover:border-white/30 transition-all duration-300"
       >
         <span className="flex items-center">
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1535,21 +2396,20 @@ const handleManhattanNarrative = () => {
       </button>
     </div>
   </div>
-
 </div>
 
-<div className="h-1 bg-gradient-to-r from-indigo-400 via-purple-400 to-amber-400 shadow-xl"></div>
-
+{/* Replaced gradient divider with more subtle version */}
+<div className="h-px bg-gradient-to-r from-slate-200 via-amber-300 to-slate-200 shadow-sm"></div>
 
 
 
     {/* Main content - Enhanced UI */}
-<div className="flex-1 max-w-6xl mx-auto px-4 py-4 -mt-0 relative z-10">
+<div className="flex-1 max-w-7xl mx-auto px-3 py-2 -mt-0 relative z-10">
 
 
 
   {/* Feature cards section - Enhanced with professional styling, reduced height */}
-<div className={`flex flex-col md:flex-row items-start gap-4 transition-all duration-700 transform ${
+<div className={`flex mt-2 flex-col md:flex-row items-start gap-4 transition-all duration-700 transform ${
   animateIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
 }`}>
   
@@ -1752,6 +2612,16 @@ const handleManhattanNarrative = () => {
         </p>
         <div className="mt-4 flex flex-wrap gap-2 justify-start">
 
+  <button
+    className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
+    onClick={() => handleHighlightDemo(4, 'highlight African drug names')}
+  >
+    <svg className="w-3.5 h-3.5 mr-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+    </svg>
+    Find African names in an 18th century drug guide
+  </button>
+
  <button
   className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
   onClick={handleManhattanNarrative}
@@ -1765,7 +2635,6 @@ const handleManhattanNarrative = () => {
       </div>
     </div>
     
-
     {/* top gradient divider */}
     <div className={`h-0.5 bg-gradient-to-r from-purple-200 via-purple-400 to-purple-200 transition-all duration-500 ${expandedFeature === 2 ? 'opacity-100' : 'opacity-0'}`}></div>
   </div>
@@ -1773,18 +2642,18 @@ const handleManhattanNarrative = () => {
 
           
   {/* Input and metadata form */}
-<div className="grid grid-cols-1 md:grid-cols-12 py-2 gap-4 mt-2">
+<div className="grid grid-cols-1 md:grid-cols-14 py-2 gap-3 mt-2">
   {/* Source input section with enhanced styling */}
   <div 
     className={`md:col-span-7 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-slate-200/80  ${
       animateIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
     }`}
   >
-    <div className="p-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 relative">
-        <h2 className="text-xl font-medium text-slate-800 flex items-center">
+    <div className="p-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-3 relative">
+        <h2 className="text-xl font-semibold text-slate-800 flex items-center">
          
-          Input Your Primary Source
+         1. Input Your Source
         </h2>
         
         {/* Demo button and dropdown section */}
@@ -1948,8 +2817,7 @@ const handleManhattanNarrative = () => {
 
       </div>
 
-     
- 
+  
               
       {/* Enhanced Tabs with Indicator Animation */}
       <div className="relative flex border-b border-slate-200 mb-3">
@@ -2010,15 +2878,15 @@ const handleManhattanNarrative = () => {
         />
       </div>
 
-      <UploadProgress 
-        show={showProgressIndicator}
-        progress={uploadProgress}
-        currentMessage={currentProgressMessage}
-        messages={progressMessages}
-      />
-
-
-              
+   {showProgressIndicator ? (
+  <UploadProgress 
+    show={showProgressIndicator}
+    progress={uploadProgress}
+    currentMessage={currentProgressMessage}
+    messages={progressMessages}
+  />
+) : (
+  <> 
           {/* AI Vision toggle with model selection - place this after the file drop zone in page.tsx */}
           {activeTab === 'file' && (
             <div className="bg-indigo-50 p-4 rounded-md border border-indigo-100 mt-3">
@@ -2088,7 +2956,7 @@ const handleManhattanNarrative = () => {
       {activeTab === 'text' && (
           <div className="relative rounded-xl  transition-all duration-300 group-focus-within:shadow-[0_0_0_2px_rgba(245,158,11,0.4),0_8px_24px_rgba(0,0,0,0.08)] group-hover:shadow-md">
           <textarea
-          className="w-full h-72 p-5 text-slate-700 bg-white/90 backdrop-blur-sm border border-slate-200 rounded-xl focus:outline-none transition-all duration-300 resize-none placeholder:text-transparent text-base"
+          className="w-full h-74 p-5 text-slate-700 bg-white/90 backdrop-blur-sm border border-slate-200 rounded-xl focus:outline-none transition-all duration-300 resize-none placeholder:text-transparent text-base"
           placeholder="Paste or type your primary source text here..."
           id="source-text-input"
           value={textInput}
@@ -2100,7 +2968,7 @@ const handleManhattanNarrative = () => {
 
 <label 
   htmlFor="source-text-input"
-  className={`absolute left-5 top-2 transition-all duration-300 ease-in-out pointer-events-none text-slate-500
+  className={`absolute left-5 top-3 transition-all duration-300 ease-in-out pointer-events-none text-slate-500
     ${textInput.length > 0 
       ? 'opacity-0 translate-y-[-10px]' 
       : 'opacity-100 translate-y-0'
@@ -2110,127 +2978,26 @@ const handleManhattanNarrative = () => {
   Paste or type your primary source text here, or drag and drop a PDF
 </label>
 
-      
- {/* "Lens" buttons below main source entry */}
-    
-    <p className="mt-3 ml-2 text-slate-500 text-sm italic font-medium">
-      After uploading a source, you can analyze it with one of the following methods:
-    </p>
-    
-    <div className="mt-3 grid grid-cols-5 gap-3">
-      {/* Detailed Analysis Button */}
-      <button className=" bg-white border border-amber-200 shadow-sm text-slate-700 py-3 px-2 rounded-lg hover:bg-gradient-to-b hover:from-white hover:to-amber-50 hover:scale-[1.02] hover:shadow-lg transition-colors transition-shadow transition-transform duration-300 ease-in-out flex flex-col items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed group "
-        onClick={() => {
-          if (formValid) {
-            setSourceContent(textInput);
-            setMetadata(metadata);
-            setLoading(true);
-            setActivePanel('detailed-analysis');
-            router.push('/analysis');
-          }
-        }}
-        disabled={!formValid}
-      >
-        <div className="flex items-center justify-center h-8 w-8 bg-amber-100 text-amber-700 group-hover:bg-amber-200 group-hover:text-amber-800 group-hover:shadow-[0_0_10px_rgba(251,191,36,0.3)] rounded-full mb-1.5 transition-all duration-300">
-          <svg className="w-4 h-4 transform group-active:scale-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-        </div>
-        <span className="text-sm font-medium group-hover:text-amber-900 transition-colors duration-300">Detailed Analysis</span>
-      </button>
+<div className="flex justify-between items-center">
+ <button
+            onClick={() => router.push('/library?tab=drafts')}
+            className="inline-flex items-center px-2 py-0 mt-1 text-sm  rounded-lg text-teal-800 hover:bg-teal-500/20 transition-colors"
+        >
+            <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Add Research Draft
+        </button>
 
-      {/* Extract Info Button */}
-<button 
-  className="bg-white border border-emerald-200 shadow-sm text-slate-700 py-3 px-2 rounded-lg hover:bg-gradient-to-b hover:from-white hover:to-emerald-50 hover:scale-[1.02] hover:shadow-lg transition-colors transition-shadow transition-transform duration-300 ease-in-out flex flex-col items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed group"
-  onClick={() => {
-    if (formValid) {
-      setSourceContent(textInput);
-      setMetadata(metadata);
-      setLoading(true);
-      setActivePanel('extract-info');
-      router.push('/analysis');
-    }
-  }}
-  disabled={!formValid}
->
-  <div className="flex items-center justify-center h-8 w-8 bg-emerald-100 text-emerald-700 group-hover:bg-emerald-200 group-hover:text-emerald-800 group-hover:shadow-[0_0_10px_rgba(5,150,105,0.3)] rounded-full mb-1.5 transition-all duration-300">
-    <svg className="w-4 h-4 transform group-active:scale-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M19 13l-4 4m0 0l-4-4m4 4V7" />
-    </svg>
-  </div>
-  <span className="text-sm font-medium group-hover:text-emerald-900 transition-colors duration-300">Extract Info</span>
-</button>
 
-    
-      {/* References Button */}
-    <button 
-      className="bg-white border border-amber-400/90 shadow-sm text-slate-700 py-3 px-2 rounded-lg hover:bg-gradient-to-b hover:from-white hover:to-amber-50/80 hover:scale-[1.02] hover:shadow-lg transition-colors transition-shadow transition-transform duration-300 ease-in-out flex flex-col items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed group" 
-      onClick={() => {
-        if (formValid) {
-          setSourceContent(textInput);
-          setMetadata(metadata);
-          setLoading(true);
-          setActivePanel('references');
-          router.push('/analysis');
-        }
-      }}
-      disabled={!formValid}
-    >
-        <div className=" flex items-center justify-center h-8 w-8 bg-amber-600 text-white group-hover:bg-amber-700 group-hover:shadow-[0_0_12px_rgba(217,119,6,0.4)] rounded-full mb-1.5 transition-colors transition-shadow transition-transform duration-300 ">
-          <svg className="w-4 h-4 transform group-active:scale-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-        </div>
-        <span className="text-sm font-medium group-hover:text-amber-900 transition-colors duration-300">Find References</span>
-      </button>
-      
-      {/* Talk to the Author Button */}
-      <button
-        className=" bg-white border border-blue-200 shadow-sm text-slate-700 py-3 px-2 rounded-lg hover:bg-gradient-to-b hover:from-white hover:to-blue-50 hover:scale-[1.02] hover:shadow-lg transition-colors transition-shadow transition-transform duration-300 ease-in-out flex flex-col items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed group"
-        onClick={() => {
-          if (formValid) {
-            setSourceContent(textInput);
-            setMetadata(metadata);
-            setLoading(true);
-            setActivePanel('roleplay');
-            setRoleplayMode(true);
-            router.push('/analysis');
-          }
-        }}
-        disabled={!formValid}
-      >
-        <div className="flex items-center justify-center h-8 w-8 bg-blue-100 text-blue-700 group-hover:bg-blue-200 group-hover:text-blue-800 group-hover:shadow-[0_0_10px_rgba(59,130,246,0.3)] rounded-full mb-1.5 transition-colors transition-shadow transition-transform duration-300">
-          <svg className="w-4 h-4 transform group-active:scale-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-          </svg>
-        </div>
-        <span className="text-sm font-medium group-hover:text-blue-900 transition-colors duration-300">Talk to the author</span>
-      </button>
-      
-      {/* Counter-Narrative Button */}
-      <button
-        className="bg-white border border-purple-200 shadow-sm text-slate-700 py-3 px-2 rounded-lg hover:bg-gradient-to-b hover:from-white hover:to-purple-50 hover:scale-[1.02] hover:shadow-lg transition-all duration-300 ease-in-out flex flex-col items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed group"
-        onClick={() => {
-          if (formValid) {
-            setSourceContent(textInput);
-            setMetadata(metadata);
-            setLoading(true);
-            setActivePanel('counter');
-            router.push('/analysis');
-          }
-        }}
-        disabled={!formValid}
-      >
-        <div className="flex items-center justify-center h-8 w-8 bg-purple-100 text-purple-700 group-hover:bg-purple-200 group-hover:text-purple-800 group-hover:shadow-[0_0_10px_rgba(147,51,234,0.3)] rounded-full mb-1.5 transition-all duration-300">
-          <svg className="w-4 h-4 transform group-active:scale-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4" />
-          </svg>
-        </div>
-        <span className="text-sm font-medium group-hover:text-purple-900 transition-colors duration-300">Counter-Narrative</span>
-      </button>
-    </div>
+</div>
   </div>
+  )}
+
+</>
 )}
+
+
               
            {/* File upload */}
            {activeTab === 'file' && (
@@ -2269,20 +3036,20 @@ const handleManhattanNarrative = () => {
           </div>
 
          
-          
+        
        {/* Metadata form section */}
        <div 
-         className={`md:col-span-5 bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-slate-200 overflow-hidden transition-all duration-700 delay-200 transform ${
+         className={`md:col-span-7 bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-slate-200 overflow-hidden transition-all duration-700 delay-200 transform ${
            animateIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
          }`}
        >
-         <div className="p-6">
-           <div className="flex justify-between items-center mb-4">
-             <h2 className="text-xl font-medium text-slate-800 flex items-center">
+         <div className="p-7">
+           <div className="flex justify-between items-center mb-4 z-1">
+             <h2 className="text-xl font-medium text-slate-800 flex items-center z-1">
                <svg className="w-5 h-5 mr-2 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                </svg>
-               Source Information
+               2. Add Metadata
              </h2>
              
              {/* Metadata detection indicator */}
@@ -2327,33 +3094,49 @@ const handleManhattanNarrative = () => {
            <div className="space-y-3">
              {/* Required fields */}
              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
                {/* Date input */}
-               <div>
-                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                   Date <span className="text-red-500">*</span>
-                 </label>
-                 <input
-                   type="text"
-                   className="w-full p-2 border border-slate-300 rounded-md focus-visible:ring-2 focus-visible:ring-amber-700/50 focus-visible:border-amber-700/70 transition-colors"
-                   placeholder="When was this created?"
-                   value={metadata.date}
-                   onChange={(e) => setLocalMetadata({...metadata, date: e.target.value})}
-                 />
-               </div>
+               <div className="group">
+  <label className="block text-sm font-medium text-slate-700 mb-1">
+    <span className="flex items-center justify-between w-full">
+      <span className="inline-flex items-center gap-1">
+        Date <span className="text-red-500">*</span>
+      </span>
+      <span className="text-xs text-slate-400 mr-2 hidden group-focus-within:inline">
+        Can be approximate
+      </span>
+    </span>
+  </label>
+  <input
+    type="text"
+    className="w-full p-2 border border-slate-300 rounded-md focus-visible:ring-2 focus-visible:ring-amber-700/50 focus-visible:border-amber-700/70 transition-colors"
+    placeholder="When created? (required)"
+    value={metadata.date}
+    onChange={(e) => setLocalMetadata({ ...metadata, date: e.target.value })}
+  />
+</div>
+
                
                {/* Author input */}
-               <div>
-                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                   Author <span className="text-red-500">*</span>
-                 </label>
-                 <input
-                   type="text"
-                   className="w-full p-2 border border-slate-300 rounded-md focus-visible:ring-2 focus-visible:ring-amber-700/50 focus-visible:border-amber-700/70 transition-colors"
-                   placeholder="Who created it?"
-                   value={metadata.author}
-                   onChange={(e) => setLocalMetadata({...metadata, author: e.target.value})}
-                 />
-               </div>
+              <div className="group">
+  <label className="block text-sm font-medium text-slate-700 mb-1">
+    <span className="flex items-center justify-between w-full">
+      <span className="inline-flex items-center gap-1">
+        Author <span className="text-red-500">*</span>
+      </span>
+      <span className="text-xs text-slate-400 mr-2 hidden group-focus-within:inline">
+        If unsure, just type "unknown"
+      </span>
+    </span>
+  </label>
+  <input
+    type="text"
+    className="w-full p-2 border border-slate-300 rounded-md focus-visible:ring-2 focus-visible:ring-amber-700/50 focus-visible:border-amber-700/70 transition-colors"
+    placeholder="Who created it? (required)"
+    value={metadata.author}
+    onChange={(e) => setLocalMetadata({ ...metadata, author: e.target.value })}
+  />
+</div>
              </div>
              
              {/* Title input */}
@@ -2404,53 +3187,86 @@ const handleManhattanNarrative = () => {
                </div>
              </div>
              
-         
+         <div className="mt-3"> 
+
+           {/* Additional Context input */}
+          
+  <div 
+    onClick={() => setExpandedFields({...expandedFields, researchGoals: !expandedFields.researchGoals})} 
+    className="flex items-center justify-between cursor-pointer p-2 hover:bg-slate-50 rounded-md transition-colors"
+  >
+    <span className="text-sm font-medium text-slate-700 flex items-center">
+     Research Goals (Optional)
+      
+    </span>
+    <svg 
+      className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${
+        expandedFields.researchGoals ? 'rotate-180' : ''
+      }`} 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  </div> 
              
-             {/* Research Goals input */}
-             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Research Goals (Optional)
-              </label>
-               <textarea
-                 className="w-full p-2 border border-slate-300 rounded-md focus-visible:ring-2 focus-visible:ring-amber-700/50 focus-visible:border-amber-700/70 transition-colors resize-none"
-                 rows={2}
-                 placeholder="What are you hoping to learn from this source?"
-                 value={metadata.researchGoals}
-                 onChange={(e) => setLocalMetadata({...metadata, researchGoals: e.target.value})}
-               ></textarea>
-             </div>
+        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+    expandedFields.researchGoals ? 'max-h-26' : 'max-h-0'
+  }`}>
+    <textarea
+      className="w-full p-2 mt-2 border border-slate-300 rounded-md focus-visible:ring-2 focus-visible:ring-amber-700/50 focus-visible:border-amber-700/70 transition-colors resize-none"
+      rows={2}
+      placeholder="What are you trying to learn?"
+      value={metadata.researchGoals}
+      onChange={(e) => setLocalMetadata({...metadata, researchGoals: e.target.value})}
+    ></textarea>
+  </div>
+
              
+
              {/* Additional Context input */}
-             <div>
-               <label className="block text-sm font-medium text-slate-700 mb-1">
-                 Additional Info (Optional)
-               </label>
-               <textarea
-                 className="w-full p-2 border border-slate-300 rounded-md focus-visible:ring-2 focus-visible:ring-amber-700/50 focus-visible:border-amber-700/70 transition-colors resize-none"
-                 rows={2}
-                 placeholder="Any other context that might help?"
-                 value={metadata.additionalInfo}
-                 onChange={(e) => setLocalMetadata({...metadata, additionalInfo: e.target.value})}
-               ></textarea>
-             </div>
+          
+  <div 
+    onClick={() => setExpandedFields({...expandedFields, additionalInfo: !expandedFields.additionalInfo})} 
+    className="flex items-center justify-between cursor-pointer p-2 hover:bg-slate-50 rounded-md transition-colors"
+  >
+    <span className="text-sm font-medium text-slate-700 flex items-center">
+      Additional Context (Optional)
+      
+    </span>
+    <svg 
+      className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${
+        expandedFields.additionalInfo ? 'rotate-180' : ''
+      }`} 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  </div>
+  
+  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+    expandedFields.additionalInfo ? 'max-h-36' : 'max-h-0'
+  }`}>
+    <textarea
+      className="w-full p-2 mt-2 border border-slate-300 rounded-md focus-visible:ring-2 focus-visible:ring-amber-700/50 focus-visible:border-amber-700/70 transition-colors resize-none"
+      rows={2}
+      placeholder="Any other context that might help?"
+      value={metadata.additionalInfo}
+      onChange={(e) => setLocalMetadata({...metadata, additionalInfo: e.target.value})}
+    ></textarea>
+  </div>
+</div>
            </div>
          </div>
          
-         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200">
-           <button
-             onClick={handleSubmit}
-             disabled={!formValid}
-             className={`w-full py-2.5 px-4 rounded-md font-medium text-white transition-all duration-300 transform ${
-               formValid 
-                 ? 'bg-amber-700 hover:bg-amber-800 active:scale-[0.98] shadow-lg hover:shadow'
-                 : 'bg-slate-400 cursor-not-allowed'
-             }`}
-           >
-             {formValid ? 'Analyze Source' : 'Complete Required Fields'}
-           </button>
+         <div className="px-6 py-3 bg-slate-50 border-t border-slate-200">
+     
            
            {!formValid && (
-             <p className="mt-2 text-xs text-slate-500 text-center">
+             <p className="mt-0 text-xs text-slate-500 text-center">
                Please fill in all required fields and provide source text
              </p>
            )}
@@ -2460,13 +3276,23 @@ const handleManhattanNarrative = () => {
       </div>
 
 
-
+  <div 
+         className={`max-w-7xl mx-auto w-full py-0 px-2 rounded-xl transition-all duration-300  transition-all duration-700 delay-200 transform ${
+           animateIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+         }`}
+       >
+<AnalysisFooter 
+    formValid={formValid} 
+    textInput={textInput} 
+    metadata={metadata} 
+  />
+</div>
       
       {/* Divider for footer */}
-      <div className="h-1.5 bg-gradient-to-r from-indigo-400 via-purple-400 to-amber-400 shadow-md"></div>
+      <div className="h-1.5 mt-1 bg-gradient-to-r from-indigo-400 via-purple-400 to-amber-400 shadow-md"></div>
       
       {/* Footer with blue-gray overlay and background image */}
-      <footer className="relative py-12 ">
+      <footer className="relative py-10 ">
         {/* Background image with overlay */}
         <div className="absolute inset-0 z-0">
           <Image 

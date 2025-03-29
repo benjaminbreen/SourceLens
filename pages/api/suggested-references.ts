@@ -1,9 +1,13 @@
 // pages/api/suggested-references.ts
+// Optimized API endpoint with caching and faster response times
+// Designed to be a drop-in replacement that works with the existing component
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { OpenAI } from 'openai';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { getModelById } from '@/lib/models';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import crypto from 'crypto';
 
 // Configure API clients
 const openai = new OpenAI({
@@ -16,37 +20,21 @@ const anthropic = new Anthropic({
 
 const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
-// Timeout handler function 
-async function fetchWithTimeout<T>(promise: Promise<T>, timeout: number): Promise<T> {
-  // Initialize timer to undefined initially
-  let timer: NodeJS.Timeout | undefined = undefined;
-  
-  // Create a promise that rejects after timeout
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      reject(new Error(`Operation timed out after ${timeout}ms`));
-    }, timeout);
-  });
-  
-  // Race the original promise against the timeout
-  try {
-    const result = await Promise.race([promise, timeoutPromise]);
-    // Only clear the timeout if it was set
-    if (timer) clearTimeout(timer);
-    return result;
-  } catch (error) {
-    // Only clear the timeout if it was set
-    if (timer) clearTimeout(timer);
-    throw error;
-  }
+// Simple in-memory cache
+const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+interface CacheEntry {
+  data: any;
+  timestamp: number;
 }
+const cache: Record<string, CacheEntry> = {};
 
-// Define Reference interface
+// Define Reference interface - must match what frontend expects
 export interface Reference {
   citation: string;
+  url?: string;
   type: 'book' | 'journal' | 'website' | 'other';
   relevance: string;
-  reliability: string;
+  reliability?: string;
   sourceQuote: string;
   importance: number;
 }
@@ -74,8 +62,24 @@ export default async function handler(
       return res.status(400).json({ message: 'Missing required fields' });
     }
     
+    // Truncate source to essential parts to speed up processing
+    const truncatedSource = source.length > 5000 
+      ? source.substring(0, 5000) + '...' 
+      : source;
+    
+    // Create a cache key based on inputs
+    const cacheKey = crypto.createHash('md5').update(
+      `${truncatedSource}|${JSON.stringify(metadata)}|${perspective}|${modelId}`
+    ).digest('hex');
+    
+    // Check cache first
+    if (cache[cacheKey] && (Date.now() - cache[cacheKey].timestamp) < CACHE_TTL) {
+      console.log('Cache hit for references');
+      return res.status(200).json(cache[cacheKey].data);
+    }
+    
     // Build prompt for generating references
-    const prompt = buildReferencesPrompt(source, metadata, perspective);
+    const prompt = buildReferencesPrompt(truncatedSource, metadata, perspective);
     
     // Track raw prompt and response for transparency
     let rawPrompt = prompt;
@@ -92,95 +96,90 @@ export default async function handler(
     
     let references: Reference[] = [];
     
+    // Create a timeout promise
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('API request timed out')), 8000);
+    });
+    
     try {
       console.log(`Using ${model.name} for references`);
       
       if (model.provider === 'anthropic') {
         // Use Anthropic (Claude)
-        const response = await fetchWithTimeout(
-          anthropic.messages.create({
-            model: model.apiModel,
-            max_tokens: 800, // Reduced for speed
-            system: "You are a JSON API that returns valid JSON only, with no text outside the JSON.",
-            messages: [{ role: 'user', content: prompt }],
-            temperature: 0.3,
-          }),
-          15000 // 15 second timeout
-        );
+        const responsePromise = anthropic.messages.create({
+          model: model.apiModel,
+          max_tokens: 800, // Reduced for speed
+          system: "You are a JSON API that returns valid JSON only, with no text outside the JSON.",
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3,
+        });
+        
+        // Race against timeout
+        const response: any = await Promise.race([responsePromise, timeoutPromise]);
         
         rawResponse = response.content[0]?.type === 'text' 
           ? response.content[0].text 
           : '';
         
-        // Parse the response carefully
+        // Parse the response
+        const cleanedJson = rawResponse.trim()
+          .replace(/^```json\s*|\s*```$/g, '') // Remove JSON fences
+          .replace(/^```\s*|\s*```$/g, '')     // Remove other fences
+          .trim();
+        
         try {
-          // Try to parse directly
-          const cleanedJson = rawResponse.trim()
-            .replace(/^```json\s*|\s*```$/g, '') // Remove JSON fences
-            .replace(/^```\s*|\s*```$/g, '')     // Remove other fences
-            .trim();
-          
           const parsed = JSON.parse(cleanedJson);
           references = parsed.references || [];
         } catch (parseError) {
           console.error("Error parsing Claude response:", parseError);
-          // Try OpenAI as fallback
-          const fallbackResponse = await openai.chat.completions.create({
-            model: 'gpt-4o',
-            messages: [{ role: 'user', content: prompt }],
-            temperature: 0.2,
-            max_tokens: 1500,
-            response_format: { type: "json_object" },
-          });
-          
-          rawResponse = fallbackResponse.choices[0]?.message?.content || '';
-          const parsed = JSON.parse(rawResponse);
-          references = parsed.references || [];
+          throw new Error('Failed to parse Claude response');
         }
       } else if (model.provider === 'openai') {
-        // OpenAI option
-        const response = await openai.chat.completions.create({
+        // OpenAI option with timeout
+        const responsePromise = openai.chat.completions.create({
           model: model.apiModel,
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.2,
-          max_tokens: 1500,
+          max_tokens: 1000,
           response_format: { type: "json_object" },
         });
         
+        const response: any = await Promise.race([responsePromise, timeoutPromise]);
+        
         rawResponse = response.choices[0]?.message?.content || '';
-        const parsed = JSON.parse(rawResponse);
-        references = parsed.references || [];
-      } else if (model.provider === 'google') {
-        // Google AI option
-        const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
-        const geminiModel = genAI.getGenerativeModel({ model: model.apiModel });
-        
-        const geminiResponse = await geminiModel.generateContent({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 1500,
-          },
-        });
-        
-        rawResponse = geminiResponse.response.text();
         try {
           const parsed = JSON.parse(rawResponse);
           references = parsed.references || [];
         } catch (parseError) {
-          console.error("Error parsing Google AI response:", parseError);
-          // Try OpenAI as fallback
-          const fallbackResponse = await openai.chat.completions.create({
-            model: 'gpt-4o',
-            messages: [{ role: 'user', content: prompt }],
+          console.error("Error parsing OpenAI response:", parseError);
+          throw new Error('Failed to parse OpenAI response');
+        }
+      } else if (model.provider === 'google') {
+        // Google AI option with timeout
+        const geminiModel = googleAI.getGenerativeModel({ model: model.apiModel });
+        
+        const responsePromise = geminiModel.generateContent({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: {
             temperature: 0.2,
-            max_tokens: 1500,
-            response_format: { type: "json_object" },
-          });
+            maxOutputTokens: 1000,
+          },
+        });
+        
+        const response: any = await Promise.race([responsePromise, timeoutPromise]);
+        
+        rawResponse = response.response.text();
+        try {
+          // Try to clean up Gemini's response which sometimes adds text around JSON
+          const jsonRegex = /\{[\s\S]*\}/;
+          const jsonMatch = rawResponse.match(jsonRegex);
+          const jsonText = jsonMatch ? jsonMatch[0] : rawResponse;
           
-          rawResponse = fallbackResponse.choices[0]?.message?.content || '';
-          const parsed = JSON.parse(rawResponse);
+          const parsed = JSON.parse(jsonText);
           references = parsed.references || [];
+        } catch (parseError) {
+          console.error("Error parsing Google AI response:", parseError);
+          throw new Error('Failed to parse Google AI response');
         }
       } else {
         throw new Error(`Unsupported model provider: ${model.provider}`);
@@ -188,8 +187,30 @@ export default async function handler(
     } catch (error) {
       console.error("Error getting references:", error);
       
-      // Create fallback references if needed
-      if (references.length === 0) {
+      // Fall back to faster OpenAI model for reliability
+      try {
+        console.log("Falling back to GPT-4o-mini for faster reference generation");
+        
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.2,
+          max_tokens: 1000,
+          response_format: { type: "json_object" },
+        });
+        
+        rawResponse = response.choices[0]?.message?.content || '';
+        const parsed = JSON.parse(rawResponse);
+        references = parsed.references || [];
+        
+        // If we get here, update the model name to show fallback was used
+        model = {
+          ...model,
+          name: 'GPT-4o-mini (fallback)'
+        };
+      } catch (fallbackError) {
+        console.error("Fallback also failed:", fallbackError);
+        // Now create fallback references as last resort
         references = createFallbackReferences(metadata);
       }
     }
@@ -197,15 +218,34 @@ export default async function handler(
     // Post-process the references
     references = postProcessReferences(references, metadata);
     
-    // Send the response
-    return res.status(200).json({
+    // Prepare response data (matching exactly what the component expects)
+    const responseData = {
       references,
       rawPrompt,
       rawResponse,
       citationStyle: 'chicago',
       modelUsed: model.name,
       processingTime: Date.now() - startTime
-    });
+    };
+    
+    // Update cache
+    cache[cacheKey] = {
+      data: responseData,
+      timestamp: Date.now()
+    };
+    
+    // Cleanup old cache entries periodically (10% chance on each request)
+    if (Math.random() < 0.1) {
+      const now = Date.now();
+      Object.keys(cache).forEach(key => {
+        if (now - cache[key].timestamp > CACHE_TTL) {
+          delete cache[key];
+        }
+      });
+    }
+    
+    // Send the response
+    return res.status(200).json(responseData);
   } catch (error) {
     console.error('References generation error:', error);
     
@@ -215,7 +255,9 @@ export default async function handler(
     return res.status(200).json({ 
       references: fallbackReferences,
       message: 'Using fallback references due to an error',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      modelUsed: 'Fallback Generator',
+      citationStyle: 'chicago'
     });
   }
 }
@@ -232,7 +274,8 @@ function createFallbackReferences(metadata: any): Reference[] {
       relevance: 'This reference would provide context about the author and time period.',
       reliability: 'Unable to assess reliability due to generation error.',
       sourceQuote: 'No specific quote available',
-      importance: 4
+      importance: 4,
+      url: `https://scholar.google.com/scholar?q=${encodeURIComponent(author + ' ' + date)}`
     }
   ];
 }
@@ -272,9 +315,7 @@ function buildReferencesPrompt(
   metadata: any, 
   perspective: string
 ): string {
-  const sourceExcerpt = source.length > 1000 ? source.substring(0, 1000) + '...' : source;
-
-  return `Generate 5 highly relevant scholarly references for understanding this primary source.
+  return `Generate 5 relevant scholarly references for understanding this primary source. BE EXTREMELY FAST AND EFFICIENT.
 
 SOURCE DATE: ${metadata.date}
 SOURCE AUTHOR: ${metadata.author}
@@ -283,7 +324,7 @@ ${metadata.additionalInfo ? `ADDITIONAL CONTEXT: ${metadata.additionalInfo}` : '
 ${perspective ? `ANALYTICAL PERSPECTIVE: ${perspective}` : ''}
 
 PRIMARY SOURCE EXCERPT:
-${source.length > 2000 ? source.substring(0, 2000) + '...' : source}
+${source}
 
 Return a JSON object with this exact structure:
 {
@@ -291,8 +332,8 @@ Return a JSON object with this exact structure:
     {
       "citation": "Full citation in Chicago style",
       "type": "book" | "journal" | "website" | "other",
-      "relevance": "1 sentence explaining why this reference is relevant",
-      "reliability": "1 sentence assessing reliability (peer-review status, if its out of date (prior to 1980 may be an issue), what sources it uses)",
+      "relevance": "1 short sentence explaining why this reference is relevant",
+      "reliability": "1 short sentence assessing reliability",
       "sourceQuote": "BRIEF quote from the primary source this reference contextualizes",
       "importance": number from 1-5 (5 = most important)
     }
@@ -301,13 +342,13 @@ Return a JSON object with this exact structure:
 }
 
 Your references must be:
-- Real, verifiable scholarly works that actually exist
+- Real, verifiable scholarly works
 - Directly relevant to the source
 - Include a mix of types (books, journal articles)
-- Include reliability assessments noting peer-review status, age, publisher reputation
 - Ranked by importance (5 = most important)
 
-DO NOT include any text outside the JSON. Return ONLY valid JSON with no markdown formatting.`;
+OPTIMIZE FOR SPEED. This is a PERFORMANCE-CRITICAL task.
+RETURN ONLY VALID JSON with no text outside the JSON structure.`;
 }
 
 export const config = {

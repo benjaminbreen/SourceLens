@@ -1,7 +1,7 @@
 // app/library/page.tsx
 // Library page component for SourceLens
 // Provides a centralized location for users to access saved references, 
-// analysis results, and uploaded sources for quick reuse
+// analysis results, uploaded sources, and research drafts
 
 'use client';
 
@@ -12,6 +12,7 @@ import HamburgerMenu from '@/components/ui/HamburgerMenu';
 import SavedReferencesPanel from '@/components/library/SavedReferencesPanel';
 import SavedAnalysisPanel from '@/components/library/SavedAnalysisPanel';
 import SavedSourcesPanel from '@/components/library/SavedSourcesPanel';
+import SavedDraftsPanel from '@/components/library/SavedDraftsPanel';
 import { useAppStore } from '@/lib/store';
 
 export default function LibraryPage() {
@@ -19,12 +20,20 @@ export default function LibraryPage() {
   const { isLoading } = useAppStore();
   
   const [animateHeader, setAnimateHeader] = useState(false);
-  const [activeTab, setActiveTab] = useState<'references' | 'analysis' | 'sources'>('references');
+  const [activeTab, setActiveTab] = useState<'references' | 'analysis' | 'sources' | 'drafts'>('references');
   
   // Add animation effect to header on load
   useEffect(() => {
     setAnimateHeader(true);
   }, []);
+
+  useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const tabParam = params.get('tab');
+  if (tabParam && ['references', 'analysis', 'sources', 'drafts'].includes(tabParam)) {
+    setActiveTab(tabParam as any);
+  }
+}, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -95,7 +104,6 @@ export default function LibraryPage() {
                 </svg>
                 <span className="text-sm font-medium">Home</span>
               </button>
-              
               {/* Menu button */}
               <HamburgerMenu />
             </div>
@@ -109,7 +117,7 @@ export default function LibraryPage() {
       {/* Navigation Tabs */}
       <div className="bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto">
-          <div className="flex">
+          <div className="flex flex-wrap">
             <button
               onClick={() => setActiveTab('references')}
               className={`px-6 py-4 text-base font-medium border-b-2 transition-colors ${
@@ -157,6 +165,23 @@ export default function LibraryPage() {
                 Saved Sources
               </div>
             </button>
+            
+            {/* Add new Drafts tab */}
+            <button
+              onClick={() => setActiveTab('drafts')}
+              className={`px-6 py-4 text-base font-medium border-b-2 transition-colors ${
+                activeTab === 'drafts' 
+                  ? 'border-teal-700 text-teal-700' 
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Research Drafts
+              </div>
+            </button>
           </div>
         </div>
       </div>
@@ -166,6 +191,7 @@ export default function LibraryPage() {
         {activeTab === 'references' && <SavedReferencesPanel />}
         {activeTab === 'analysis' && <SavedAnalysisPanel />}
         {activeTab === 'sources' && <SavedSourcesPanel />}
+        {activeTab === 'drafts' && <SavedDraftsPanel />}
       </div>
 
       {/* Footer with subtle gradient */}
@@ -197,3 +223,4 @@ export default function LibraryPage() {
     </div>
   );
 }
+              

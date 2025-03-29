@@ -4,6 +4,7 @@
 
 import { create } from 'zustand';
 import { DEFAULT_MODEL_ID } from './models';
+import { SavedDraft } from './libraryContext';
 
 
 
@@ -26,7 +27,7 @@ export interface Metadata {
   academicSubfield?: string;
   tags?: string[] | string;
   fullCitation?: string;
-
+thumbnailUrl?: string;
 }
 
 export interface SpecialLensRequest {
@@ -83,8 +84,11 @@ interface AppState {
   metadata: Metadata | null;
   perspective: string;
   referencesModel: string;
-
    sourceThumbnailUrl: string | null;
+
+     // Draft context
+  activeDraft: SavedDraft | null;
+  setActiveDraft: (draft: SavedDraft | null) => void;
 
   //text segment color coding
    highlightedSegments: HighlightedSegment[];
@@ -207,7 +211,7 @@ highlightedSegments: [],
   isHighlightMode: false,
   specialLensRequest: null,
     sourceThumbnailUrl: null,
-
+  activeDraft: null,
    
 };
 
@@ -284,6 +288,9 @@ setSummaryOverall: (summary) => set({ summaryOverall: summary }),
 
   setSpecialLensRequest: (request) => set({ specialLensRequest: request }),
   setSourceThumbnailUrl: (url) => set({ sourceThumbnailUrl: url }),
+
+  setActiveDraft: (draft) => set({ activeDraft: draft }),
+
   
   clearHighlights: () => set({ 
     highlightedSegments: [], 

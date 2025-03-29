@@ -123,7 +123,7 @@ export default function CounterNarrative() {
           lensType, // Use the type-asserted variable
           specialLensRequest.instructions || ''
         );
-      }, 300);
+      }, 200);
     } else {
       // Just open the modal without generating if no instructions
       setIsModalOpen(true);

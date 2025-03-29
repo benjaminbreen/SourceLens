@@ -1,7 +1,10 @@
 // components/chat/ChatInput.tsx
+// Chat input component that supports conversation history
+// Tracks conversation ID for maintaining context in API calls
+
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
 
 export default function ChatInput() {
@@ -13,13 +16,15 @@ export default function ChatInput() {
     setRawResponse,
     sourceContent,
     metadata,
-    llmModel
+    llmModel,
+    conversation
   } = useAppStore();
   
   const [input, setInput] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [isCardDropped, setIsCardDropped] = useState(false);
   const [cardText, setCardText] = useState('');
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,7 +54,13 @@ export default function ChatInput() {
     console.log("Starting chat request");
     
     try {
-      // Basic API call to our endpoint
+      // Format conversation history for API
+      const history = conversation.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+      
+      // API call with conversation history
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -59,7 +70,9 @@ export default function ChatInput() {
           message: userMessage,
           source: sourceContent,
           metadata: metadata,
-          model: llmModel
+          model: llmModel,
+          conversationId, // Send the conversation ID if we have one
+          history         // Send conversation history
         }),
       });
       
@@ -72,6 +85,11 @@ export default function ChatInput() {
       const data = await response.json();
       console.log("Parsed JSON response");
       
+      // Store the conversation ID for future messages
+      if (data.conversationId) {
+        setConversationId(data.conversationId);
+      }
+      
       // Add assistant response to conversation
       addMessage({
         role: 'assistant',
@@ -83,19 +101,19 @@ export default function ChatInput() {
       setRawResponse(data.rawResponse || null);
       
     } catch (error) {
-         console.error("Chat error:", error);
-         
-         // Add type checking for the error before accessing the message property
-         const errorMessage = error instanceof Error 
-           ? error.message 
-           : 'Unknown error occurred';
-         
-         // Add error message to conversation
-         addMessage({
-           role: 'assistant',
-           content: `Error: ${errorMessage}`
-         });
-       } finally {
+      console.error("Chat error:", error);
+      
+      // Add type checking for the error before accessing the message property
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Unknown error occurred';
+      
+      // Add error message to conversation
+      addMessage({
+        role: 'assistant',
+        content: `Error: ${errorMessage}`
+      });
+    } finally {
       console.log("Setting loading to false");
       setLoading(false);
     }
@@ -190,8 +208,8 @@ export default function ChatInput() {
           className={`px-4 py-2 rounded-r ${
             (!input.trim() && !isCardDropped) || isLoading
               ? 'bg-slate-200 text-slate-400'
-              : 'bg-indigo-600 text-white'
-          }`}
+              : 'bg-indigo-600 text-white hover:bg-indigo-700'
+          } transition-colors`}
         >
           {isLoading ? '...' : 'Send'}
         </button>

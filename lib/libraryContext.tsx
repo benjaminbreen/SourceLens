@@ -12,8 +12,28 @@ import { Metadata } from '@/lib/store';
 export const SAVED_REFERENCES_KEY = 'sourceLens_savedReferences';
 export const SAVED_ANALYSES_KEY = 'sourceLens_savedAnalyses';
 export const SAVED_SOURCES_KEY = 'sourceLens_savedSources';
+export const SAVED_DRAFTS_KEY = 'sourceLens_savedDrafts';
 
 // Types
+export interface SavedDraft {
+  id: string;
+  title: string;
+  content: string;
+  summary?: string;
+  sections?: {
+    id: string;
+    title: string;
+    summary: string;
+    fullText: string;
+  }[];
+  dateAdded: number;
+  lastEdited?: number;
+  tags?: string[];
+  status?: 'in-progress' | 'review' | 'final';
+  type: 'text' | 'pdf' | 'docx';
+  wordCount?: number;
+}
+
 export interface SavedReference {
   id: string;
   citation: string;
@@ -72,6 +92,14 @@ interface LibraryContextType {
   addSource: (source: Omit<SavedSource, 'id' | 'dateAdded'>) => string;
   deleteSource: (id: string) => void;
   sourceExists: (content: string) => boolean;
+
+    // Drafts
+  drafts: SavedDraft[];
+  addDraft: (draft: Omit<SavedDraft, 'id' | 'dateAdded'>) => string;
+  updateDraft: (id: string, updates: Partial<SavedDraft>) => void;
+  deleteDraft: (id: string) => void;
+  draftExists: (title: string) => boolean;
+
   
   // Import/Export
   exportLibrary: () => void;
@@ -86,6 +114,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
   const [references, setReferences] = useState<SavedReference[]>([]);
   const [analyses, setAnalyses] = useState<SavedAnalysis[]>([]);
   const [sources, setSources] = useState<SavedSource[]>([]);
+    const [drafts, setDrafts] = useState<SavedDraft[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Load data from localStorage on mount
@@ -108,6 +137,11 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
         const sourcesJson = localStorage.getItem(SAVED_SOURCES_KEY);
         if (sourcesJson) {
           setSources(JSON.parse(sourcesJson));
+        }
+          // Load drafts
+        const draftsJson = localStorage.getItem(SAVED_DRAFTS_KEY);
+        if (draftsJson) {
+          setDrafts(JSON.parse(draftsJson));
         }
       } catch (error) {
         console.error('Error loading library data:', error);
@@ -163,6 +197,37 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(SAVED_ANALYSES_KEY, JSON.stringify(updatedAnalyses));
   };
 
+  const addDraft = (draft: Omit<SavedDraft, 'id' | 'dateAdded'>) => {
+    const newDraft: SavedDraft = {
+      ...draft,
+      id: uuidv4(),
+      dateAdded: Date.now()
+    };
+    
+    const updatedDrafts = [...drafts, newDraft];
+    setDrafts(updatedDrafts);
+    localStorage.setItem(SAVED_DRAFTS_KEY, JSON.stringify(updatedDrafts));
+    return newDraft.id;
+  };
+  
+  const updateDraft = (id: string, updates: Partial<SavedDraft>) => {
+    const updatedDrafts = drafts.map(draft => 
+      draft.id === id ? { ...draft, ...updates, lastEdited: Date.now() } : draft
+    );
+    setDrafts(updatedDrafts);
+    localStorage.setItem(SAVED_DRAFTS_KEY, JSON.stringify(updatedDrafts));
+  };
+  
+  const deleteDraft = (id: string) => {
+    const updatedDrafts = drafts.filter(draft => draft.id !== id);
+    setDrafts(updatedDrafts);
+    localStorage.setItem(SAVED_DRAFTS_KEY, JSON.stringify(updatedDrafts));
+  };
+  
+  const draftExists = (title: string) => {
+    return drafts.some(draft => draft.title.toLowerCase() === title.toLowerCase());
+  };
+
   // Sources functions
   const addSource = (source: Omit<SavedSource, 'id' | 'dateAdded'>) => {
     const newSource: SavedSource = {
@@ -196,6 +261,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
         references,
         analyses,
         sources,
+        drafts,
         exportDate: new Date().toISOString(),
         version: '1.0'
       };
@@ -238,6 +304,9 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
       
       setSources(parsed.sources);
       localStorage.setItem(SAVED_SOURCES_KEY, JSON.stringify(parsed.sources));
+
+      setDrafts(parsed.drafts);
+          localStorage.setItem(SAVED_DRAFTS_KEY, JSON.stringify(parsed.drafts));
       
       return true;
     } catch (error) {
@@ -258,6 +327,13 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
     analyses,
     addAnalysis, 
     deleteAnalysis,
+
+    // Drafts
+    drafts,
+    addDraft,
+    updateDraft,
+    deleteDraft,
+    draftExists,
     
     // Sources
     sources,

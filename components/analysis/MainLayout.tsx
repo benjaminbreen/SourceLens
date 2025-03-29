@@ -34,6 +34,9 @@ import HighlightPanel from '../highlight/HighlightPanel';
 import HighlightExplanation from '../highlight/HighlightExplanation';
 import SummaryButton from '../ui/SummaryButton';
 import SummarizeText from '../text/SummarizeText';
+import FullAnalysisModal from './FullAnalysisModal';
+import AboutModal from '../ui/AboutModal';
+import DraftContext from '../drafts/DraftContext';
 
 
 export default function MainLayout() {
@@ -58,11 +61,13 @@ export default function MainLayout() {
   } = useAppStore();
 
   const [animateHeader, setAnimateHeader] = useState(false);
-  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showAboutLogoModal, setShowAboutLogoModal] = useState(false);
   const [chatExpanded, setChatExpanded] = useState(false);
   const [portraitError, setPortraitError] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [fontSize, setFontSize] = useState(16);
+    const [isFullAnalysisModalOpen, setIsFullAnalysisModalOpen] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
 
   const toggleDarkMode = () => {
   setDarkMode(!darkMode);
@@ -102,113 +107,156 @@ const [showSummary, setShowSummary] = useState(false);
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       {/* Header with gradient background and sourcelensbar.jpg fade */}
-      <header className={`relative overflow-hidden bg-gradient-to-r from-indigo-900 via-indigo-700 to-transparent text-white shadow-lg transition-all duration-700 ${animateHeader ? 'opacity-100' : 'opacity-10'}`}>
-        {/* Background image on right side */}
-        <div className="absolute top-0 right-0 h-full w-1/2 z-0">
-          <Image 
-            src="/sourcelensbar.jpg" 
-            alt="SourceLens Header" 
-            fill 
-            priority
-            className="object-cover object-left" 
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-700/100 via-indigo-700/70 to-transparent"></div>
+<header className={`relative overflow-hidden bg-gradient-to-r from-indigo-900 via-indigo-700 to-transparent text-white shadow-lg transition-all duration-700 ${animateHeader ? 'opacity-100' : 'opacity-10'}`}>
+  {/* Background image on right side */}
+  <div className="absolute top-0 right-0 h-full w-1/2 z-0">
+    <Image 
+      src="/sourcelensbar.jpg" 
+      alt="SourceLens Header" 
+      fill 
+      priority
+      className="object-cover object-left" 
+    />
+    <div className="absolute inset-0 bg-gradient-to-r from-indigo-700/100 via-indigo-700/70 to-transparent"></div>
+  </div>
+  
+  {/* Header content container */}
+  <div className="max-w-9xl mx-auto p-4 relative z-10">
+    <div className="flex justify-between items-center">
+      <div className="flex items-center">
+        {/* Logo that opens the modal */}
+        <div className="flex ml-3 items-center gap-3">
+          <button 
+            onClick={() => setShowAboutLogoModal(true)}
+            className="transition-transform hover:scale-104 focus:outline-none rounded-full glow-effect drop-shadow-effect"
+          >
+            <Image 
+              src="/sourcelenslogo.png" 
+              alt="SourceLens Logo" 
+              width={55} 
+              height={55} 
+              className="rounded-full border border-indigo-800/10 ring-1 ring-yellow-300/20"
+            />
+          </button>
+          
+          {/* App title */}
+          <Link 
+            href="/"
+            className="group inline-block relative overflow-hidden"
+          >
+            <h1 className="text-2xl ml-4 font-bold tracking-wide drop-shadow-sm font-serif transition-all duration-300 group-hover:text-amber-100">
+              SourceLens
+              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-amber-300 via-white to-amber-300 transform scale-x-0 origin-left transition-transform duration-300 ease-out group-hover:scale-x-100"></span>
+            </h1>
+          </Link>
         </div>
+      </div>
+
+      {/* Navigation Links */}
+      <div className="hidden md:flex items-center gap-4 mx-4">
+        {metadata?.date && (
+          <a 
+            href={`https://en.wikipedia.org/wiki/${extractYear(metadata.date)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium bg-white/20 hover:bg-white/30 px-3 py-0.5 rounded-full backdrop-blur-sm transition-colors duration-200 group"
+          >
+            {metadata.date}
+            <span className="block max-w-0 group-hover:max-w-full transition-all duration-300 h-0.5 bg-amber-300/70"></span>
+          </a>
+        )}
         
-        {/* Header content container */}
-        <div className="max-w-9xl mx-auto p-4 relative z-10">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center">
-              {/* Logo that opens the modal */}
-              <div className="pl-10 pr-10 flex items-center">
-                <button 
-                  onClick={() => setShowAboutModal(true)}
-                  className="transition-transform hover:scale-104 focus:outline-none rounded-full glow-effect drop-shadow-effect"
-                >
-                  <Image 
-                    src="/sourcelenslogo.png" 
-                    alt="SourceLens Logo" 
-                    width={70} 
-                    height={70} 
-                    className="rounded-full border border-indigo-800/10 ring-1 ring-yellow-300/20"
-                  />
-                </button>
-              </div>
-              
-              <div>
-  {/* Title with subtle text shadow, now as a link with hover animation */}
-  <Link 
-    href="/"
-    className="group inline-block relative overflow-hidden"
-  >
-    <h1 className="text-3xl font-bold tracking-wide drop-shadow-sm font-serif transition-all duration-300 group-hover:text-amber-100">
-      SourceLens
-      <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-amber-300 via-white to-amber-300 transform scale-x-0 origin-left transition-transform duration-300 ease-out group-hover:scale-x-100"></span>
-    </h1>
-    <span className="absolute -inset-x-1 bottom-0 h-1 bg-gradient-to-r from-amber-300/0 via-amber-300/70 to-amber-300/0 blur-sm opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
-  </Link>
-  
-  {/* Source metadata row */}
+        {metadata?.date && metadata?.author && (
+          <span className="text-white/50">•</span>
+        )}
+        
+        {metadata?.author && (
+          <a 
+            href={`https://en.wikipedia.org/wiki/Special:Search?go=Go&search=${encodeURIComponent(metadata.author)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium bg-white/20 hover:bg-white/30 px-3 py-0.5 rounded-full backdrop-blur-sm transition-colors duration-200 group"
+          >
+            {metadata.author}
+            <span className="block max-w-0 group-hover:max-w-full transition-all duration-300 h-0.5 bg-amber-300/70"></span>
+          </a>
+        )}
+         {metadata?.date && metadata?.author && (
+          <span className="text-white/50">•</span>
+        )}
+        
+        <StrategyDeck className="ml-1" />
+      </div>
+      
+      {/* Right side controls */}
+      <div className="flex items-center space-x-4">
+        {/* Main navigation links */}
+        <nav className="hidden md:flex items-center space-x-1">
+          <Link 
+            href="/library" 
+            className="px-3 py-1.5 text-white/90 hover:text-white hover:bg-white/10 rounded-md transition-colors text-sm font-medium flex items-center"
+          >
+            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+            </svg>
+            Library
+          </Link>
+          
+          <button 
+            onClick={() => setShowAboutModal(true)}
+            className="px-3 py-1.5 text-white/90 hover:text-white hover:bg-white/10 rounded-md transition-colors text-sm font-medium flex items-center"
+          >
+            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            About
+          </button>
+        </nav>
 
-<div className="flex items-center mt-1.5">
-  {metadata?.date && (
-    <a 
-      href={`https://en.wikipedia.org/wiki/${extractYear(metadata.date)}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-sm font-medium bg-white/20 hover:bg-white/30 px-3 py-0.5 rounded-full backdrop-blur-sm transition-colors duration-200 group"
-    >
-      {metadata.date}
-      <span className="block max-w-0 group-hover:max-w-full transition-all duration-300 h-0.5 bg-amber-300/70"></span>
-    </a>
-  )}
-  
-  {metadata?.date && metadata?.author && (
-    <span className="mx-2 text-white/50">•</span>
-  )}
-  
-  {metadata?.author && (
-    <a 
-      href={`https://en.wikipedia.org/wiki/Special:Search?go=Go&search=${encodeURIComponent(metadata.author)}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-sm font-medium bg-white/20 hover:bg-white/30 px-3 py-0.5 rounded-full backdrop-blur-sm transition-colors duration-200 group"
-    >
-      {metadata.author}
-      <span className="block max-w-0 group-hover:max-w-full transition-all duration-300 h-0.5 bg-amber-300/70"></span>
-    </a>
-  )}
-
-
-             
-       <span className="mx-2 text-white/50">•</span>
-                    <StrategyDeck className="ml-1 " />
-                </div>
-              </div>
-            </div>
-            
-            {/* Right side controls */}
-
-    
-
-            <div className="flex items-center space-x-4">
-              {/* Loading indicator */}
-              {isLoading && (
-                <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm py-1.5 px-4 rounded-full animate-pulse">
-                  <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-                  <span className="text-sm font-medium">Processing...</span>
-                </div>
-              )}
-              
-              {/* Menu button */}
-              <HamburgerMenu />
-            </div>
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm py-1.5 px-4 rounded-full animate-pulse">
+            <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+            <span className="text-sm font-medium">Processing...</span>
           </div>
-        </div>
+        )}
         
-        {/* Decorative highlight line below header */}
-        <div className="h-1 bg-gradient-to-r from-amber-400 via-purple-400 to-indigo-400 opacity-80"></div>
-      </header>
+        {/* Menu button */}
+        <HamburgerMenu />
+      </div>
+    </div>
+  </div>
+  
+  {/* Mobile metadata display */}
+  <div className="md:hidden px-4 py-2 flex flex-wrap items-center gap-2 bg-indigo-800/80 border-t border-indigo-700/50">
+    {metadata?.date && (
+      <a 
+        href={`https://en.wikipedia.org/wiki/${extractYear(metadata.date)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs font-medium bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded-full backdrop-blur-sm"
+      >
+        {metadata.date}
+      </a>
+    )}
+    
+    {metadata?.author && (
+      <a 
+        href={`https://en.wikipedia.org/wiki/Special:Search?go=Go&search=${encodeURIComponent(metadata.author)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs font-medium bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded-full backdrop-blur-sm"
+      >
+        {metadata.author}
+      </a>
+    )}
+    
+    <StrategyDeck className="scale-90" />
+  </div>
+  
+  {/* Decorative highlight line below header */}
+  <div className="h-1 bg-gradient-to-r from-amber-400 via-purple-400 to-indigo-400 opacity-80"></div>
+</header>
 
       {/* Main content with three-panel layout */}
       <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
@@ -230,17 +278,12 @@ const [showSummary, setShowSummary] = useState(false);
 
             </div>
             
-            {/* Analysis Tools Box */}
+          {/* Analysis Tools Box */}
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-              <h2 className="text-lg font-medium text-indigo-900 flex items-center mb-4">
-                <svg className="w-5 h-5 mr-2 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
-                Analysis Tools
-              </h2>
+              
               <UserInputPanel />
             </div>
-            
+
             {/* LLM Transparency Box */}
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
               <h2 className="text-lg font-medium text-indigo-900 flex items-center mb-4">
@@ -352,16 +395,16 @@ const [showSummary, setShowSummary] = useState(false);
       </div>
       
       {/* Source Box */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mb-4">
+      <div className="bg-slate-100/20 rounded-lg shadow-md border-2 border-slate-300 p-4 mb-4">
        
-<div className="flex justify-between items-center mb-4">
-  <h2 className="text-lg font-medium ml-2 text-indigo-900 flex items-center">
+<div className="flex justify-between  items-center mb-2">
+  <h2 className="text-xl font-semibold ml-2 text-indigo-900 flex items-center">
    
     Primary Source
 
   </h2>
   
-  <div className="flex items-center mr-2 space-x-5">
+  <div className="flex items-center mr-2  mb-1 space-x-5">
    
     {/* Document Actions Button */}
    <DocumentActions 
@@ -377,7 +420,7 @@ const [showSummary, setShowSummary] = useState(false);
 
   </div>
 </div>
-        <div className="bg-slate-50 p-4 rounded-md border border-slate-100">
+        <div className="bg-slate-200/60  p-1 rounded-lg border-2 border-slate-100">
          <SourceDisplay 
   darkMode={darkMode}
   toggleDarkMode={toggleDarkMode}
@@ -388,7 +431,7 @@ const [showSummary, setShowSummary] = useState(false);
       
       {/* Source metadata with expanded fields */}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-        <h2 className="text-lg font-medium text-indigo-900 flex items-center mb-4">
+        <h2 className="text-xl font-medium text-indigo-900 flex items-center mb-4">
           <svg className="w-5 h-5 mr-2 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
           </svg>
@@ -440,17 +483,17 @@ const [showSummary, setShowSummary] = useState(false);
           {/* Tags displayed as pills if present */}
           {metadata?.tags && metadata.tags.length > 0 && (
             <div className="mt-3">
-              <span className="font-medium block mb-2">Tags:</span>
+              <span className="font-medium  block mb-2">Tags:</span>
               <div className="flex flex-wrap gap-2">
                 {Array.isArray(metadata.tags) 
                   ? metadata.tags.map((tag, index) => (
-                    <span key={index} className="inline-block px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded">
+                    <span key={index} className="inline-block hover:shadow px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded">
                       {tag}
                     </span>
                   ))
                   : typeof metadata.tags === 'string' 
                     ? metadata.tags.split(',').map((tag, index) => (
-                      <span key={index} className="inline-block px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded">
+                      <span key={index} className="inline-block  px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded">
                         {tag.trim()}
                       </span>
                     ))
@@ -531,74 +574,111 @@ const [showSummary, setShowSummary] = useState(false);
 
         </h2>
         
-        {/* Add the InfoButton component */}
-       <InfoButton 
-         sourceLength={sourceContent?.length || 0}
-         modelId={llmModel || 'Unknown model'}
-         provider={llmModel?.includes('gpt') ? 'OpenAI' : llmModel?.includes('claude') ? 'Anthropic' : 'Google'}
-        truncated={sourceContent ? sourceContent.length > 130000 : undefined}
-         wordCount={Math.round((sourceContent?.length || 0) / 6.5)}
-         truncatedLength={processingData?.truncatedLength}
-         processingData={processingData || {}}
-         additionalInfo={{
-           perspective: perspective || 'Default',
-           activePanel: activePanel
-         }}
-       />
-      </div>
-      <div className="bg-slate-50 p-3 rounded-md border border-slate-100">
-        {activePanel === 'references' 
-          ? <ReferencesExplanation />
-          : <AnalysisPanel />
-        }
-      </div>
-    </div>
+       {/* Right side icons */}
+                 <div className="flex items-center space-x-2"> {/* Container for right icons */}
+                    {/* Button to open Full Analysis Modal */}
+                    {activePanel === 'detailed-analysis' && detailedAnalysis && (
+                      <button
+                        onClick={() => setIsFullAnalysisModalOpen(true)}
+                        title="View Full Analysis in Popup"
+                        className="p-1.5 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-100 rounded-full transition-colors"
+                        aria-label="Open full analysis"
+                      >
+                         {/* Use External Link Icon */}
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                           <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                         </svg>
+                      </button>
+                    )}
 
-{/* Button Row - Side by side buttons with consistent styling */}
-<div className="flex gap-2 mt-4">
+                    {/* InfoButton */}
+                    <InfoButton
+                      sourceLength={sourceContent?.length || 0}
+                      modelId={llmModel || 'Unknown model'}
+                      provider={llmModel?.includes('gpt') ? 'OpenAI' : llmModel?.includes('claude') ? 'Anthropic' : 'Google'}
+                      truncated={sourceContent ? sourceContent.length > 130000 : undefined} // Example threshold
+                      wordCount={Math.round((sourceContent?.length || 0) / 6.5)} // Example word count calc
+                      truncatedLength={processingData?.truncatedLength}
+                      processingData={processingData || {}}
+                      additionalInfo={{
+                        perspective: perspective || 'Default',
+                        activePanel: activePanel
+                      }}
+                    />
+                 </div>
+              </div>
+
+   <div className="bg-slate-50 p-3 rounded-md border border-slate-100">
+                   {/* AnalysisPanel or other content */}
+                   {activePanel === 'references'
+                      ? <ReferencesExplanation />
+                      : <AnalysisPanel /> // This will render the updated detailed analysis
+                   }
+                </div>
+              </div>
+
+{/* Feature Button Grid - Responsive, consistently styled skinny action buttons */}
+<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
   {/* Highlight Text Button */}
   <button
     onClick={() => setActivePanel('highlight')}
-    className="flex-1 flex items-center justify-center p-2 rounded-md bg-white border border-amber-300 text-amber-700 shadow-sm transition-all duration-200 hover:bg-amber-50 hover:border-amber-400 hover:shadow group"
+    className={`group flex items-center justify-center h-9 py-3 px-3 rounded-lg border transition-all duration-200 shadow-sm
+      ${activePanel === 'highlight'
+        ? 'bg-amber-50 text-amber-800 border-amber-300 shadow-amber-100/50'
+        : 'bg-white text-slate-700 border-slate-200 hover:bg-amber-50/50 hover:text-amber-700 hover:border-amber-200 hover:shadow'
+      }`}
   >
-    <svg className="w-5 h-5 mr-2 transition-transform duration-300 group-hover:scale-110 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+    <svg className={`w-4 h-4 mr-2 transition-colors duration-200 ${
+      activePanel === 'highlight' ? 'text-amber-600' : 'text-slate-500 group-hover:text-amber-500'
+    }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
     </svg>
-    <span className="text-sm font-medium">Highlight Text</span>
+    <span className="text-sm font-medium">Highlight</span>
   </button>
   
-  {/* Summary Button */}
+  {/* View Summary Button */}
   <button
     onClick={() => setShowSummary(true)}
-    className="flex-1 flex items-center justify-center p-2 rounded-md bg-white border border-emerald-300 text-emerald-700 shadow-sm transition-all duration-200 hover:bg-emerald-50 hover:border-emerald-400 hover:shadow group"
+    className="group flex items-center justify-center h-9 px-3 py-3 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm transition-all duration-200 hover:bg-indigo-50/50 hover:text-indigo-700 hover:border-indigo-200 hover:shadow"
   >
-    <svg className="w-5 h-5 mr-2 transition-transform duration-300 group-hover:scale-110 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+    <svg className="w-4 h-4 mr-2 text-slate-500 transition-colors duration-200 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
     </svg>
-    <span className="text-sm font-medium">View Summary</span>
+    <span className="text-sm font-medium">Summary</span>
   </button>
+  
+  {/* Add Research Context Button (using the updated component) */}
+  <DraftContext 
+    className="group flex items-center justify-center h-9 px-3 py-3 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm transition-all duration-200 hover:bg-emerald-50/50 hover:text-emerald-700 hover:border-emerald-200 hover:shadow"
+  >
+    <svg className="w-4 h-4 mr-2 text-slate-500 transition-colors duration-200 group-hover:text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    </svg>
+    <span className="text-sm font-medium">Add Draft</span>
+  </DraftContext>
 </div>
 
-{/* Summarize Modal */}
+{/* Modals */}
 {showSummary && (
   <SummarizeText 
     onClose={() => setShowSummary(false)} 
   />
 )}
-            
+
+
           </div>
         </div>
 
       </div>
 
       {/* About SourceLens Logo Modal */}
-      {showAboutModal && (
+      {showAboutLogoModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
             <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-indigo-50">
               <h3 className="font-bold text-xl text-indigo-900">About this logo</h3>
               <button 
-                onClick={() => setShowAboutModal(false)}
+                onClick={() => setShowAboutLogoModal(false)}
                 className="text-gray-500 hover:text-gray-800 text-2xl"
               >
                 &times;
@@ -642,7 +722,7 @@ const [showSummary, setShowSummary] = useState(false);
             
             <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end">
               <button
-                onClick={() => setShowAboutModal(false)}
+                onClick={() => setShowAboutLogoModal(false)}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors"
               >
                 Close
@@ -655,6 +735,24 @@ const [showSummary, setShowSummary] = useState(false);
       {/* Metadata Modal */}
       {showMetadataModal && <MetadataModal />}
 
+
+  {/* Render the new FullAnalysisModal */}
+      {isFullAnalysisModalOpen && detailedAnalysis && (
+        <FullAnalysisModal
+          isOpen={isFullAnalysisModalOpen}
+          onClose={() => setIsFullAnalysisModalOpen(false)}
+          analysisContent={detailedAnalysis}
+          metadata={metadata}
+          perspective={perspective}
+          llmModel={llmModel}
+        />
+      )}
+
+        <AboutModal 
+      isOpen={showAboutModal} 
+      onClose={() => setShowAboutModal(false)} 
+    />
+    
 
     </div>
   );

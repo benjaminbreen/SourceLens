@@ -44,7 +44,7 @@ export default function StrategyDeck({ className = '' }: StrategyDeckProps) {
     "Briefly embrace oversimplification",
     "Start over. Read from the bottom up.",
     "Argue against your favorite author",
-    "Pause on a minor detail. What do you hear?",
+    "What would your mother say?",
     "Uncover a hidden chronology",
     "Write the footnote first",
     "Consider the perspective least likely to appear here",
@@ -56,7 +56,7 @@ export default function StrategyDeck({ className = '' }: StrategyDeckProps) {
     "What would be different if cause and effect were inverted here?",
     "Dwell on what resists summary",
     "Temporarily ignore context",
-    "Make the familiar strange again",
+    "Go for a walk and stop thinking about this",
     "How would a Martian perceive this?",
     "Imagine your source is lying. Why?",
     "Ask a question you've been avoiding",
@@ -317,14 +317,14 @@ export default function StrategyDeck({ className = '' }: StrategyDeckProps) {
           onClick={closeCard}
         >
           {/* Backdrop with blur */}
-          <div className={`absolute inset-0 bg-black/80 backdrop-blur-sm z-10 ${
+          <div className={`absolute inset-0 bg-black/80 backdrop-blur-sm z-14 ${
             isClosing ? 'animate-out fade-out duration-300' : 'animate-in fade-in duration-300'
           }`}></div>
           
           {/* Card Modal */}
           <div 
             ref={modalRef}
-            className={`bg-amber-50 rounded-xl max-w-xl w-full p-16 py-10 shadow-2xl z-10 relative ${
+            className={`bg-amber-50 rounded-xl max-w-xl w-full p-16 py-10 shadow-2xl z-15 relative ${
               isClosing 
                 ? 'animate-out zoom-out-95 slide-out-to-bottom-4 duration-300' 
                 : 'animate-in zoom-in-95 slide-in-from-bottom-4 duration-500'

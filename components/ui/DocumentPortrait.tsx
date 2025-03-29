@@ -33,7 +33,11 @@ export default function DocumentPortrait({
   const actualSourceType = sourceType || store.sourceType;
   const actualMetadata = metadata || store.metadata || {};
   const actualRoleplayMode = roleplayMode !== undefined ? roleplayMode : store.roleplayMode;
-  
+  const thumbnailUrl = store.sourceThumbnailUrl; // Get thumbnail URL from store
+
+    // State for image loading error
+  const [thumbnailError, setThumbnailError] = useState(false);
+
   // Calculate century based on date for color schemes
   const date = actualMetadata?.date || '';
   const year = parseInt(date.match(/\d+/)?.[0] || '2000', 10);
@@ -204,12 +208,26 @@ export default function DocumentPortrait({
       </svg>
     );
   };
-  
+
+// Determine if we should display a thumbnail
+  const shouldShowThumbnail = () => {
+    // Check if there's a thumbnail URL in the store and it hasn't errored
+    if (thumbnailUrl && !thumbnailError) return true;
+    
+    // Check if the source is an image type but no thumbnail was generated
+    if (actualSourceType === 'image' && !thumbnailError) {
+      // This could be enhanced to generate a thumbnail on the fly if needed
+      return false;
+    }
+    
+    return false;
+  };
+
   if (actualRoleplayMode && actualMetadata?.author) {
     // Roleplay mode with author portrait
     const authorNameForFile = actualMetadata.author.toLowerCase().replace(/\s+/g, '');
     const portraitPath = `/portraits/${authorNameForFile}.jpg`;
-    
+
     return (
       <LocationBackground 
         date={actualMetadata?.date || ''} 
@@ -275,24 +293,40 @@ export default function DocumentPortrait({
       </LocationBackground>
     );
   } else {
-    // Regular document mode with enhanced styling
+    // Regular document mode with thumbnail support
     return (
       <LocationBackground 
         date={actualMetadata?.date || ''} 
         location={actualMetadata?.placeOfPublication}
         opacity={0.5}
-        className="flex flex-col border-4 border-double border-slate-300 items-center p-3 rounded-lg overflow-hidden shadow-lg"
+        className="flex flex-col border-4 border-double border-slate-300 items-center p-3 rounded-lg overflow-hidden z-8 shadow-lg"
       >
         {/* Subtle vignette effect around the edges */}
-        <div className="absolute rounded-lg  inset-0 shadow-[inset_0_0_30px_rgba(0,0,0,0.05)] z-10"></div>
+        <div className="absolute rounded-lg inset-0 shadow-[inset_0_0_30px_rgba(0,0,0,0.05)] z-9"></div>
         
         {/* Content with higher z-index */}
         <div className="flex flex-col items-center">
-          {/* Document emoji with enhanced styling - bigger shadow and stronger border */}
+          {/* Document thumbnail/emoji with enhanced styling */}
           <div className={`group w-25 h-25 rounded-full bg-white flex items-center justify-center text-8xl mb-2 overflow-hidden shadow-xl border-2 ${colorScheme.border} transition-all duration-300 hover:shadow-2xl transform hover:scale-[1.05]`}>
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white to-gray-50">
-              {actualMetadata?.documentEmoji || '📄'}
-            </div>
+            {shouldShowThumbnail() ? (
+              // Thumbnail image
+              <div className="w-full h-full relative">
+                <Image 
+                  src={thumbnailUrl!}
+                  alt={actualMetadata?.title || "Document thumbnail"} 
+                  fill 
+                  className="object-cover"
+                  onError={() => setThumbnailError(true)}
+                />
+                {/* Overlay on hover effect */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+              </div>
+            ) : (
+              // Emoji fallback
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white to-gray-50">
+                {actualMetadata?.documentEmoji || '📄'}
+              </div>
+            )}
             
             {/* Enhanced hover effect with stronger transition */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>

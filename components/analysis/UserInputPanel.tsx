@@ -144,10 +144,10 @@ export default function UserInputPanel() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Analysis Perspective */}
       <div>
-        <h3 className="font-medium mb-1 text-slate-800">Analysis Perspective</h3>
+        <h3 className="font-semibold text-lg mb-2 ml-1 text-indigo-900">Analysis Perspective</h3>
         {showPerspectiveInput ? (
           <div className="space-y-2">
             {isCardDropped ? (
@@ -275,107 +275,261 @@ export default function UserInputPanel() {
         )}
       </div>
 
-      {/* LLM Model Selection */}
+
+ {/* Analysis Tools */}
+<div className="space-y-2">
+  <h3 className="font-semibold text-lg text-indigo-900">Analysis Tools</h3>
+  
+  {/* Basic Analysis */}
+  <button
+    onClick={() => setActivePanel('analysis')}
+    className={`flex items-center w-full shadow-sm px-4 py-2.5 rounded-md font-medium text-left transition-all duration-200 ${
+      activePanel === 'analysis'
+        ? 'bg-slate-100 border-l-4 border-indigo-600 pl-3'
+        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
+    }`}
+  >
+    <svg 
+      className={`w-5 h-5 mr-3 flex-shrink-0 ${activePanel === 'analysis' ? 'text-indigo-600' : 'text-slate-500'}`} 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+    </svg>
+    <span className={activePanel === 'analysis' ? 'text-indigo-800' : 'text-slate-700'}>Basic Analysis</span>
+  </button>
+  
+  {/* Detailed Analysis */}
+  <button
+    onClick={handleDetailedAnalysis}
+    disabled={isLoading || !initialAnalysis}
+    className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
+      activePanel === 'detailed-analysis'
+        ? 'bg-slate-100 border-l-4 border-amber-600 pl-3'
+        : isLoading || !initialAnalysis
+        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
+        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
+    }`}
+  >
+    <svg 
+      className={`w-5 h-5 mr-3 flex-shrink-0 ${
+        activePanel === 'detailed-analysis' 
+          ? 'text-amber-600' 
+          : isLoading || !initialAnalysis 
+          ? 'text-slate-400' 
+          : 'text-slate-500'
+      }`} 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    <span className={
+      activePanel === 'detailed-analysis' 
+        ? 'text-amber-800' 
+        : isLoading || !initialAnalysis 
+        ? 'text-slate-400' 
+        : 'text-slate-700'
+    }>
+      {detailedAnalysisLoaded && activePanel !== 'detailed-analysis'
+        ? 'Show Detailed Analysis'
+        : 'Detailed Analysis'}
+    </span>
+  </button>
+  
+  {/* Extract Information */}
+  <button
+    onClick={() => setActivePanel('extract-info')}
+    disabled={isLoading || !initialAnalysis}
+    className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
+      activePanel === 'extract-info'
+        ? 'bg-slate-100 border-l-4 border-emerald-600 pl-3'
+        : isLoading || !initialAnalysis
+        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
+        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
+    }`}
+  >
+    <svg 
+      className={`w-5 h-5 mr-3 flex-shrink-0 ${
+        activePanel === 'extract-info' 
+          ? 'text-emerald-600' 
+          : isLoading || !initialAnalysis 
+          ? 'text-slate-400' 
+          : 'text-slate-500'
+      }`} 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M19 13l-4 4m0 0l-4-4m4 4V7" />
+    </svg>
+    <span className={
+      activePanel === 'extract-info' 
+        ? 'text-emerald-800' 
+        : isLoading || !initialAnalysis 
+        ? 'text-slate-400' 
+        : 'text-slate-700'
+    }>
+      Extract Information
+    </span>
+  </button>
+  
+  {/* Suggest References */}
+  <button
+    onClick={handleSuggestReferences}
+    disabled={isLoading || !initialAnalysis}
+    className={`flex items-center w-full px-4 py-2.5 rounded-md shadow-sm font-medium text-left transition-all duration-200 ${
+      activePanel === 'references'
+        ? 'bg-slate-100 shadow-sm border-l-4 border-amber-700 pl-3 '
+        : isLoading || !initialAnalysis
+        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
+        : 'bg-slate-100 text-slate-700  hover:bg-slate-200 border-l-4 border-transparent pl-3'
+    }`}
+  >
+    <svg 
+      className={`w-5 h-5 mr-3 flex-shrink-0 ${
+        activePanel === 'references' 
+          ? 'text-amber-700' 
+          : isLoading || !initialAnalysis 
+          ? 'text-slate-400' 
+          : 'text-slate-500'
+      }`} 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    </svg>
+    <span className={
+      activePanel === 'references' 
+        ? 'text-amber-800 ' 
+        : isLoading || !initialAnalysis 
+        ? 'text-slate-400' 
+        : 'text-slate-700'
+    }>
+      Suggest References
+    </span>
+  </button>
+  
+  {/* Begin Roleplay */}
+  <button
+    onClick={handleBeginRoleplay}
+    disabled={isLoading || !initialAnalysis}
+    className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
+      activePanel === 'roleplay'
+        ? 'bg-slate-100 border-l-4 border-blue-600 pl-3'
+        : isLoading || !initialAnalysis
+        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
+        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
+    }`}
+  >
+    <svg 
+      className={`w-5 h-5 mr-3 flex-shrink-0 ${
+        activePanel === 'roleplay' 
+          ? 'text-blue-600' 
+          : isLoading || !initialAnalysis 
+          ? 'text-slate-400' 
+          : 'text-slate-500'
+      }`} 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+    </svg>
+    <span className={
+      activePanel === 'roleplay' 
+        ? 'text-blue-800' 
+        : isLoading || !initialAnalysis 
+        ? 'text-slate-400' 
+        : 'text-slate-700'
+    }>
+      Simulation Mode
+    </span>
+  </button>
+  
+  {/* Counter-Narrative */}
+  <button
+    onClick={handleCounterNarrative}
+    disabled={isLoading || !initialAnalysis}
+    className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
+      activePanel === 'counter'
+        ? 'bg-slate-100 border-l-4 border-purple-600 pl-3'
+        : isLoading || !initialAnalysis
+        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
+        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
+    }`}
+  >
+    <svg 
+      className={`w-5 h-5 mr-3 flex-shrink-0 ${
+        activePanel === 'counter' 
+          ? 'text-purple-600' 
+          : isLoading || !initialAnalysis 
+          ? 'text-slate-400' 
+          : 'text-slate-500'
+      }`} 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4" />
+    </svg>
+    <span className={
+      activePanel === 'counter' 
+        ? 'text-purple-800' 
+        : isLoading || !initialAnalysis 
+        ? 'text-slate-400' 
+        : 'text-slate-700'
+    }>
+      Counter-Narrative
+    </span>
+  </button>
+  
+  {/* Text Highlighting */}
+  <button
+    onClick={() => setActivePanel('highlight')}
+    disabled={isLoading || !initialAnalysis}
+    className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
+      activePanel === 'highlight'
+        ? 'bg-slate-100 border-l-4 border-yellow-500 pl-3'
+        : isLoading || !initialAnalysis
+        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
+        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-md border-l-4 border-transparent pl-3'
+    }`}
+  >
+    <svg 
+      className={`w-5 h-5 mr-3 flex-shrink-0 ${
+        activePanel === 'highlight' 
+          ? 'text-yellow-500' 
+          : isLoading || !initialAnalysis 
+          ? 'text-slate-400' 
+          : 'text-slate-500'
+      }`} 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+    </svg>
+    <span className={
+      activePanel === 'highlight' 
+        ? 'text-yellow-700' 
+        : isLoading || !initialAnalysis 
+        ? 'text-slate-400' 
+        : 'text-slate-700'
+    }>
+      Text Highlighting
+    </span>
+  </button>
+</div>
+
+   {/* LLM Model Selection */}
       <ModelSelector />
 
-      {/* Analysis Tools */}
-      <div className="space-y-2">
-        <h3 className="font-medium text-slate-800">Analysis Tools</h3>
 
-        {/* Basic Analysis */}
-        <button
-          onClick={() => setActivePanel('analysis')}
-          className={`block w-full px-4 py-2 rounded-md font-medium text-left transition-colors shadow-sm
-            ${
-              activePanel === 'analysis'
-                ? 'bg-amber-600 text-white hover:bg-amber-700'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-        >
-          Basic Analysis
-        </button>
-
-        {/* Detailed Analysis */}
-        <button
-          onClick={handleDetailedAnalysis}
-          disabled={isLoading || !initialAnalysis}
-          className={`block w-full px-4 py-2 rounded-md font-medium text-left transition-colors shadow-sm ${
-            activePanel === 'detailed-analysis'
-              ? 'bg-amber-600 text-white hover:bg-amber-700'
-              : isLoading || !initialAnalysis
-              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-          }`}
-        >
-          {detailedAnalysisLoaded && activePanel !== 'detailed-analysis'
-            ? 'Show Detailed Analysis'
-            : 'Generate Detailed Analysis'}
-        </button>
-
-        {/* Counter-Narrative */}
-        <button
-          onClick={handleCounterNarrative}
-          disabled={isLoading || !initialAnalysis}
-          className={`block w-full px-4 py-2 rounded-md font-medium text-left transition-colors shadow-sm ${
-            activePanel === 'counter'
-              ? 'bg-amber-600 text-white hover:bg-amber-700'
-              : isLoading || !initialAnalysis
-              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-          }`}
-        >
-          Generate Counter-Narrative
-        </button>
-
-        {/* Suggest References */}
-        <button
-          onClick={handleSuggestReferences}
-          disabled={isLoading || !initialAnalysis}
-          className={`block w-full px-4 py-2 rounded-md font-medium text-left transition-colors shadow-sm ${
-            activePanel === 'references'
-              ? 'bg-amber-600 text-white hover:bg-amber-700'
-              : isLoading || !initialAnalysis
-              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-          }`}
-        >
-          Suggest References
-        </button>
-
-        {/* Extract Information */}
-        <button
-          onClick={() => setActivePanel('extract-info')}
-          disabled={isLoading || !initialAnalysis}
-          className={`block w-full px-4 py-2 rounded-md font-medium text-left transition-colors shadow-sm ${
-            activePanel === 'extract-info'
-              ? 'bg-amber-600 text-white hover:bg-amber-700'
-              : isLoading || !initialAnalysis
-              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-          }`}
-        >
-          Extract Information
-        </button>
-
-        {/* Begin Roleplay */}
-        <button
-          onClick={handleBeginRoleplay}
-          disabled={isLoading || !initialAnalysis}
-          className={`block w-full px-4 py-2 rounded-md font-medium text-left transition-colors shadow-sm ${
-            activePanel === 'roleplay'
-              ? 'bg-amber-600 text-white hover:bg-amber-700'
-              : isLoading || !initialAnalysis
-              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-          }`}
-        >
-          Simulation Mode
-        </button>
-
-        
-      </div>
-
-      {/* Model Info Panel with provider logo */}
+     
     
     </div>
   );
