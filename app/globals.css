@@ -18,6 +18,37 @@
 }
 
 
+.font-mono {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+}
+
+code, pre, .code {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-fade-in {
+  animation: modalFadeIn 0.2s ease-out forwards;
+}
+
+.modal-slide-in {
+  animation: modalSlideIn 0.3s ease-out forwards;
+}
   
   
   .bg-radial-gradient {
@@ -35,12 +66,12 @@
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
+  animation: fadeIn 0.3s ease-out forwards;
 }
 
 .glow-effect {
-  box-shadow: 0 0 15px 6px rgba(255, 200, 0, 0.5);
-  transition: box-shadow 0.5s ease;
+  box-shadow: 0 0 12px 4px rgba(255, 200, 0, 0.3);
+  transition: box-shadow 0.2s ease;
 }
 
 .glow-effect:hover {

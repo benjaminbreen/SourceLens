@@ -80,7 +80,7 @@ interface AppState {
   // Source and metadata
   sourceContent: string;
   sourceFile: File | null;
-  sourceType: 'text' | 'pdf' | 'image' | null;
+  sourceType: 'text' | 'pdf' | 'image' | 'audio' | null;
   metadata: Metadata | null;
   perspective: string;
   referencesModel: string;
@@ -151,7 +151,7 @@ setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
   // Actions
   setSourceContent: (content: string) => void;
    setSourceFile: (file: File | null) => void;
-   setSourceType: (type: 'text' | 'pdf' | 'image' | null) => void;
+   setSourceType: (type: 'text' | 'pdf' | 'image' | 'audio' | null) => void;
    setMetadata: (metadata: Metadata) => void;
    setPerspective: (perspective: string) => void;
    setInitialAnalysis: (analysis: AnalysisResult | null) => void;

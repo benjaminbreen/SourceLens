@@ -37,6 +37,7 @@ import SummarizeText from '../text/SummarizeText';
 import FullAnalysisModal from './FullAnalysisModal';
 import AboutModal from '../ui/AboutModal';
 import DraftContext from '../drafts/DraftContext';
+import SlimFooter from '@/components/ui/SlimFooter';
 
 
 export default function MainLayout() {
@@ -65,7 +66,7 @@ export default function MainLayout() {
   const [chatExpanded, setChatExpanded] = useState(false);
   const [portraitError, setPortraitError] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [fontSize, setFontSize] = useState(16);
+  const [fontSize, setFontSize] = useState(18);
     const [isFullAnalysisModalOpen, setIsFullAnalysisModalOpen] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
 
@@ -103,71 +104,70 @@ const [showSummary, setShowSummary] = useState(false);
 
 
 
-
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       {/* Header with gradient background and sourcelensbar.jpg fade */}
-<header className={`relative overflow-hidden bg-gradient-to-r from-indigo-900 via-indigo-700 to-transparent text-white shadow-lg transition-all duration-700 ${animateHeader ? 'opacity-100' : 'opacity-10'}`}>
+<header className="relative py-2 overflow-hidden transition-all duration-700 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-lg">
   {/* Background image on right side */}
-  <div className="absolute top-0 right-0 h-full w-1/2 z-0">
+  <div className="absolute top-0 right-0 h-full w-3/4 z-0">
     <Image 
       src="/sourcelensbar.jpg" 
       alt="SourceLens Header" 
       fill 
       priority
-      className="object-cover object-left" 
+      className="object-cover opacity-80" 
     />
-    <div className="absolute inset-0 bg-gradient-to-r from-indigo-700/100 via-indigo-700/70 to-transparent"></div>
+  <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-800/90 to-indigo-900/10"></div>
   </div>
+
   
-  {/* Header content container */}
-  <div className="max-w-9xl mx-auto p-4 relative z-10">
+  
+   {/* Header content container */}
+  <div className="relative z-20 max-w-10xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
     <div className="flex justify-between items-center">
+      {/* Logo and title section */}
       <div className="flex items-center">
-        {/* Logo that opens the modal */}
-        <div className="flex ml-3 items-center gap-3">
-          <button 
-            onClick={() => setShowAboutLogoModal(true)}
-            className="transition-transform hover:scale-104 focus:outline-none rounded-full glow-effect drop-shadow-effect"
-          >
-            <Image 
-              src="/sourcelenslogo.png" 
-              alt="SourceLens Logo" 
-              width={55} 
-              height={55} 
-              className="rounded-full border border-indigo-800/10 ring-1 ring-yellow-300/20"
-            />
-          </button>
-          
-          {/* App title */}
-          <Link 
-            href="/"
-            className="group inline-block relative overflow-hidden"
-          >
-            <h1 className="text-2xl ml-4 font-bold tracking-wide drop-shadow-sm font-serif transition-all duration-300 group-hover:text-amber-100">
-              SourceLens
-              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-amber-300 via-white to-amber-300 transform scale-x-0 origin-left transition-transform duration-300 ease-out group-hover:scale-x-100"></span>
-            </h1>
-          </Link>
-        </div>
+        <button 
+          onClick={() => setShowAboutLogoModal(true)}
+          className="transition-transform ml-6 hover:scale-110 focus:outline-none rounded-full shadow-lg shadow-indigo-500/30"
+        >
+          <Image 
+            src="/sourcelenslogo.png" 
+            alt="SourceLens Logo" 
+            width={50} 
+            height={50} 
+            className="rounded-full border border-indigo-200/30" 
+          />
+        </button>
+        
+        <Link 
+          href="/"
+          className="group inline-block relative overflow-hidden p-2 ml-10"
+        >
+          <h1 className="text-2xl font-bold shadow-xl shadow-indigo-800/10 text-white">
+            SourceLens
+            <span className="absolute bottom-0 left-1 w-full h-0.5 bg-gradient-to-r from-indigo-400 via-white to-indigo-400 transform scale-x-0 origin-left transition-transform duration-300 ease-out group-hover:scale-x-90"></span>
+          </h1>
+        </Link>
       </div>
+ 
 
       {/* Navigation Links */}
-      <div className="hidden md:flex items-center gap-4 mx-4">
+      <div className="hidden md:flex items-center gap-4">
         {metadata?.date && (
           <a 
             href={`https://en.wikipedia.org/wiki/${extractYear(metadata.date)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-medium bg-white/20 hover:bg-white/30 px-3 py-0.5 rounded-full backdrop-blur-sm transition-colors duration-200 group"
+            className="text-sm font-medium bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full transition-colors duration-200 group"
           >
             {metadata.date}
-            <span className="block max-w-0 group-hover:max-w-full transition-all duration-300 h-0.5 bg-amber-300/70"></span>
+            <span className="block max-w-0 group-hover:max-w-full transition-all duration-300 h-0.5 bg-indigo-400/60"></span>
           </a>
         )}
         
         {metadata?.date && metadata?.author && (
-          <span className="text-white/50">•</span>
+          <span className="text-white/40">•</span>
         )}
         
         {metadata?.author && (
@@ -175,57 +175,64 @@ const [showSummary, setShowSummary] = useState(false);
             href={`https://en.wikipedia.org/wiki/Special:Search?go=Go&search=${encodeURIComponent(metadata.author)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-medium bg-white/20 hover:bg-white/30 px-3 py-0.5 rounded-full backdrop-blur-sm transition-colors duration-200 group"
+            className="text-sm font-medium bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full transition-colors duration-200 group"
           >
             {metadata.author}
-            <span className="block max-w-0 group-hover:max-w-full transition-all duration-300 h-0.5 bg-amber-300/70"></span>
+            <span className="block max-w-0 group-hover:max-w-full transition-all duration-300 h-0.5 bg-indigo-400/60"></span>
           </a>
         )}
-         {metadata?.date && metadata?.author && (
-          <span className="text-white/50">•</span>
-        )}
         
-        <StrategyDeck className="ml-1" />
+        <StrategyDeck className="ml-2" />
       </div>
       
       {/* Right side controls */}
-      <div className="flex items-center space-x-4">
-        {/* Main navigation links */}
-        <nav className="hidden md:flex items-center space-x-1">
-          <Link 
-            href="/library" 
-            className="px-3 py-1.5 text-white/90 hover:text-white hover:bg-white/10 rounded-md transition-colors text-sm font-medium flex items-center"
-          >
-            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-            </svg>
-            Library
-          </Link>
-          
-          <button 
-            onClick={() => setShowAboutModal(true)}
-            className="px-3 py-1.5 text-white/90 hover:text-white hover:bg-white/10 rounded-md transition-colors text-sm font-medium flex items-center"
-          >
-            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            About
-          </button>
-        </nav>
-
+     <nav className="hidden md:flex items-center space-x-3">
+        <Link 
+          href="/" 
+          className="px-3 py-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-md transition-colors text-sm font-medium flex items-center"
+        >
+          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          Home
+        </Link>
+        
+        <Link 
+          href="/library" 
+          className="px-3 py-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-md transition-colors text-sm font-medium flex items-center"
+        >
+          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+          </svg>
+          Library
+        </Link>
+        
+        <button 
+          onClick={() => setShowAboutModal(true)}
+          className="px-3 py-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-md transition-colors text-sm font-medium flex items-center"
+        >
+          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          About
+        </button>
+        
         {/* Loading indicator */}
         {isLoading && (
-          <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm py-1.5 px-4 rounded-full animate-pulse">
+          <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm py-1.5 px-3 rounded-full">
             <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-            <span className="text-sm font-medium">Processing...</span>
+            <span className="text-xs font-medium text-white/90">Processing...</span>
           </div>
         )}
+      </nav>
         
-        {/* Menu button */}
+        {/* Mobile menu button */}
+
         <HamburgerMenu />
-      </div>
+    
     </div>
   </div>
+
   
   {/* Mobile metadata display */}
   <div className="md:hidden px-4 py-2 flex flex-wrap items-center gap-2 bg-indigo-800/80 border-t border-indigo-700/50">
@@ -255,17 +262,19 @@ const [showSummary, setShowSummary] = useState(false);
   </div>
   
   {/* Decorative highlight line below header */}
-  <div className="h-1 bg-gradient-to-r from-amber-400 via-purple-400 to-indigo-400 opacity-80"></div>
+
 </header>
+  <div className="h-1 bg-gradient-to-r from-amber-400 via-purple-400 to-indigo-900 opacity-100"></div>
 
       {/* Main content with three-panel layout */}
       <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
         {/* Left Panel - Tools */}
         <div className={`w-full ${roleplayMode ? 'md:w-1/4' : 'md:w-1/4'} overflow-y-auto bg-gradient-to-b from-slate-100 to-slate-50 border-b md:border-b-0 md:border-r border-slate-200`}>
           {/* Modular boxes in left panel */}
-          <div className="p-4 grid grid-cols-1 gap-4">
+          <div className="p-3 grid grid-cols-1 gap-4">
 
             <div className="shadow-sm rounded-lg ">
+
 <DocumentPortrait
   sourceFile={sourceFile}
   sourceType={sourceType}
@@ -307,19 +316,13 @@ const [showSummary, setShowSummary] = useState(false);
       : (detailedAnalysis && activePanel === 'detailed-analysis') || activePanel === 'counter'
         ? 'md:w-1/3' // Narrower when detailed analysis is shown or counter-narrative is active
         : 'md:w-3/5' // Normal width otherwise
-  } transition-all duration-300 overflow-y-auto bg-white shadow-inner`}>
+  } transition-all duration-300 overflow-y-auto bg-white  `}>
 
   {activePanel === 'extract-info' ? (
-    <div className="p-4">
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mb-4">
+    <div className="p-0">
+      <div className="bg-white rounded-lg border border-slate-200 p-4 mb-4">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-medium text-indigo-900 flex items-center">
-            <svg className="w-5 h-5 mr-2 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-            </svg>
-            Extract Information
-          </h2>
-          <ExtractPanelToggle />
+         
         </div>
         <ExtractInfoPanel />
       </div>
@@ -395,16 +398,16 @@ const [showSummary, setShowSummary] = useState(false);
       </div>
       
       {/* Source Box */}
-      <div className="bg-slate-100/20 rounded-lg shadow-md border-2 border-slate-300 p-4 mb-4">
+      <div className="bg-slate-100/20  rounded-lg border-1  shadow-md border-2 border-slate-200 p-4 mb-4">
        
 <div className="flex justify-between  items-center mb-2">
-  <h2 className="text-xl font-semibold ml-2 text-indigo-900 flex items-center">
+  <h2 className="text-xl font-semibold  ml-2 rounded-lgtext-indigo-900 flex items-center">
    
     Primary Source
 
   </h2>
   
-  <div className="flex items-center mr-2  mb-1 space-x-5">
+  <div className="flex items-center mr-2   mb-0 space-x-5">
    
     {/* Document Actions Button */}
    <DocumentActions 
@@ -420,7 +423,7 @@ const [showSummary, setShowSummary] = useState(false);
 
   </div>
 </div>
-        <div className="bg-slate-200/60  p-1 rounded-lg border-2 border-slate-100">
+        <div className="bg-slate-200/70 p-1 rounded-lg border-1 border-slate-100">
          <SourceDisplay 
   darkMode={darkMode}
   toggleDarkMode={toggleDarkMode}
@@ -430,16 +433,16 @@ const [showSummary, setShowSummary] = useState(false);
       </div>
       
       {/* Source metadata with expanded fields */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-        <h2 className="text-xl font-medium text-indigo-900 flex items-center mb-4">
-          <svg className="w-5 h-5 mr-2 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="bg-white rounded-lg  border-slate-200 p-4">
+        <h2 className="text-xl font-medium text-indigo-900 flex items-center mb-1">
+          <svg className="w-5 ml-2 h-5 mr-2 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
           </svg>
           Source Details
         </h2>
-        <div className="text-sm space-y-2 text-slate-700">
+        <div className="text-sm p-2 space-y-2text-slate-700">
           {/* Basic metadata */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+          <div className="grid border rounded-lg bg-slate-100/30  shadow-inner border-slate-200 p-3 grid-cols-1 md:grid-cols-2 gap-x-4 ">
             {metadata?.date && (
               <div className="flex">
                 <span className="font-medium w-24">Date:</span>
@@ -484,10 +487,10 @@ const [showSummary, setShowSummary] = useState(false);
           {metadata?.tags && metadata.tags.length > 0 && (
             <div className="mt-3">
               <span className="font-medium  block mb-2">Tags:</span>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-3">
                 {Array.isArray(metadata.tags) 
                   ? metadata.tags.map((tag, index) => (
-                    <span key={index} className="inline-block hover:shadow px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded">
+                    <span key={index} className="inline-block font-mono hover:shadow shadow-indigo-400/80 px-2 py-1 text-xs bg-indigo-100/40 text-slate-700 rounded">
                       {tag}
                     </span>
                   ))
@@ -507,7 +510,7 @@ const [showSummary, setShowSummary] = useState(false);
           {metadata?.fullCitation && (
             <div className="flex flex-col mt-3">
               <span className="font-medium mb-1">Citation:</span>
-              <p className="bg-slate-50 p-2 rounded text-slate-600 italic">{metadata.fullCitation}</p>
+              <p className="bg-slate-50 p-1 rounded text-slate-600 italic">{metadata.fullCitation}</p>
             </div>
           )}
           
@@ -515,7 +518,7 @@ const [showSummary, setShowSummary] = useState(false);
           {metadata?.researchGoals && (
             <div className="flex flex-col mt-3">
               <span className="font-medium mb-1">Research Goals:</span>
-              <p className="bg-slate-50 p-2 rounded text-slate-600">{metadata.researchGoals}</p>
+              <p className="bg-slate-50 p-1 rounded text-slate-600">{metadata.researchGoals}</p>
             </div>
           )}
           
@@ -523,14 +526,17 @@ const [showSummary, setShowSummary] = useState(false);
           {metadata?.additionalInfo && (
             <div className="flex flex-col mt-3">
               <span className="font-medium mb-1">Additional Context:</span>
-              <p className="bg-slate-50 p-2 rounded text-slate-600">{metadata.additionalInfo}</p>
+              <p className="bg-slate-50 p-1 rounded text-slate-600">{metadata.additionalInfo}</p>
             </div>
           )}
         </div>
       </div>
     </div>
   )}
+
 </div>
+
+
         
        {/* Right Panel - Analysis Results */}
 <div className={`w-full ${
@@ -618,11 +624,11 @@ const [showSummary, setShowSummary] = useState(false);
               </div>
 
 {/* Feature Button Grid - Responsive, consistently styled skinny action buttons */}
-<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+<div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-6">
   {/* Highlight Text Button */}
   <button
     onClick={() => setActivePanel('highlight')}
-    className={`group flex items-center justify-center h-9 py-3 px-3 rounded-lg border transition-all duration-200 shadow-sm
+    className={`group flex items-center justify-center h-9 py-3 px-2 rounded-lg border transition-all duration-200 shadow-sm
       ${activePanel === 'highlight'
         ? 'bg-amber-50 text-amber-800 border-amber-300 shadow-amber-100/50'
         : 'bg-white text-slate-700 border-slate-200 hover:bg-amber-50/50 hover:text-amber-700 hover:border-amber-200 hover:shadow'
@@ -639,7 +645,7 @@ const [showSummary, setShowSummary] = useState(false);
   {/* View Summary Button */}
   <button
     onClick={() => setShowSummary(true)}
-    className="group flex items-center justify-center h-9 px-3 py-3 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm transition-all duration-200 hover:bg-indigo-50/50 hover:text-indigo-700 hover:border-indigo-200 hover:shadow"
+    className="group flex items-center justify-center h-9 px-1 py-3 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm transition-all duration-200 hover:bg-indigo-50/50 hover:text-indigo-700 hover:border-indigo-200 hover:shadow"
   >
     <svg className="w-4 h-4 mr-2 text-slate-500 transition-colors duration-200 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -649,14 +655,17 @@ const [showSummary, setShowSummary] = useState(false);
   
   {/* Add Research Context Button (using the updated component) */}
   <DraftContext 
-    className="group flex items-center justify-center h-9 px-3 py-3 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm transition-all duration-200 hover:bg-emerald-50/50 hover:text-emerald-700 hover:border-emerald-200 hover:shadow"
+    className="group flex items-center justify-center h-9 px-2 py-3 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm transition-all duration-200 hover:bg-emerald-50/50 hover:text-emerald-700 hover:border-emerald-200 hover:shadow"
   >
     <svg className="w-4 h-4 mr-2 text-slate-500 transition-colors duration-200 group-hover:text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
     </svg>
     <span className="text-sm font-medium">Add Draft</span>
   </DraftContext>
+
 </div>
+
+
 
 {/* Modals */}
 {showSummary && (
@@ -672,69 +681,84 @@ const [showSummary, setShowSummary] = useState(false);
       </div>
 
       {/* About SourceLens Logo Modal */}
-      {showAboutLogoModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-indigo-50">
-              <h3 className="font-bold text-xl text-indigo-900">About this logo</h3>
-              <button 
-                onClick={() => setShowAboutLogoModal(false)}
-                className="text-gray-500 hover:text-gray-800 text-2xl"
-              >
-                &times;
-              </button>
+{showAboutLogoModal && (
+  <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-auto">
+      <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-indigo-50">
+        <h3 className="font-bold text-xl text-indigo-900">About this logo</h3>
+        <button 
+          onClick={() => setShowAboutLogoModal(false)}
+          className="text-gray-500 hover:text-gray-800 text-2xl"
+        >
+          &times;
+        </button>
+      </div>
+      
+      <div className="p-6 space-y-4">
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex-1">
+            <h4 className="text-lg font-semibold text-indigo-800 mb-2">Looking more closely</h4>
+            <p className="text-slate-700 mb-3">
+              This image is a tiny detail from Hans Memling's "Diptych of Maarten van Nieuwenhove" (1487), 
+              currently housed in the Old St. John's Hospital in Bruges. This early Netherlandish diptych 
+              features an innovative technique: <span 
+                id="mirror-text" 
+                className="relative inline transition-colors font-semibold text-amber-700 hover:text-amber-500 hover:font-medium cursor-help"
+                onMouseEnter={() => document.getElementById('mirror-highlight')?.classList.remove('opacity-0')}
+                onMouseLeave={() => document.getElementById('mirror-highlight')?.classList.add('opacity-0')}
+              >a mirror that reflects the scene</span>, creating a unified space between two separate panels.
+            </p>
+            <p className="text-slate-700 mb-3">
+              Just as Memling's mirror offers a new perspective on the scene, SourceLens provides multiple viewpoints 
+              through which to examine historical texts. The convex mirror in the painting reveals what would otherwise 
+              remain hidden from view. SourceLens uncovers interpretations and contexts that might not be 
+              immediately apparent in sources.
+            </p>
+          </div>
+          <div className="md:w-2/3 flex flex-col items-center relative">
+            <div className="relative">
+              <Image 
+                src="/memling.jpg"
+                alt="Diptych of Maarten van Nieuwenhove by Hans Memling"
+                width={600}
+                height={500}
+                className="rounded-md shadow-md mb-2"
+              />
+              {/* Mirror highlight overlay */}
+              <div 
+                id="mirror-highlight"
+                className="absolute rounded-full border-4 border-amber-500/70 bg-amber-400/20 w-16 h-16 top-[135px] left-[70px] opacity-0 transition-opacity duration-500 pointer-events-none"
+                style={{
+                  boxShadow: '0 0 20px 5px rgba(217, 119, 6, 0.25)',
+                  transform: 'translate(-50%, -50%)'
+                }}
+              />
             </div>
-            
-            <div className="p-6 space-y-4">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex-1">
-                  <h4 className="text-lg font-semibold text-indigo-800 mb-2">The Inspiration</h4>
-                  <p className="text-slate-700 mb-3">
-                    This image is a tiny detail from Hans Memling's masterpiece, the "Diptych of Maarten van Nieuwenhove" (1487), 
-                    currently housed in the Old St. John's Hospital in Bruges. This early Netherlandish devotional diptych 
-                    features an innovative technique: a mirror that reflects the scene, creating a unified space between two separate panels.
-                  </p>
-                  <p className="text-slate-700 mb-3">
-                    Just as Memling's mirror offers a new perspective on the scene, SourceLens provides multiple viewpoints 
-                    through which to examine historical texts. The convex mirror in the painting reveals what would otherwise 
-                    remain hidden from view—similarly, our application uncovers interpretations and contexts that might not be 
-                    immediately apparent in primary sources.
-                  </p>
-                  <p className="text-slate-700">
-                    The diptych also represents a conversation across time and space—between the Virgin Mary and Maarten van Nieuwenhove—much like 
-                    how SourceLens facilitates a dialogue between modern researchers and historical figures through its roleplay feature.
-                  </p>
-                </div>
-                <div className="md:w-1/2 flex flex-col items-center">
-                  <Image 
-                    src="/memling.jpg"
-                    alt="Diptych of Maarten van Nieuwenhove by Hans Memling"
-                    width={400}
-                    height={300}
-                    className="rounded-md shadow-md mb-2"
-                  />
-                  <p className="text-xs text-slate-500 italic text-center">
-                    Diptych of Maarten van Nieuwenhove (1487) by Hans Memling
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end">
-              <button
-                onClick={() => setShowAboutLogoModal(false)}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors"
-              >
-                Close
-              </button>
-            </div>
+            <p className="text-xs text-slate-500 italic text-center">
+              Diptych of Maarten van Nieuwenhove (1487) by Hans Memling
+            </p>
           </div>
         </div>
-      )}
+      </div>
+      
+      <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+        <button
+          onClick={() => setShowAboutLogoModal(false)}
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Metadata Modal */}
       {showMetadataModal && <MetadataModal />}
 
+<div className="mt-3">
+  <SlimFooter />
+</div>
 
   {/* Render the new FullAnalysisModal */}
       {isFullAnalysisModalOpen && detailedAnalysis && (
@@ -755,5 +779,6 @@ const [showSummary, setShowSummary] = useState(false);
     
 
     </div>
+
   );
 }

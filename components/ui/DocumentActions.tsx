@@ -1,11 +1,13 @@
 // components/ui/DocumentActions.tsx
 // Button menu system that provides actions for the primary source document
-// Includes dark mode toggle, text cleanup, translation, highlighting and font size control
+// Includes dark mode toggle, text cleanup, translation, highlighting, font size control,
+// and saving source to library functionality
 
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
+import { useLibrary } from '@/lib/libraryContext';
 import CleanupText from '../text/CleanupText';
 import SummarizeText from '../text/SummarizeText';
 
@@ -24,14 +26,16 @@ export default function DocumentActions({
   toggleDarkMode,
   onSummarizeComplete,
   onFontSizeChange,
-  currentFontSize = 16, // Default font size
+  currentFontSize = 18, // Default font size
 }: DocumentActionsProps) {
-  const { setActivePanel, activePanel } = useAppStore();
+  const { setActivePanel, activePanel, sourceContent, metadata, sourceType } = useAppStore();
+  const { addSource, sourceExists } = useLibrary();
   const [isOpen, setIsOpen] = useState(false);
   const [showCleanup, setShowCleanup] = useState(false);
   const [showSummarize, setShowSummarize] = useState(false);
   const [showAnimation, setShowAnimation] = useState(true);
   const [fontSize, setFontSize] = useState(currentFontSize);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error' | 'exists'>('idle');
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   
@@ -90,6 +94,48 @@ export default function DocumentActions({
     setIsOpen(false);
   };
 
+  // Handle saving source to library
+  const handleSaveToLibrary = () => {
+    if (!sourceContent || !metadata) {
+      alert('No source content or metadata available to save');
+      return;
+    }
+
+    // Check if source already exists
+    if (sourceExists(sourceContent)) {
+      setSaveStatus('exists');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+      setIsOpen(false);
+      return;
+    }
+
+    setSaveStatus('saving');
+    
+    try {
+      addSource({
+        content: sourceContent,
+        metadata: metadata,
+       type: sourceType === 'audio' ? 'text' : (sourceType || 'text'),
+        // Category and tags can be added later in the library
+        category: metadata.academicSubfield || 'Uncategorized',
+        tags: Array.isArray(metadata.tags) 
+          ? metadata.tags 
+          : typeof metadata.tags === 'string' 
+            ? metadata.tags.split(',').map(tag => tag.trim())
+            : []
+      });
+      
+      setSaveStatus('success');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (error) {
+      console.error('Error saving source to library:', error);
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    }
+    
+    setIsOpen(false);
+  };
+
   // Handle summary completion
   const handleSummarizeClose = () => {
     setShowSummarize(false);
@@ -105,6 +151,17 @@ export default function DocumentActions({
     setFontSize(newSize);
     if (onFontSizeChange) {
       onFontSizeChange(newSize);
+    }
+  };
+
+  // Get save button text/icon based on status
+  const getSaveButtonText = () => {
+    switch (saveStatus) {
+      case 'saving': return 'Saving...';
+      case 'success': return 'Saved!';
+      case 'error': return 'Error!';
+      case 'exists': return 'Already saved';
+      default: return 'Save to Library';
     }
   };
 
@@ -125,6 +182,20 @@ export default function DocumentActions({
         <span className="text-xs font-medium">Actions</span>
       </button>
 
+      {/* Save status indicator (outside menu) */}
+      {saveStatus !== 'idle' && (
+        <div className={`absolute -top-10 left-1/2 transform -translate-x-1/2 px-3 py-1.5 rounded shadow-md text-white text-xs whitespace-nowrap z-50 
+          ${saveStatus === 'success' ? 'bg-emerald-600' : 
+            saveStatus === 'error' ? 'bg-red-600' : 
+            saveStatus === 'exists' ? 'bg-amber-600' : 'bg-blue-600'}`}>
+          {getSaveButtonText()}
+          <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 rotate-45 
+            ${saveStatus === 'success' ? 'bg-emerald-600' : 
+              saveStatus === 'error' ? 'bg-red-600' : 
+              saveStatus === 'exists' ? 'bg-amber-600' : 'bg-blue-600'}"></div>
+        </div>
+      )}
+
       {/* Dropdown Menu */}
       {isOpen && (
         <div 
@@ -132,6 +203,17 @@ export default function DocumentActions({
           className="absolute right-0 mt-1 bg-white rounded-lg shadow-xl border border-slate-200 w-60 py-1 z-50 origin-top-right animate-in fade-in-50 zoom-in-95 duration-200"
           style={{ transformOrigin: 'top right' }}
         >
+          {/* Save to Library Button - NEW */}
+          <button
+            onClick={handleSaveToLibrary}
+            className="flex items-center w-full px-4 py-2.5 text-left text-sm text-emerald-700 hover:bg-emerald-50 border-b border-slate-100"
+          >
+            <svg className="w-4 h-4 mr-3 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Save to Library
+          </button>
+          
           <button
             onClick={handleCleanupClick}
             className="flex items-center w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"

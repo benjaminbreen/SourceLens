@@ -1,4 +1,5 @@
-// components/upload/UploadProgress.tsx
+// Updated UploadProgress.tsx for overlay display
+
 import React, { useEffect, useState, useRef } from 'react';
 
 interface UploadProgressProps {
@@ -66,58 +67,56 @@ const UploadProgress: React.FC<UploadProgressProps> = ({
   if (!show) return null;
   
   return (
-    <div className="mt-4 mb-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden transition-all duration-500 animate-fade-in-up">
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-1.5">
-          <h4 className="text-sm font-medium text-slate-700">{currentMessage}</h4>
-          <span className="text-xs font-medium text-slate-500">{Math.round(displayProgress)}%</span>
-        </div>
-        
-        {/* Progress bar with animated gradient for active uploads */}
-        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-          <div 
-            className={`h-full rounded-full ${
-              displayProgress < 100 
-                ? 'bg-gradient-to-r from-blue-400 to-amber-500 animate-pulse' 
-                : 'bg-emerald-500'
-            }`}
-            style={{ 
-              width: `${displayProgress}%`, 
-              transition: 'width 0.3s ease-out'
-            }}
-          ></div>
-        </div>
-        
-        {/* Only show message history if there are multiple messages */}
-        {messages.length > 1 && (
-          <div className="mt-3 pt-3 border-t border-slate-100">
-            <h5 className="text-xs font-medium text-slate-500 mb-2">Processing Steps:</h5>
-            <ul className="space-y-1 max-h-24 overflow-y-auto pr-2">
-              {messages.map((message, index) => (
-                <li 
-                  key={index} 
-                  className={`text-xs flex items-center ${
-                    index === messages.length - 1 
-                      ? 'text-slate-700 font-medium' 
-                      : 'text-slate-500'
-                  }`}
-                >
-                  {index === messages.length - 1 ? (
-                    <svg className="w-3 h-3 mr-1.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-3 h-3 mr-1.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                  {message}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+    <div className="w-full bg-white border border-slate-200 rounded-lg shadow-xl transition-all duration-300 animate-fade-in p-4">
+      <div className="flex items-center justify-between mb-1.5">
+        <h4 className="text-sm font-medium text-slate-700">{currentMessage}</h4>
+        <span className="text-xs font-medium text-slate-500">{Math.round(displayProgress)}%</span>
       </div>
+      
+      {/* Progress bar with animated gradient for active uploads */}
+      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+        <div 
+          className={`h-full rounded-full ${
+            displayProgress < 100 
+              ? 'bg-gradient-to-r from-blue-400 to-amber-500 animate-pulse' 
+              : 'bg-emerald-500'
+          }`}
+          style={{ 
+            width: `${displayProgress}%`, 
+            transition: 'width 0.3s ease-out'
+          }}
+        ></div>
+      </div>
+      
+      {/* Only show message history if there are multiple messages */}
+      {messages.length > 1 && (
+        <div className="mt-3 pt-3 border-t border-slate-100">
+          <h5 className="text-xs font-medium text-slate-500 mb-2">Processing Steps:</h5>
+          <ul className="space-y-1 max-h-20 overflow-y-auto pr-2">
+            {messages.map((message, index) => (
+              <li 
+                key={index} 
+                className={`text-xs flex items-center ${
+                  index === messages.length - 1 
+                    ? 'text-slate-700 font-medium' 
+                    : 'text-slate-500'
+                }`}
+              >
+                {index === messages.length - 1 ? (
+                  <svg className="w-3 h-3 mr-1.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ) : (
+                  <svg className="w-3 h-3 mr-1.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                {message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

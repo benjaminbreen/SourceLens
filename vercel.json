@@ -1,7 +1,11 @@
 {
   "functions": {
     "pages/api/**/*.ts": {
-      "maxDuration": 60
+      "maxDuration": 90
+    },
+    "pages/api/upload.ts": {
+      "memory": 1024,
+      "maxDuration": 90
     }
   },
   "images": {

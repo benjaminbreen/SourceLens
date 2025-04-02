@@ -1,10 +1,11 @@
 // components/chat/ChatInput.tsx
-// Chat input component that supports conversation history
-// Tracks conversation ID for maintaining context in API calls
+// Terminal-styled chat input that integrates with the cyberpunk aesthetic
+// Supports strategy cards and conversation history
+// Features seamless dark styling to match the conversation display
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAppStore } from '@/lib/store';
 
 export default function ChatInput() {
@@ -25,7 +26,7 @@ export default function ChatInput() {
   const [isCardDropped, setIsCardDropped] = useState(false);
   const [cardText, setCardText] = useState('');
   const [conversationId, setConversationId] = useState<string | null>(null);
-
+  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -51,7 +52,6 @@ export default function ChatInput() {
     
     // Set loading state
     setLoading(true);
-    console.log("Starting chat request");
     
     try {
       // Format conversation history for API
@@ -71,19 +71,16 @@ export default function ChatInput() {
           source: sourceContent,
           metadata: metadata,
           model: llmModel,
-          conversationId, // Send the conversation ID if we have one
-          history         // Send conversation history
+          conversationId,
+          history
         }),
       });
-      
-      console.log("Received response status:", response.status);
       
       if (!response.ok) {
         throw new Error(`API returned status ${response.status}`);
       }
       
       const data = await response.json();
-      console.log("Parsed JSON response");
       
       // Store the conversation ID for future messages
       if (data.conversationId) {
@@ -103,18 +100,12 @@ export default function ChatInput() {
     } catch (error) {
       console.error("Chat error:", error);
       
-      // Add type checking for the error before accessing the message property
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Unknown error occurred';
-      
       // Add error message to conversation
       addMessage({
         role: 'assistant',
-        content: `Error: ${errorMessage}`
+        content: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`
       });
     } finally {
-      console.log("Setting loading to false");
       setLoading(false);
     }
   };
@@ -134,14 +125,13 @@ export default function ChatInput() {
     }
   };
   
-  // Handle drag over event
+  // Handle drag events
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(true);
   };
   
-  // Handle drag leave event
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -151,13 +141,13 @@ export default function ChatInput() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col">
       {isCardDropped ? (
-        <div className="mb-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-md">
+        <div className="mb-2 px-3 py-2 bg-amber-900/30 border border-amber-700/50 rounded-sm">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className="text-md font-bold text-amber-800 mb-1">
+              <p className="text-xs font-bold text-amber-400 mb-1">
                 Creative strategy card enabled
               </p>
-              <p className="text-sm text-amber-700">{cardText}</p>
+              <p className="text-xs text-amber-300">{cardText}</p>
             </div>
             <button 
               type="button"
@@ -165,20 +155,22 @@ export default function ChatInput() {
                 setIsCardDropped(false);
                 setCardText('');
               }}
-              className="text-amber-600 hover:text-amber-800 transition-colors"
+              className="text-amber-400 hover:text-amber-300 transition-colors"
               aria-label="Remove card"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
         </div>
       ) : (
-        <div className="mb-2 w-full relative">
+        <div className="relative">
           {isDragOver && (
-            <div className="absolute inset-0 flex items-center justify-center text-amber-600 pointer-events-none">
-              <span className="text-sm bg-amber-50 px-2 py-1 rounded shadow-sm">Drop card here and see what happens</span>
+            <div className="absolute inset-0 flex items-center justify-center text-amber-400 pointer-events-none z-10">
+              <span className="text-xs bg-slate-800 border border-amber-500/50 px-2 py-1 rounded shadow-sm">
+                Drop card here
+              </span>
             </div>
           )}
         </div>
@@ -195,8 +187,10 @@ export default function ChatInput() {
               setCardText('');
             }
           }}
-          placeholder="Ask the AI about this source..."
-          className={`flex-1 px-4 py-2 border ${isDragOver ? 'border-amber-400 bg-amber-50/30' : 'border-slate-300'} rounded-l focus:outline-none transition-colors ${isCardDropped ? 'hidden' : 'block'}`}
+          placeholder={isLoading ? 'Processing...' : 'Ask about this source...'}
+          className={`flex-grow font-mono text-sm bg-slate-600 text-white px-3 py-1 border ${
+            isDragOver ? 'border-amber-500 bg-slate-800/80' : 'border-slate-700'
+          } rounded-l-sm focus:outline-none focus:border-cyan-500 transition-colors ${isLoading ? 'opacity-60' : ''}`}
           disabled={isLoading}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -205,13 +199,13 @@ export default function ChatInput() {
         <button
           type="submit"
           disabled={(!input.trim() && !isCardDropped) || isLoading}
-          className={`px-4 py-2 rounded-r ${
+          className={`px-3 py-1 rounded-r-sm font-mono text-sm ${
             (!input.trim() && !isCardDropped) || isLoading
-              ? 'bg-slate-200 text-slate-400'
-              : 'bg-indigo-600 text-white hover:bg-indigo-700'
+              ? 'bg-slate-500 text-slate-200'
+              : 'bg-cyan-500 text-white hover:bg-cyan-500'
           } transition-colors`}
         >
-          {isLoading ? '...' : 'Send'}
+          {isLoading ? '...' : '>_'}
         </button>
       </div>
     </form>

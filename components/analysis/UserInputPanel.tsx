@@ -285,12 +285,14 @@ export default function UserInputPanel() {
     onClick={() => setActivePanel('analysis')}
     className={`flex items-center w-full shadow-sm px-4 py-2.5 rounded-md font-medium text-left transition-all duration-200 ${
       activePanel === 'analysis'
-        ? 'bg-slate-100 border-l-4 border-indigo-600 pl-3'
+        ? 'bg-slate-100 border-l-4 border-indigo-400 pl-3'
         : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
     }`}
   >
     <svg 
-      className={`w-5 h-5 mr-3 flex-shrink-0 ${activePanel === 'analysis' ? 'text-indigo-600' : 'text-slate-500'}`} 
+      className={`w-5 h-5 mr-3 flex-shrink-0 text-indigo-600 ${
+        activePanel === 'analysis' ? 'text-indigo-600' : 'hover:text-indigo-700 transition-colors'
+      }`} 
       fill="none" 
       stroke="currentColor" 
       viewBox="0 0 24 24"
@@ -306,19 +308,19 @@ export default function UserInputPanel() {
     disabled={isLoading || !initialAnalysis}
     className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
       activePanel === 'detailed-analysis'
-        ? 'bg-slate-100 border-l-4 border-amber-600 pl-3'
+        ? 'bg-slate-100 border-l-4 border-amber-400 pl-3'
         : isLoading || !initialAnalysis
         ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
         : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
     }`}
   >
     <svg 
-      className={`w-5 h-5 mr-3 flex-shrink-0 ${
+      className={`w-5 h-5 mr-3 flex-shrink-0 text-amber-600 ${
         activePanel === 'detailed-analysis' 
           ? 'text-amber-600' 
           : isLoading || !initialAnalysis 
           ? 'text-slate-400' 
-          : 'text-slate-500'
+          : 'hover:text-amber-700 transition-colors'
       }`} 
       fill="none" 
       stroke="currentColor" 
@@ -345,19 +347,19 @@ export default function UserInputPanel() {
     disabled={isLoading || !initialAnalysis}
     className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
       activePanel === 'extract-info'
-        ? 'bg-slate-100 border-l-4 border-emerald-600 pl-3'
+        ? 'bg-slate-100 border-l-4 border-emerald-400 pl-3'
         : isLoading || !initialAnalysis
         ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
         : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
     }`}
   >
     <svg 
-      className={`w-5 h-5 mr-3 flex-shrink-0 ${
+      className={`w-5 h-5 mr-3 flex-shrink-0 text-emerald-600 ${
         activePanel === 'extract-info' 
           ? 'text-emerald-600' 
           : isLoading || !initialAnalysis 
           ? 'text-slate-400' 
-          : 'text-slate-500'
+          : 'hover:text-emerald-700 transition-colors'
       }`} 
       fill="none" 
       stroke="currentColor" 
@@ -382,19 +384,19 @@ export default function UserInputPanel() {
     disabled={isLoading || !initialAnalysis}
     className={`flex items-center w-full px-4 py-2.5 rounded-md shadow-sm font-medium text-left transition-all duration-200 ${
       activePanel === 'references'
-        ? 'bg-slate-100 shadow-sm border-l-4 border-amber-700 pl-3 '
+        ? 'bg-slate-100 shadow-sm border-l-4 border-amber-500 pl-3 '
         : isLoading || !initialAnalysis
         ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
         : 'bg-slate-100 text-slate-700  hover:bg-slate-200 border-l-4 border-transparent pl-3'
     }`}
   >
     <svg 
-      className={`w-5 h-5 mr-3 flex-shrink-0 ${
+      className={`w-5 h-5 mr-3 flex-shrink-0 text-amber-700 ${
         activePanel === 'references' 
           ? 'text-amber-700' 
           : isLoading || !initialAnalysis 
           ? 'text-slate-400' 
-          : 'text-slate-500'
+          : 'hover:text-amber-800 transition-colors'
       }`} 
       fill="none" 
       stroke="currentColor" 
@@ -419,19 +421,19 @@ export default function UserInputPanel() {
     disabled={isLoading || !initialAnalysis}
     className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
       activePanel === 'roleplay'
-        ? 'bg-slate-100 border-l-4 border-blue-600 pl-3'
+        ? 'bg-slate-100 border-l-4 border-blue-400 pl-3'
         : isLoading || !initialAnalysis
         ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
         : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
     }`}
   >
     <svg 
-      className={`w-5 h-5 mr-3 flex-shrink-0 ${
+      className={`w-5 h-5 mr-3 flex-shrink-0 text-blue-600 ${
         activePanel === 'roleplay' 
           ? 'text-blue-600' 
           : isLoading || !initialAnalysis 
           ? 'text-slate-400' 
-          : 'text-slate-500'
+          : 'hover:text-blue-700 transition-colors'
       }`} 
       fill="none" 
       stroke="currentColor" 
@@ -456,19 +458,19 @@ export default function UserInputPanel() {
     disabled={isLoading || !initialAnalysis}
     className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
       activePanel === 'counter'
-        ? 'bg-slate-100 border-l-4 border-purple-600 pl-3'
+        ? 'bg-slate-100 border-l-4 border-purple-400 pl-3'
         : isLoading || !initialAnalysis
         ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
         : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
     }`}
   >
     <svg 
-      className={`w-5 h-5 mr-3 flex-shrink-0 ${
+      className={`w-5 h-5 mr-3 flex-shrink-0 text-purple-600 ${
         activePanel === 'counter' 
           ? 'text-purple-600' 
           : isLoading || !initialAnalysis 
           ? 'text-slate-400' 
-          : 'text-slate-500'
+          : 'hover:text-purple-700 transition-colors'
       }`} 
       fill="none" 
       stroke="currentColor" 
@@ -493,19 +495,19 @@ export default function UserInputPanel() {
     disabled={isLoading || !initialAnalysis}
     className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
       activePanel === 'highlight'
-        ? 'bg-slate-100 border-l-4 border-yellow-500 pl-3'
+        ? 'bg-slate-100 border-l-4 border-yellow-400 pl-3'
         : isLoading || !initialAnalysis
         ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
         : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-md border-l-4 border-transparent pl-3'
     }`}
   >
     <svg 
-      className={`w-5 h-5 mr-3 flex-shrink-0 ${
+      className={`w-5 h-5 mr-3 flex-shrink-0 text-yellow-500 ${
         activePanel === 'highlight' 
           ? 'text-yellow-500' 
           : isLoading || !initialAnalysis 
           ? 'text-slate-400' 
-          : 'text-slate-500'
+          : 'hover:text-yellow-600 transition-colors'
       }`} 
       fill="none" 
       stroke="currentColor" 

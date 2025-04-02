@@ -345,7 +345,7 @@ ${source.slice(0, 1500)}${source.length > 1500 ? '...' : ''}
 ${metadata.additionalInfo ? `### ADDITIONAL HISTORICAL CONTEXT:\n${metadata.additionalInfo}` : ''}
 ${metadata.placeOfPublication ? `### CURRENT LOCATION:\n${metadata.placeOfPublication}` : ''}
 
-${conversationHistory ? `### RECENTLY, YOU HEARD THIS:\n${conversationHistory}` : ''}
+${conversationHistory ? `### RECENTLY, YOU HEARD THIS - remember that your response should proceed on the basis of this relevent recent conversation with the voice:\n${conversationHistory}` : ''}
 
 The voice now intrudes again, saying:
 

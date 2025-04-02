@@ -1,7 +1,7 @@
 // components/chat/ChatContainer.tsx
 // Container component that combines chat input and conversation display
-// Features draggable height adjustment with a more minimal, professional UI
-// Defaults to collapsed state for a cleaner interface, hiding input when collapsed
+// Features smooth transitions and subtle terminal-inspired aesthetics
+// Uses inset styling for input area and polished animations
 
 'use client';
 
@@ -12,8 +12,8 @@ import { useAppStore } from '@/lib/store';
 
 export default function ChatContainer() {
   const { llmModel, conversation, activePanel } = useAppStore();
-  const [isExpanded, setIsExpanded] = useState(false); // Default to collapsed
-  const [containerHeight, setContainerHeight] = useState(280); // Slightly reduced default height
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [containerHeight, setContainerHeight] = useState(280);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const startYRef = useRef<number>(0);
@@ -23,7 +23,6 @@ export default function ChatContainer() {
   
   // Auto-collapse when detailed analysis or counter-narrative is generated
   useEffect(() => {
-    // If active panel changed to detailed analysis or counter-narrative
     if (
       (activePanel === 'analysis' && prevActivePanelRef.current === 'analysis' && 
        useAppStore.getState().detailedAnalysis) || 
@@ -35,8 +34,7 @@ export default function ChatContainer() {
     prevActivePanelRef.current = activePanel;
   }, [activePanel, useAppStore.getState().detailedAnalysis]);
   
-  
-  // Auto-expand to 280px on first message
+  // Auto-expand on first message
   useEffect(() => {
     if (conversation.length > 0 && !hasExpandedRef.current) {
       setIsExpanded(true);
@@ -50,7 +48,7 @@ export default function ChatContainer() {
       if (!isDragging) return;
       
       const deltaY = e.clientY - startYRef.current;
-      const newHeight = Math.max(100, startHeightRef.current + deltaY); // Min height 100px
+      const newHeight = Math.max(100, startHeightRef.current + deltaY);
       
       setContainerHeight(newHeight);
     };
@@ -85,20 +83,24 @@ export default function ChatContainer() {
   // Get model name for display
   const getModelDisplayName = () => {
     const modelId = llmModel || 'gpt-4o-mini';
-    // Strip any extra identifiers and just keep the core model name
     return modelId.replace(/-\d{4}-\d{2}-\d{2}$/, '').toUpperCase();
   };
   
   return (
-    <div className="bg-white rounded-xl shadow-md border-2 border-slate-200 overflow-hidden transition-all duration-300">
-      {/* Header - more minimal with subtle border instead of gradient */}
-      <div className={`flex justify-between items-center px-5 py-3 bg-slate-50 border-l-4 border-indigo-500 text-slate-800 ${isExpanded ? 'border-b border-b-4 border-b-indigo-200 shadow' : ''}`}>
+    <div className="bg-white rounded-xl shadow-md border-1 border-slate-300 overflow-hidden">
+      {/* Header - clean and professional */}
+      <div 
+        onClick={() => setIsExpanded(!isExpanded)}
+        className={`flex justify-between items-center px-5 py-3 bg-slate-50 border-l-4 border-indigo-500 
+          text-slate-800 cursor-pointer transition-all duration-300 
+          ${isExpanded ? 'border-b border-b-indigo-200 border-b-2 shadow-sm' : ''}`}
+      >
         <div className="flex items-center">
           <h3 className="font-medium">Discuss this source with</h3>
           
-          {/* Model indicator - more subtle styling */}
+          {/* Model indicator */}
           <div className="ml-2 flex items-center">
-            <span className="ml-0 text-xs px-1 py-1 bg-slate-100 rounded font-mono text-slate-600 flex items-center border-3 border-slate-200">
+            <span className="text-xs px-1 py-1 bg-slate-100 rounded font-mono text-slate-600 flex items-center border border-slate-200">
               <svg className="w-3 h-3 mr-1 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
@@ -108,46 +110,55 @@ export default function ChatContainer() {
         </div>
         
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="text-slate-500 hover:text-slate-800 transition-colors"
           aria-label={isExpanded ? "Collapse conversation" : "Expand conversation"}
+          className="text-slate-500 hover:text-slate-800 transition-colors focus:outline-none"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg 
+            className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
             <path 
               strokeLinecap="round" 
               strokeLinejoin="round" 
               strokeWidth={2} 
-              d={isExpanded ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} 
+              d="M19 9l-7 7-7-7" 
             />
           </svg>
         </button>
       </div>
       
-      {/* Conversation container + Input area - only rendered when expanded */}
-      {isExpanded && (
-        <>
-          <div 
-            ref={containerRef}
-            className="relative overflow-hidden"
-            style={{ height: `${containerHeight}px` }}
-          >
-            <ConversationDisplay />
-            
-            {/* Resizer handle - more subtle styling */}
-            <div 
-              className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-slate-50 to-transparent cursor-ns-resize flex justify-center items-end"
-              onMouseDown={handleMouseDown}
-            >
-              <div className="w-12 h-1 mb-1 bg-slate-200 rounded-full hover:bg-slate-300 transition-colors"></div>
-            </div>
-          </div>
+      {/* Conversation container with smooth height transition */}
+      <div 
+        className="overflow-hidden transition-all duration-300 ease-out"
+        style={{ 
+          height: isExpanded ? `${containerHeight}px` : '0px',
+          opacity: isExpanded ? 1 : 0
+        }}
+      >
+        <div 
+          ref={containerRef}
+          className="relative h-[calc(100%-60px)]"
+        >
+          <ConversationDisplay />
           
-          {/* Input area */}
-          <div className="p-4 bg-white border-t border-slate-100">
+          {/* Subtle resizer handle */}
+          <div 
+            className="absolute bottom-0 left-0 right-0 h-5 cursor-ns-resize flex justify-center items-end"
+            onMouseDown={handleMouseDown}
+          >
+            <div className="w-10 h-1 mb-1 bg-slate-200 rounded-full hover:bg-slate-300 transition-colors"></div>
+          </div>
+        </div>
+        
+        {/* Input area with inset styling */}
+        <div className="h-[60px] p-3 border-t-2  border-indigo-300 bg-gradient-to-b from-slate-300 to-white">
+          <div className="bg-slate-100 rounded border-b-2 shadow-inner ring-1 ring-slate-200">
             <ChatInput />
           </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }

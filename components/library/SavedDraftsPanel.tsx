@@ -44,6 +44,14 @@ export default function SavedDraftsPanel() {
 
   // File input ref
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  interface MenuItem {
+  label: string;
+  href?: string;
+  icon: React.ReactNode;
+  onClick?: () => void;
+  target?: string;
+}
   
   // Load effect with simulation
   useEffect(() => {

@@ -6,6 +6,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { OpenAI } from 'openai';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { getModelById } from '@/lib/models';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Configure API clients
 const openai = new OpenAI({
@@ -15,6 +16,8 @@ const openai = new OpenAI({
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
 // Default model to use
 const DEFAULT_MODEL = 'gemini-flash';
@@ -105,33 +108,67 @@ export default async function handler(
         const parsed = JSON.parse(cleanedJson);
         segments = parsed.segments || [];
       } catch (error) {
-        console.error('Error parsing Claude response:', error);
-        throw new Error('Failed to parse segments from Claude response');
+        console.error('Error parsing response:', error);
+        throw new Error('Failed to parse segments from response');
       }
-    } else {
-      // Default to OpenAI for now if we don't recognize the provider
-      console.log(`Using default OpenAI for unknown provider`);
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.2,
-        response_format: { type: "json_object" },
-        max_tokens: 6000,
-      });
-      
-      rawResponse = response.choices[0]?.message?.content || '';
-      
-      try {
-        const parsed = JSON.parse(rawResponse);
-        segments = parsed.segments || [];
-      } catch (error) {
-        console.error('Error parsing JSON response:', error);
-        throw new Error('Failed to parse segments from LLM response');
-      }
-    }
+    } 
+  else {
+  // Try Gemini Flash Lite first as the preferred fallback
+  console.log(`Trying gemini-flash as primary fallback`);
+  try {
+    const genModel = googleAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
     
-    // Normalize scores to ensure they're between 0 and 1
-    segments = normalizeSegments(segments);
+    const result = await genModel.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 8000,
+      }
+    });
+    
+    rawResponse = result.response.text();
+    
+    try {
+      // Clean the response to ensure valid JSON
+      const cleanedJson = rawResponse.trim()
+        .replace(/^```json\s*|\s*```$/g, '') // Remove JSON fences if present
+        .replace(/^```\s*|\s*```$/g, '')     // Remove other fences if present
+        .trim();
+      
+      const parsed = JSON.parse(cleanedJson);
+      segments = parsed.segments || [];
+      console.log(`Successfully parsed ${segments.length} segments from Gemini response`);
+    } catch (jsonError) {
+      console.error('Error parsing Gemini JSON response:', jsonError);
+      throw new Error('Failed to parse segments from Gemini response');
+    }
+  } catch (geminiError) {
+    console.log(`Gemini Flash failed, using OpenAI fallback:`, geminiError);
+    // Fall back to OpenAI
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini', // Changed from 'gpt-4o' to 'gpt-4o-mini'
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      max_tokens: 6000,
+    });
+    
+    rawResponse = response.choices[0]?.message?.content || '';
+    
+    try {
+      const parsed = JSON.parse(rawResponse);
+      segments = parsed.segments || [];
+    } catch (error) {
+      console.error('Error parsing JSON response:', error);
+      throw new Error('Failed to parse segments from LLM response');
+    }
+  }
+}
+    
+segments = segments.map(segment => ({
+  ...segment,
+  score: Math.max(0, Math.min(1, segment.score)) // Just clamp between 0-1
+}))
     
     // Sort segments by score (highest first)
     segments.sort((a, b) => b.score - a.score);
@@ -183,10 +220,10 @@ CONTENT:
 ${content}
 
 For each segment:
-1. Extract the exact text (try to make each segment 1-3 sentences, or roughly 20-100 words)
+1. Extract the exact text (try to make each segment 1-2 short sentences or phrases, or roughly 5-40 words, though some can be a short phrase or word if query requires)
 2. Find the start and end character position of the segment in the original text
 3. Assign a relevance score from 0 to 1 (with 1 being most relevant)
-4. Provide a brief explanation (1 sentence) of why this segment is relevant
+4. Provide a brief explanation (1 sentence) of why this segment is relevant (or why it isn't, but is still closest match, if you could find no good results)
 
 Return a valid JSON object with this exact structure:
 {
@@ -207,33 +244,18 @@ IMPORTANT:
 - The startIndex and endIndex must be accurate character positions in the original content
 - Make sure each segment is truly relevant to the query
 - Don't include overlapping segments
-- Scores should be relative, with the most relevant segment having the highest score
+- Scores should be relative, with the most relevant segment having the highest score (typically a .8 or .9), but a wide range should be represented, including some in .2 to .6 range.
+- Scores will typically range between .95 and .2. 
+- Remember to EXACTLY match the user's query. Keep it precise and crisp. If nothing matches, use low scores, below .1, and explain that in your explanation. But try very hard to find a match in the full text.
 - Include ONLY this JSON in your response, no other text`;
 }
 
 // Normalize scores to ensure they're between 0 and 1
 function normalizeSegments(segments: HighlightedSegment[]): HighlightedSegment[] {
-  // Find min and max scores
-  let minScore = 1;
-  let maxScore = 0;
-  
-  for (const segment of segments) {
-    minScore = Math.min(minScore, segment.score);
-    maxScore = Math.max(maxScore, segment.score);
-  }
-  
-  // If all scores are the same, set them all to 1
-  if (maxScore === minScore) {
-    return segments.map(segment => ({
-      ...segment,
-      score: 1
-    }));
-  }
-  
-  // Normalize the scores
+  // Just ensure scores are between 0 and 1 without changing their relative values
   return segments.map(segment => ({
     ...segment,
-    score: (segment.score - minScore) / (maxScore - minScore)
+    score: Math.max(0, Math.min(1, segment.score)) // Clamp between 0-1
   }));
 }
 

@@ -44,9 +44,9 @@ export default function AnalysisFooter({ formValid, textInput, metadata }: Analy
   };
 
   return (
-    <div className="mt-0 mb-5">
+    <div className="mt-0 z-1 mb-3">
       {/* Responsive grid layout - side by side on md+ screens, stacked on mobile */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2  gap-4">
         {/* Left side - analyze button */}
         <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-slate-200 p-5">
           <div className="space-y-2"> 
@@ -74,10 +74,11 @@ export default function AnalysisFooter({ formValid, textInput, metadata }: Analy
     text-base 
     transition-all 
     duration-300 
-    transform
+
+    z-1
     ease-in-out
     ${formValid 
-      ? 'bg-amber-700 hover:brightness-130 hover:shadow-xl  hover:scale-[1.015] active:brightness-99 shadow-md ' 
+      ? 'bg-amber-600  hover:brightness-130 hover:shadow-xl  hover:scale-[1.015] active:brightness-99 shadow-lg ' 
       : 'bg-slate-400 cursor-not-allowed'
     }
   `}
@@ -132,7 +133,7 @@ export default function AnalysisFooter({ formValid, textInput, metadata }: Analy
                </div>
                <div>
                  <div className="text-sm font-medium ">Detailed Analysis</div>
-                 <div className="text-xs text-slate-700">Close reading of the text</div>
+                 <div className="text-xs text-slate-700">Close read the text</div>
                </div>
              </button>
 
@@ -166,7 +167,7 @@ export default function AnalysisFooter({ formValid, textInput, metadata }: Analy
                </div>
                <div>
                  <div className="text-sm font-medium">Find References</div>
-                 <div className="text-xs text-slate-700">Discover related sources</div>
+                 <div className="text-xs text-slate-700">Discover sources</div>
                </div>
              </button>
 
