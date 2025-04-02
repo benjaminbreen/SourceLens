@@ -398,18 +398,19 @@ const [showSummary, setShowSummary] = useState(false);
       </div>
       
       {/* Source Box */}
-      <div className="bg-slate-100/20  rounded-lg border-1  shadow-md border-2 border-slate-200 p-4 mb-4">
+      <div className="bg-slate-100/20  rounded-lg   p-4 mb-2">
        
 <div className="flex justify-between  items-center mb-2">
-  <h2 className="text-xl font-semibold  ml-2 rounded-lgtext-indigo-900 flex items-center">
+  <h2 className="text-xl font-semibold  ml-2 rounded-lg  text-indigo-900 flex items-center">
    
     Primary Source
 
   </h2>
   
-  <div className="flex items-center mr-2   mb-0 space-x-5">
+  <div className="flex items-center mr-2   -mt-2 space-x-5">
    
     {/* Document Actions Button */}
+    <div className=" rounded-lg border-1 border-slate-200">
    <DocumentActions 
   darkMode={darkMode} 
   toggleDarkMode={toggleDarkMode}
@@ -420,6 +421,7 @@ const [showSummary, setShowSummary] = useState(false);
     console.log("Summary completed");
   }}
 />
+ </div>
 
   </div>
 </div>

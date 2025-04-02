@@ -464,7 +464,7 @@ const handleTabChange = (tab: string) => {
     const newText = e.target.value;
     setTextInput(newText);
     setSourceContent(newText);
-    if (onTextChange) onTextChange(newText);
+    if (onTextChange && !disableMetadataDetection) onTextChange(newText);
   };
   
   const handleTextPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => { 

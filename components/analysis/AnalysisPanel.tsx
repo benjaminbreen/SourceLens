@@ -54,6 +54,10 @@ export default function AnalysisPanel() {
     activePanel,
     isLoading,
     addMessage,
+    setLoading,
+    setRawPrompt,
+    setRawResponse,
+    sourceContent,
     perspective,
     sourceType,
     llmModel,
@@ -243,15 +247,74 @@ const buildCitationMap = (references: Reference[]) => {
   };
 
   // Function to handle asking a follow-up question
-  const handleAskQuestion = (question: string) => {
-    if (question.trim()) {
-      addMessage({
-        role: 'user',
-        content: question
-      });
-    }
-  };
-  
+const handleAskQuestion = (question: string) => {
+  if (question.trim()) {
+    // Add the user message to the conversation
+    addMessage({
+      role: 'user',
+      content: question
+    });
+
+    // Fetch the current conversation from the store
+    const currentConversation = useAppStore.getState().conversation;
+
+    // Manually trigger the API call logic
+    (async () => {
+      // Set loading state
+      setLoading(true);
+      
+      try {
+        // Format conversation history for API
+        const history = currentConversation.map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+        
+        // API call with conversation history
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: question,
+            source: sourceContent,
+            metadata: metadata,
+            model: llmModel,
+            history
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API returned status ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Add assistant response to conversation
+        addMessage({
+          role: 'assistant',
+          content: data.rawResponse || 'No response received'
+        });
+        
+        // Set raw data for transparency
+        setRawPrompt(data.rawPrompt || null);
+        setRawResponse(data.rawResponse || null);
+        
+      } catch (error) {
+        console.error("Chat error:", error);
+        
+        // Add error message to conversation
+        addMessage({
+          role: 'assistant',
+          content: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`
+        });
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }
+};
  
 
   // Define section colors and styles for the enhanced typography
@@ -745,22 +808,32 @@ default:
          Click a question to add it in the discussion:
        </p>
        <div className="space-y-2">
-         {initialAnalysis?.followupQuestions?.map((question, idx) => (
-           <div
-             key={idx}
-             className={`p-3 border rounded-md cursor-pointer transition-colors ${
-               selectedQuestion === idx 
-                 ? 'bg-indigo-50 border-indigo-300 shadow-sm' 
-                 : 'hover:bg-blue-100/80 border-slate-200'
-             }`}
-             onClick={() => {
-               setSelectedQuestion(idx);
-               handleAskQuestion(question);
-             }}
-           >
-             <p className="text-slate-700">{question}</p>
-           </div>
-         ))}
+  {initialAnalysis?.followupQuestions?.map((question, idx) => (
+    <div
+      key={idx}
+      className={`p-3 border rounded-md cursor-pointer transition-colors ${
+        selectedQuestion === idx 
+          ? 'bg-indigo-50 border-indigo-300 shadow-sm' 
+          : 'hover:bg-blue-100/80 border-slate-200'
+      }`}
+      onClick={() => {
+        setSelectedQuestion(idx);
+        handleAskQuestion(question);
+      }}
+    >
+      <ReactMarkdown 
+        components={{
+          p: ({node, ...props}) => (
+            <p className="text-slate-700" {...props} />
+          )
+        }}
+        remarkPlugins={[remarkGfm]}
+      >
+        {question}
+      </ReactMarkdown>
+    </div>
+  ))}
+
 
 
 

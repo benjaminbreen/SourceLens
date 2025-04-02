@@ -7,6 +7,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/lib/store';
+import { useEffect } from 'react';
 
 interface AnalysisFooterProps {
   formValid: boolean;
@@ -23,6 +24,25 @@ export default function AnalysisFooter({ formValid, textInput, metadata }: Analy
     setActivePanel,
     setRoleplayMode
   } = useAppStore();
+
+  // NEW: Add this useEffect hook
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Enter' && formValid) {
+        event.preventDefault(); // Prevent default Enter key behavior
+        navigateToMethod('analysis');
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup event listener on component unmount
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [formValid]); // Depend on formValid to ensure the listener updates
+
 
   // Method navigation handlers
   const navigateToMethod = (panel: 'analysis' | 'detailed-analysis' | 'extract-info' | 'references' | 'roleplay' | 'counter' | 'highlight') => {
@@ -42,6 +62,8 @@ export default function AnalysisFooter({ formValid, textInput, metadata }: Analy
     
     router.push('/analysis');
   };
+
+
 
   return (
     <div className="mt-0 z-1 mb-3">

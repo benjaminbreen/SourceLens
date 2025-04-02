@@ -1,9 +1,9 @@
 // pages/api/upload.ts
-// Layered PDF processing approach with multiple fallbacks and thumbnail generation:
+// Enhanced file processing with automatic fallback:
 // 1. Fast PDF text extraction using pdf-lib and optimized pdf-parse
 // 2. Command-line tools like pdftotext if available 
-// 3. Gemini Flash 2.0 for native PDF processing
-// 4. Claude Haiku Vision as final OCR fallback for first page
+// 3. Gemini Flash 2.0 Lite for native PDF and image processing
+// 4. Claude Haiku Vision as automatic fallback when Gemini fails
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { IncomingForm } from 'formidable';
@@ -25,14 +25,14 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
-// Minimum text length to be considered successful extraction
-const MIN_TEXT_LENGTH = 500; // Threshold for the first pass
-
-// Maximum PDF size in bytes (20MB)
-const MAX_PDF_SIZE = 20 * 1024 * 1024;
-
-// Maximum PDF pages to process
+// Constants for processing limits and thresholds
+const MIN_TEXT_LENGTH = 500;
+const MAX_PDF_SIZE = 20 * 1024 * 1024; // 20MB
 const MAX_PDF_PAGES = 400;
+
+// Default AI models to use
+const DEFAULT_GEMINI_MODEL = 'gemini-2.0-flash-lite';
+const DEFAULT_CLAUDE_MODEL = 'claude-3-5-haiku-latest';
 
 // Convert exec to Promise-based
 const exec = util.promisify(execCallback);
@@ -41,7 +41,6 @@ const exec = util.promisify(execCallback);
 export const config = {
   api: {
     bodyParser: false,
-    // Increase timeout for larger files
     responseLimit: false,
   },
 };
@@ -64,10 +63,10 @@ export default async function handler(
     fs.mkdirSync(tempDir, { recursive: true });
     console.log(`Created temp directory: ${tempDir}`);
     
-    // Parse the form with increased file size limit (20MB)
+    // Parse the form with increased file size limit
     const form = new IncomingForm({
       keepExtensions: true,
-      maxFileSize: MAX_PDF_SIZE, // 20MB limit
+      maxFileSize: MAX_PDF_SIZE,
       uploadDir: tempDir,
       multiples: false,
     });
@@ -87,10 +86,10 @@ export default async function handler(
     const useAIVision = fields.useAIVision && fields.useAIVision[0] === 'true';
     console.log(`AI Vision preference: ${useAIVision ? 'PRIMARY' : 'FALLBACK'}`);
     
-    // Get the selected AI Vision model
-    const visionModel = fields.visionModel 
-      ? fields.visionModel[0] 
-      : 'gemini-2.0-flash'; // Default to Gemini Flash 2.0
+    // Get the selected AI Vision model, but always default to Gemini Flash 2.0 Lite
+    const selectedModel = fields.visionModel ? fields.visionModel[0] : '';
+    // Always ensure we have a valid default
+    const visionModel = selectedModel || DEFAULT_GEMINI_MODEL;
     console.log(`Selected AI Vision model: ${visionModel}`);
     
     // Get the file object
@@ -128,8 +127,6 @@ export default async function handler(
     
     // First response for large files to show progress
     if (fileSize > 5 * 1024 * 1024) { // Files over 5MB
-      // Send initial status - this won't be used on the client side
-      // but helps with keeping the connection alive
       res.writeHead(202, {
         'Content-Type': 'application/json',
         'Transfer-Encoding': 'chunked'
@@ -246,47 +243,47 @@ export default async function handler(
           
           try {
             // Define a custom page renderer to improve text extraction
-const renderOptions = {
-  normalizeWhitespace: true,
-  disableCombineTextItems: false
-};
-
-const data = await pdfParse(fileBuffer, {
-  // Custom page renderer that attempts to preserve layout
-  pagerender: function(pageData: any) {
-    return pageData.getTextContent(renderOptions)
-      .then(function(textContent: any) {
-        let lastY: number | undefined, text = '';
-        const items = textContent.items;
-        
-        // Sort by y position then x to maintain reading order
-        items.sort(function(a: any, b: any) {
-          if (a.transform[5] !== b.transform[5]) {
-            return b.transform[5] - a.transform[5]; // Sort by y position (reversed)
-          }
-          return a.transform[4] - b.transform[4]; // Then by x position
-        });
-        
-        // Process text with better layout preservation
-        for (let i = 0; i < items.length; i++) {
-          const item = items[i];
-          
-          // Start a new line if y position changes significantly
-          if (lastY !== undefined && Math.abs(lastY - item.transform[5]) > 5) {
-            text += '\n';
-          } else if (i > 0 && items[i-1].str.slice(-1) !== ' ' && item.str[0] !== ' ') {
-            // Add space between words on same line if needed
-            text += ' ';
-          }
-          
-          text += item.str;
-          lastY = item.transform[5];
-        }
-        
-        return text;
-      });
-  }
-});
+            const renderOptions = {
+              normalizeWhitespace: true,
+              disableCombineTextItems: false
+            };
+            
+            const data = await pdfParse(fileBuffer, {
+              // Custom page renderer that attempts to preserve layout
+              pagerender: function(pageData: any) {
+                return pageData.getTextContent(renderOptions)
+                  .then(function(textContent: any) {
+                    let lastY: number | undefined, text = '';
+                    const items = textContent.items;
+                    
+                    // Sort by y position then x to maintain reading order
+                    items.sort(function(a: any, b: any) {
+                      if (a.transform[5] !== b.transform[5]) {
+                        return b.transform[5] - a.transform[5]; // Sort by y position (reversed)
+                      }
+                      return a.transform[4] - b.transform[4]; // Then by x position
+                    });
+                    
+                    // Process text with better layout preservation
+                    for (let i = 0; i < items.length; i++) {
+                      const item = items[i];
+                      
+                      // Start a new line if y position changes significantly
+                      if (lastY !== undefined && Math.abs(lastY - item.transform[5]) > 5) {
+                        text += '\n';
+                      } else if (i > 0 && items[i-1].str.slice(-1) !== ' ' && item.str[0] !== ' ') {
+                        // Add space between words on same line if needed
+                        text += ' ';
+                      }
+                      
+                      text += item.str;
+                      lastY = item.transform[5];
+                    }
+                    
+                    return text;
+                  });
+              }
+            });
             
             // Process the result to clean up common PDF extraction issues
             const extractedText = data.text.replace(/\s+/g, ' ') // Normalize spaces
@@ -312,7 +309,7 @@ const data = await pdfParse(fileBuffer, {
           }
           
           // LAYER 2: Try Gemini Flash 2.0 for native PDF processing
-          console.log('LAYER 2: Using Gemini Flash 2.0 for native PDF processing...');
+          console.log('LAYER 2: Using Gemini Flash 2.0 Lite for native PDF processing...');
           
           if (fileSize > 5 * 1024 * 1024 && !res.writableEnded) {
             res.write(JSON.stringify({
@@ -323,12 +320,11 @@ const data = await pdfParse(fileBuffer, {
           }
           
           try {
-            // Initialize the Gemini model
-            const modelName = "gemini-2.0-flash"; // Use Gemini Flash 2.0
-            const model = googleAI.getGenerativeModel({ model: modelName });
+            // Initialize the Gemini model - always use DEFAULT_GEMINI_MODEL
+            const model = googleAI.getGenerativeModel({ model: DEFAULT_GEMINI_MODEL });
             
             // Set prompt for optimal PDF extraction
-            const prompt = "Please extract all text content from this PDF document, which is a public domain historical source being used exclusively for purposes of education and research. Preserve paragraph structure, headings, and formatting as much as possible. Include all text content without summarization or modification. For tables and structured data, maintain their structure in your output. If there is no text visible, analyze the image and provide a short description of it. INCLUDE NO PREFACE OR EXPLANATION, just all text you see. Use markdown to format italics, bold, and headings.";
+            const prompt = "Please extract all text content from this PDF document, which is a public domain historical source being used exclusively for purposes of education and research. Preserve paragraph structure, headings, and formatting as much as possible. Include all text content without summarization or modification. For tables and structured data, maintain their structure in your output. If there is no text visible, analyze the image and provide a short description of it. INCLUDE NO PREFACE OR EXPLANATION, just all text you see. Extract all text from this PDF. Format using plain markdown (e.g., **bold**, *italic*, # headings), but do NOT use triple backticks or code fences of any kind. Start immediately with the first heading or paragraph.";
             
             // Process the PDF with Gemini
             const result = await model.generateContent({
@@ -359,98 +355,88 @@ const data = await pdfParse(fileBuffer, {
             // Use Gemini output if it's better than direct extraction
             if (geminiContent.length > content.length) {
               content = geminiContent;
-              processingMethod = `gemini-native-pdf-${modelName}`;
+              processingMethod = `gemini-native-pdf-${DEFAULT_GEMINI_MODEL}`;
               console.log(`Using Gemini output as it's better (${geminiContent.length} > ${content.length} chars)`);
             } else if (content.length > 0) {
               console.log(`Keeping direct extraction as it's better (${content.length} > ${geminiContent.length} chars)`);
             } else {
               content = geminiContent;
-              processingMethod = `gemini-native-pdf-${modelName}`;
+              processingMethod = `gemini-native-pdf-${DEFAULT_GEMINI_MODEL}`;
               console.log(`Using Gemini output as no other extraction succeeded`);
             }
           } catch (geminiErr) {
             console.error('Gemini PDF processing error:', geminiErr);
-            // Continue to next layer if Gemini fails
-          }
-          
-          // If we still don't have enough content, try Claude Vision as a last resort
-          if (content.length < MIN_TEXT_LENGTH) {
-            // LAYER 3: Claude Haiku Vision for first page OCR
-            console.log('LAYER 3: Using Claude Haiku Vision for first page OCR...');
             
+            // FALLBACK: If Gemini fails, try Claude Vision as automatic fallback
             if (fileSize > 5 * 1024 * 1024 && !res.writableEnded) {
               res.write(JSON.stringify({
                 status: 'processing',
-                message: 'Using Claude Vision for detailed OCR...',
-                progress: 75
+                message: 'Trying backup method with Claude Vision...',
+                progress: 60
               }));
             }
             
-          // For the Claude Vision image processing section
-          try {
-            // Convert first page to image for Claude Vision
-            const poppler = await checkPoppler();
-            
-            if (poppler.available) {
-              // Convert first page to PNG
-              const pdfFilename = path.basename(filePath, '.pdf');
-              const outputPath = path.join(tempDir, `${pdfFilename}-page1`);
-              await exec(`${poppler.command} -png -r 300 -f 1 -l 1 "${filePath}" "${outputPath}"`);
+            try {
+              // Convert first page to image for Claude Vision
+              const poppler = await checkPoppler();
               
-              // Find generated image
-              const imageFiles = fs.readdirSync(tempDir)
-                .filter(file => file.startsWith(`${pdfFilename}-page1`) && file.endsWith('.png'))
-                .map(file => path.join(tempDir, file));
-              
-              if (imageFiles.length > 0) {
-                // Process image with Claude Vision
-                const imageBuffer = fs.readFileSync(imageFiles[0]);
-                const base64Image = imageBuffer.toString('base64');
+              if (poppler.available) {
+                // Convert first page to PNG
+                const pdfFilename = path.basename(filePath, '.pdf');
+                const outputPath = path.join(tempDir, `${pdfFilename}-page1`);
+                await exec(`${poppler.command} -png -r 300 -f 1 -l 1 "${filePath}" "${outputPath}"`);
                 
-                // Define a properly typed media type
-                const mediaType = 'image/png' as const; // Use a literal type with 'as const'
+                // Find generated image
+                const imageFiles = fs.readdirSync(tempDir)
+                  .filter(file => file.startsWith(`${pdfFilename}-page1`) && file.endsWith('.png'))
+                  .map(file => path.join(tempDir, file));
                 
-                const response = await anthropic.messages.create({
-                  model: 'claude-3-5-haiku-latest',
-                  max_tokens: 4000,
-                  temperature: 0.2,
-                  system: "You are an OCR specialist. Extract ALL text visible in the image with perfect formatting, including paragraph breaks. Include all text, tables, captions, headers, footers, and page numbers. Do not add any commentary, just extract the text precisely as it appears.",
-                  messages: [
-                    {
-                      role: 'user',
-                      content: [
-                        {
-                          type: 'text',
-                          text: 'Please extract ALL text from this document page, maintaining paragraph breaks and formatting as much as possible. Include tables, captions, headers, footers, and page numbers if present. Just give me the raw extracted text with no commentary.'
-                        },
-                        {
-                          type: 'image',
-                          source: {
-                            type: 'base64',
-                            media_type: mediaType,
-                            data: base64Image
+                if (imageFiles.length > 0) {
+                  // Process image with Claude Vision
+                  const imageBuffer = fs.readFileSync(imageFiles[0]);
+                  const base64Image = imageBuffer.toString('base64');
+                  
+                  // Define a properly typed media type
+                  const mediaType = 'image/png' as const;
+                  
+                  const response = await anthropic.messages.create({
+                    model: DEFAULT_CLAUDE_MODEL,
+                    max_tokens: 4000,
+                    temperature: 0.2,
+                    system: "You are an OCR specialist. Extract ALL text visible in the image with perfect formatting, including paragraph breaks. Include all text, tables, captions, headers, footers, and page numbers. Do not add any commentary, just extract the text precisely as it appears.",
+                    messages: [
+                      {
+                        role: 'user',
+                        content: [
+                          {
+                            type: 'text',
+                            text: 'Please extract ALL text from this document page, maintaining paragraph breaks and formatting as much as possible. Include tables, captions, headers, footers, and page numbers if present. Just give me the raw extracted text with no commentary.'
+                          },
+                          {
+                            type: 'image',
+                            source: {
+                              type: 'base64',
+                              media_type: mediaType,
+                              data: base64Image
+                            }
                           }
-                        }
-                      ]
-                    }
-                  ]
-                });
+                        ]
+                      }
+                    ]
+                  });
                   
                   const claudeText = response.content[0]?.type === 'text' ? response.content[0].text : '';
                   console.log(`Claude Vision extracted ${claudeText.length} characters from first page`);
                   
-                  // Only use Claude Vision if it gives better results or if we have very little content
-                  if (claudeText.length > content.length || content.length < MIN_TEXT_LENGTH / 2) {
-                    // If document has multiple pages, add a note
-                    let claudeContent = claudeText;
-                    if (pageCount > 1) {
-                      claudeContent += `\n\n[Note: This is only the first page of a ${pageCount}-page document. The remaining pages were not processed.]`;
-                    }
-                    
-                    content = claudeContent;
-                    processingMethod = 'claude-vision-first-page';
-                    console.log(`Using Claude Vision output (${claudeText.length} chars)`);
+                  // If document has multiple pages, add a note
+                  let claudeContent = claudeText;
+                  if (pageCount > 1) {
+                    claudeContent += `\n\n[Note: This is only the first page of a ${pageCount}-page document. The remaining pages were not processed.]`;
                   }
+                  
+                  content = claudeContent;
+                  processingMethod = 'claude-vision-first-page';
+                  console.log(`Using Claude Vision output (${claudeText.length} chars)`);
                   
                   // Clean up temporary image
                   try {
@@ -487,63 +473,109 @@ const data = await pdfParse(fileBuffer, {
       processingMethod = 'direct-text';
     } 
     else if (mimeType.includes('image') || 
-        ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.heic', '.heif'].includes(fileExtension)) {
-  // For images, use Gemini Vision or Claude Vision based on preference
-  console.log('Processing image with AI Vision');
-  
-  try {
-    // Read the image file
-    const imageBuffer = fs.readFileSync(filePath);
-    let processableBuffer = imageBuffer;
-    let processableMimeType = mimeType;
-    
-    // Handle HEIC/HEIF conversion to JPEG if needed
-    if (fileExtension === '.heic' || fileExtension === '.heif' || 
-        mimeType.includes('heic') || mimeType.includes('heif')) {
-      console.log('Converting HEIC/HEIF image to JPEG for processing');
+              ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.heic', '.heif'].includes(fileExtension)) {
+      // For images, always try Gemini first, then Claude as automatic fallback
+      console.log('Processing image with AI Vision');
+      
       try {
-        // Convert HEIC to JPEG buffer using sharp
-        processableBuffer = await sharp(imageBuffer)
-          .jpeg({ quality: 90 })
-          .toBuffer();
-        processableMimeType = 'image/jpeg';
-      } catch (convErr) {
-        console.error('HEIC conversion error:', convErr);
-        // Continue with original buffer if conversion fails
-      }
-    }
-    
-    // For thumbnail generation with HEIC images
-    if (fileExtension === '.heic' || fileExtension === '.heif' || 
-        mimeType.includes('heic') || mimeType.includes('heif')) {
-      thumbnailUrl = await generateHEICThumbnail(imageBuffer);
-    }
-    
+        // Read the image file
+        const imageBuffer = fs.readFileSync(filePath);
+        let processableBuffer = imageBuffer;
+        let processableMimeType = mimeType;
         
-        // For the image processing section with Claude Vision
-    if (visionModel.includes('claude')) {
-      // Use Claude Vision
-      console.log('Using Claude Vision for image OCR');
-      const base64Image = processableBuffer.toString('base64');
-      
-      // Determine the proper media type explicitly
-      let mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
-      
-      // Assign the correct media type based on the file type
-      if (processableMimeType.includes('png')) {
-        mediaType = 'image/png';
-      } else if (processableMimeType.includes('gif')) {
-        mediaType = 'image/gif';
-      } else if (processableMimeType.includes('webp')) {
-        mediaType = 'image/webp';
-      } else {
-        // Default to jpeg for any other format (including converted HEIC)
-        mediaType = 'image/jpeg';
-      }
-      
+        // Handle HEIC/HEIF conversion to JPEG if needed
+        if (fileExtension === '.heic' || fileExtension === '.heif' || 
+            mimeType.includes('heic') || mimeType.includes('heif')) {
+          console.log('Converting HEIC/HEIF image to JPEG for processing');
+          try {
+            // Convert HEIC to JPEG buffer using sharp
+            processableBuffer = await sharp(imageBuffer)
+              .jpeg({ quality: 90 })
+              .toBuffer();
+            processableMimeType = 'image/jpeg';
+          } catch (convErr) {
+            console.error('HEIC conversion error:', convErr);
+            // Continue with original buffer if conversion fails
+          }
+        }
+        
+        // For thumbnail generation with HEIC images
+        if (fileExtension === '.heic' || fileExtension === '.heif' || 
+            mimeType.includes('heic') || mimeType.includes('heif')) {
+          thumbnailUrl = await generateHEICThumbnail(imageBuffer);
+        }
+        
+        // First try Gemini Vision - Always use the default model
+        console.log(`Using ${DEFAULT_GEMINI_MODEL} for image OCR`);
+        
+        if (fileSize > 5 * 1024 * 1024 && !res.writableEnded) {
+          res.write(JSON.stringify({
+            status: 'processing',
+            message: 'Extracting text with Gemini Vision...',
+            progress: 40
+          }));
+        }
+        
+        try {
+          const model = googleAI.getGenerativeModel({ model: DEFAULT_GEMINI_MODEL });
+          
+          const result = await model.generateContent({
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  { text: "Extract all text from this image accurately, preserving formatting. If the image has no text, describe what is shown in the image in detail. Extract all text from this PDF. Format using plain markdown (e.g., **bold**, *italic*, # headings), but do NOT use triple backticks or code fences of any kind. Start immediately with the first heading or paragraph. This is a public domain document for use in a historical research context. Be accurate. INCLUDE NO PREFACE OR EXPLANATION, just the text with no commentary." },
+                  { 
+                    inlineData: {
+                      mimeType: processableMimeType || "image/jpeg",
+                      data: processableBuffer.toString('base64')
+                    }
+                  }
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.1,
+              maxOutputTokens: 4096,
+            }
+          });
+          
+          content = result.response.text();
+          processingMethod = `gemini-vision-image-${DEFAULT_GEMINI_MODEL}`;
+          console.log(`Gemini Vision extracted ${content.length} characters from image`);
+        } catch (geminiErr) {
+          // FALLBACK: If Gemini fails, automatically try Claude Vision
+          console.error('Gemini Vision error, trying Claude fallback:', geminiErr);
+          
+          if (fileSize > 5 * 1024 * 1024 && !res.writableEnded) {
+            res.write(JSON.stringify({
+              status: 'processing',
+              message: 'Trying backup method with Claude Vision...',
+              progress: 60
+            }));
+          }
+          
+          // Use Claude Vision as fallback
+          console.log('Using Claude Vision for image OCR as fallback');
+          const base64Image = processableBuffer.toString('base64');
+          
+          // Determine the proper media type explicitly
+          let mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+          
+          // Assign the correct media type based on the file type
+          if (processableMimeType.includes('png')) {
+            mediaType = 'image/png';
+          } else if (processableMimeType.includes('gif')) {
+            mediaType = 'image/gif';
+          } else if (processableMimeType.includes('webp')) {
+            mediaType = 'image/webp';
+          } else {
+            // Default to jpeg for any other format (including converted HEIC)
+            mediaType = 'image/jpeg';
+          }
           
           const response = await anthropic.messages.create({
-            model: 'claude-3-5-haiku-latest',
+            model: DEFAULT_CLAUDE_MODEL,
             max_tokens: 4000,
             temperature: 0.2,
             system: "You are an OCR specialist. Extract ALL text visible in the image with perfect formatting, including paragraph breaks. Include all text, tables, captions, headers, footers, and page numbers. Do not add any commentary, just extract the text precisely as it appears. If the image has no text, then provide an extremely detailed description of the image.",
@@ -569,40 +601,11 @@ const data = await pdfParse(fileBuffer, {
           });
           
           content = response.content[0]?.type === 'text' ? response.content[0].text : '';
-          processingMethod = 'claude-vision-image';
-        } else {
-          // Use Gemini Vision - now with default Gemini Flash 2.0
-          console.log('Using Gemini Vision for image OCR');
-          const model = googleAI.getGenerativeModel({ model: visionModel });
-          
-          const result = await model.generateContent({
-            contents: [
-              {
-                role: "user",
-                parts: [
-                  { text: "Extract all text from this image accurately, preserving formatting. If the image has no text, describe what is shown in the image in detail. Use markdown formatting to display bold, headers, and italics. This is a public domain document for use in a historical research context. Be accurate. INCLUDE NO PREFACE OR EXPLANATION, just the text with no commentary." },
-                  { 
-                    inlineData: {
-                      mimeType: mimeType || "image/jpeg",
-                      data: imageBuffer.toString('base64')
-                    }
-                  }
-                ]
-              }
-            ],
-            generationConfig: {
-              temperature: 0.1,
-              maxOutputTokens: 4096,
-            }
-          });
-          
-          content = result.response.text();
-          processingMethod = `gemini-vision-image-${visionModel}`;
+          processingMethod = 'claude-vision-image-fallback';
+          console.log(`Claude Vision fallback extracted ${content.length} characters from image`);
         }
-        
-        console.log(`AI Vision extracted ${content.length} characters from image`);
       } catch (err) {
-        console.error('Image OCR error:', err);
+        console.error('Image processing error:', err);
         content = '[Image processing failed - unable to extract text]';
         processingMethod = 'image-processing-failed';
       }
@@ -647,7 +650,7 @@ const data = await pdfParse(fileBuffer, {
       processingMethod,
       pageCount: pageCount > 0 ? pageCount : undefined,
       fileSize,
-      thumbnailUrl // Include the thumbnail URL in the response
+      thumbnailUrl
     });
   } catch (error) {
     console.error('Upload error:', error);
@@ -739,7 +742,7 @@ async function generateHEICThumbnail(buffer: Buffer): Promise<string | null> {
     console.log('Generating thumbnail for HEIC image');
     // Convert HEIC to JPEG for thumbnail
     const jpegBuffer = await sharp(buffer)
-      .resize(300, 300, { fit: 'inside' })
+     .resize(300, 300, { fit: 'inside' })
       .jpeg({ quality: 80 })
       .toBuffer();
     

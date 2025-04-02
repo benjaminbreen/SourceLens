@@ -51,15 +51,6 @@ export const models: ModelConfig[] = [
     temperature: 0.2,
   },
   {
-    id: 'gpt-4.5-preview',
-    name: 'GPT-4.5 Preview',
-    provider: 'openai',
-    apiModel: 'gpt-4.5-preview',
-    description: 'Most advanced of the current models. Expensive',
-    maxTokens: 3000,
-    temperature: 0.7,
-  },
-  {
     id: 'o3-mini',
     name: 'O3 Mini',
     provider: 'openai',
@@ -74,7 +65,7 @@ export const models: ModelConfig[] = [
     apiModel: 'gemini-2.0-flash',
     description: 'Process long texts with 1M token context window',
     maxTokens: 400000, 
-    temperature: 0.1,
+    temperature: 0.2,
   },
     {
     id: 'gemini-flash-lite',
@@ -82,8 +73,8 @@ export const models: ModelConfig[] = [
     provider: 'google',
     apiModel: 'gemini-2.0-flash-lite',
     description: 'The smaller version of Flash. Good all-arounder.',
-    maxTokens: 500000, // unknown if this works
-    temperature: 0.1,
+    maxTokens: 600000, // unknown if this works
+    temperature: 0.2,
   },
 
   {

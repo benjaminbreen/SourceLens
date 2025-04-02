@@ -22,7 +22,7 @@ interface SourceDisplayProps {
   fontSize?: number; 
 }
 
-export default function SourceDisplay({ darkMode = false, toggleDarkMode, renderHighlights = true, fontSize = 18 }: SourceDisplayProps) {
+export default function SourceDisplay({ darkMode = false, toggleDarkMode, renderHighlights = true, fontSize = 16 }: SourceDisplayProps) {
   const {
     sourceContent, sourceType, sourceFile, highlightedSegments,
     isHighlightMode, highlightQuery, llmModel
@@ -89,11 +89,11 @@ export default function SourceDisplay({ darkMode = false, toggleDarkMode, render
 
   // --- Enhanced Markdown Components - FIXED to prevent <pre> inside <p> ---
   const markdownComponents = useMemo<Components>(() => ({
-    h1: ({node, ...props}) => <h1 style={{fontSize: `${fontSize * 1.875}px`}} className="font-semibold font-['Lora',serif] mt-8 mb-5 border-b pb-2 dark:border-slate-700 border-slate-300" {...props} />,
-    h2: ({node, ...props}) => <h2 style={{fontSize: `${fontSize * 1.5}px`}} className="font-semibold font-['Lora',serif] mt-7 mb-4 border-b pb-1 dark:border-slate-700 border-slate-300" {...props} />,
-    h3: ({node, ...props}) => <h3 style={{fontSize: `${fontSize * 1.25}px`}} className="font-semibold font-['Lora',serif] mt-6 mb-3" {...props} />,
+    h1: ({node, ...props}) => <h1 style={{fontSize: `${fontSize * 1.35}px`}} className="font-bold font-['Lora',serif] mt-6 mb-3 border-b pb-1 dark:border-slate-700 border-slate-300" {...props} />,
+    h2: ({node, ...props}) => <h2 style={{fontSize: `${fontSize * 1.3}px`}} className="font-semibold font-['Lora',serif] mt-5 mb-3 border-b pb-1 dark:border-slate-700 border-slate-300" {...props} />,
+    h3: ({node, ...props}) => <h3 style={{fontSize: `${fontSize * 1.25}px`}} className="font-semibold font-['Lora',serif] mt-5 mb-3" {...props} />,
     h4: ({node, ...props}) => <h4 style={{fontSize: `${fontSize * 1.125}px`}} className="font-semibold font-['Lora',serif] mt-5 mb-2" {...props} />,
-    p: ({node, ...props}) => <p style={{fontSize: `${fontSize}px`}} className="mb-5 font-['Lora',serif] leading-relaxed md:leading-loose" {...props} />,
+    p: ({node, ...props}) => <p style={{fontSize: `${fontSize * .95}px`}} className="mb-5 font-['Lora',serif] leading-relaxed md:leading-loose" {...props} />,
     ul: ({node, ...props}) => <ul style={{fontSize: `${fontSize}px`}} className="list-disc pl-6 mb-5 space-y-2 font-['Lora',serif]" {...props} />,
     ol: ({node, ...props}) => <ol style={{fontSize: `${fontSize}px`}} className="list-decimal pl-6 mb-5 space-y-2 font-['Lora',serif]" {...props} />,
     li: ({node, ...props}) => <li style={{fontSize: `${fontSize}px`}} className="mb-1.5 font-['Lora',serif] leading-relaxed" {...props} />,
@@ -260,14 +260,17 @@ export default function SourceDisplay({ darkMode = false, toggleDarkMode, render
     // Handle PDF/Image
     if ((sourceType === 'pdf' || sourceType === 'image') && sourceFile) {
       return (
-        <div className="space-y-5">
+        <div className="space-y-1">
           {/* File Info Box */}
-          <div className={`p-4 rounded-lg shadow-sm ${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-slate-50 border border-slate-200'}`}>
-            <p className={`${darkMode ? 'text-slate-300' : 'text-slate-700'} mb-1 text-sm font-medium`}>{sourceType === 'pdf' ? 'PDF Document:' : 'Text extracted from:'}</p>
-            <p className={`font-['Geist Mono'] text-sm break-all `}>{sourceFile.name}</p>
-            {sourceType === 'image' && <div className="relative max-h-[40vh] my-0 rounded overflow-hidden "><Image src={URL.createObjectURL(sourceFile)} alt="Source document image" className="object-contain" fill /></div>}
-         
-          </div>
+          <div className={`p-1 rounded-lg  ${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-slate-50 border border-slate-200'}`}>
+  <div className="flex items-center gap-2">
+    <p className={`${darkMode ? 'text-slate-300' : 'text-slate-700'} ml-2 text-xs font-medium`}>
+      {sourceType === 'pdf' ? 'PDF Document:' : 'Text extracted from:'}
+    </p>
+    <p className={`font-mono text-indigo-900 text-xs break-all`}>{sourceFile.name}</p>
+  </div>
+  {sourceType === 'image' && <div className="relative max-h-[40vh] my-0 rounded overflow-hidden "><Image src={URL.createObjectURL(sourceFile)} alt="Source document image" className="object-contain" fill /></div>}
+</div>
           
           {/* Fix: Use special content handling for highlighted or regular view */}
           {showHighlights ? (
