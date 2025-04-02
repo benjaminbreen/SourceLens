@@ -1,11 +1,12 @@
+// vercel.json
 {
   "functions": {
     "pages/api/**/*.ts": {
-      "maxDuration": 90
+      "maxDuration": 60
     },
     "pages/api/upload.ts": {
       "memory": 1024,
-      "maxDuration": 90
+      "maxDuration": 60
     }
   },
   "images": {
