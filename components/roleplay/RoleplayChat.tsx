@@ -469,7 +469,7 @@ export default function RoleplayChat({ initialMessage }: RoleplayChatProps) {
       </LocationBackground>
 
       {/* Input area - fixed at the bottom with flex-shrink-0 */}
-      <div className="bg-white border-t border-slate-200 p-4 flex-shrink-0">
+      <div className="bg-slate-100 border-t border-slate-200 p-4 flex-shrink-0">
         <form onSubmit={handleSendMessage} className="flex space-x-2">
           <input
             ref={inputRef}

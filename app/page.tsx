@@ -73,6 +73,22 @@ export default function Home() {
   const [fields, setFields] = useState({
     visionModel: 'gemini-2.0-pro-exp-02-05' // Default to Gemini
   });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+  const checkIfMobile = () => {
+    setIsMobile(window.innerWidth < 768);
+  };
+  
+  // Initial check
+  checkIfMobile();
+  
+  // Add event listener
+  window.addEventListener('resize', checkIfMobile);
+  
+  // Cleanup
+  return () => window.removeEventListener('resize', checkIfMobile);
+}, []);
 
   // --- Cleanup on unmount ---
   useEffect(() => {
@@ -469,7 +485,7 @@ export default function Home() {
     <main className="min-h-screen flex flex-col bg-slate-100/50 overflow-x-hidden overflow-y-auto">
       {/* Hero section with background image, gradient overlay and animation */}
       <div className="relative shadow-2xl transition-all duration-1000 ease-out overflow-hidden" 
-          style={{ height: animateIn ? '235px' : '0px' }}>
+    style={{ height: animateIn ? (isMobile ? '320px' : '235px') : '0px' }}>
         {/* Background with enhanced overlay */}
         <div className="absolute inset-0 z-0">
           <Image 
@@ -507,8 +523,11 @@ export default function Home() {
         {/* Improved hero content with better typography */}
         <div className="relative z-10 max-w-4xl mx-auto px-1 flex flex-col justify-center items-center text-center pt-2"
         style={{ paddingTop: '40px' }}>
+
           <h1 
-            className={`font-serif font-bold text-white mb-2 transition-all duration-1000 transform md:text-6xl ${
+            className={`font-serif font-bold text-white mb-2 transition-all duration-1000 transform ${
+              isMobile ? 'text-4xl' : 'md:text-6xl'
+            } ${
               animateIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
             }`}
             style={{ 
@@ -518,15 +537,9 @@ export default function Home() {
           >
             SourceLens
           </h1>
-          
-          <div 
-            className={`h-0.5 w-28 bg-amber-300/70 my-1 transition-all duration-1000 transform ${
-              animateIn ? 'scale-x-100 opacity-80' : 'scale-x-0 opacity-0'
-            }`}
-          ></div>
-          
+
           <p 
-            className={`text-xl md:text-2xl text-white/95 max-w-2xl transition-all duration-1000 delay-200 transform font-light leading-relaxed ${
+            className={`${isMobile ? 'text-lg' : 'text-xl md:text-2xl'} text-white/95 max-w-2xl transition-all duration-1000 delay-200 transform font-light leading-relaxed ${
               animateIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
             }`}
             style={{ textShadow: '0 3px 12px rgba(0,0,0,0.9)' }}

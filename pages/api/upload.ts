@@ -324,7 +324,7 @@ export default async function handler(
             const model = googleAI.getGenerativeModel({ model: DEFAULT_GEMINI_MODEL });
             
             // Set prompt for optimal PDF extraction
-            const prompt = "Please extract all text content from this PDF document, which is a public domain historical source being used exclusively for purposes of education and research. Preserve paragraph structure, headings, and formatting as much as possible. Include all text content without summarization or modification. For tables and structured data, maintain their structure in your output. If there is no text visible, analyze the image and provide a short description of it. INCLUDE NO PREFACE OR EXPLANATION, just all text you see. Extract all text from this PDF. Format using plain markdown (e.g., **bold**, *italic*, # headings), but do NOT use triple backticks or code fences of any kind. Start immediately with the first heading or paragraph.";
+            const prompt = "Please extract all text content from this PDF document, which is a public domain historical source being used exclusively for purposes of education and research. Preserve paragraph structure, headings, and formatting as much as possible. Include all text content without summarization or modification. For tables and structured data, maintain their structure in your output. If there is no text visible, analyze the image and provide a short description of it. INCLUDE NO PREFACE OR EXPLANATION, just all text you see. Extract all text from this PDF. Format using plain markdown (e.g., **bold**, *italic*, # headings,  as well as unordered + lists when you detect a list), but do NOT use triple backticks or code fences of any kind. Start immediately with the first heading or paragraph.";
             
             // Process the PDF with Gemini
             const result = await model.generateContent({
@@ -524,7 +524,7 @@ export default async function handler(
               {
                 role: "user",
                 parts: [
-                  { text: "Extract all text from this image accurately, preserving formatting. If the image has no text, describe what is shown in the image in detail. Extract all text from this PDF. Format using plain markdown (e.g., **bold**, *italic*, # headings), but do NOT use triple backticks or code fences of any kind. Start immediately with the first heading or paragraph. This is a public domain document for use in a historical research context. Be accurate. INCLUDE NO PREFACE OR EXPLANATION, just the text with no commentary." },
+                  { text: "Extract all text from this image accurately, preserving formatting. If the image has no text, describe what is shown in the image in detail. Extract all text from this PDF. Format using plain markdown (e.g., **bold**, *italic*, # headings, as well as unordered + lists), but do NOT use triple backticks or code fences of any kind. Start immediately with the first heading or paragraph. This is a public domain document for use in a historical research context. Be accurate. INCLUDE NO PREFACE OR EXPLANATION, just the text with no commentary." },
                   { 
                     inlineData: {
                       mimeType: processableMimeType || "image/jpeg",

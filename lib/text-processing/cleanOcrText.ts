@@ -1,131 +1,148 @@
 // lib/text-processing/cleanOcrText.ts
-// Enhanced utility function to clean OCR text artifacts and improve readability
-// Now with better handling of line breaks in PDF text extracted from Gemini
+// Advanced OCR text cleaning utility with intelligent preservation of original text characteristics
 
 /**
- * Cleans OCR text to improve readability by removing artifacts and normalizing formatting
- * @param text The raw OCR text to clean
- * @returns Cleaned and formatted text
+ * Configuration options for OCR text cleaning
  */
-export function cleanOcrText(text: string): string {
-  if (!text) return '';
-  
-  // Make a copy of the input text
-  let cleaned = text;
-  
-  // Pre-process Gemini PDF specific issues - join words separated by line breaks
-  // This specifically targets the pattern shown in your example output
-  cleaned = cleaned.replace(/(\w+)\s*\n\s*(\w+)/g, '$1 $2');
-  
-  // Fix cases where a word is split across lines (like "effi-\nficar" becoming "efficar")
-  cleaned = cleaned.replace(/(\w+)-\s*\n\s*(\w+)/g, '$1$2');
-  
-  // Replace multiple spaces with a single space
-  cleaned = cleaned.replace(/\s{2,}/g, ' ');
-  
-  // Remove isolated single characters that are likely OCR errors (except 'a', 'A', 'I')
-  cleaned = cleaned.replace(/\s+([b-hj-z])\s+/gi, ' ');
-  
-  // Fix common OCR artifacts
-  cleaned = cleaned
-    .replace(/[\u2018\u2019]/g, "'") // Smart quotes to regular quotes
-    .replace(/[\u201C\u201D]/g, '"') // Smart double quotes to regular quotes
-    .replace(/\u2013|\u2014/g, '-')  // Em/en dashes to hyphens
-    .replace(/\u00A0/g, ' ')         // Non-breaking spaces to regular spaces
-    .replace(/\r\n|\r/g, '\n');      // Normalize line breaks
-
-  // Handle paragraph recognition
-  // Strategy: Join lines that don't end with proper sentence terminators
-  const lines = cleaned.split('\n');
-  const paragraphs: string[] = [];
-  let currentParagraph = '';
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    
-    // Skip empty lines
-    if (!line) {
-      if (currentParagraph) {
-        paragraphs.push(currentParagraph);
-        currentParagraph = '';
-      }
-      continue;
-    }
-    
-    // Check if the previous line ends with a paragraph terminator
-    const endsWithTerminator = /[.!?:)]$/.test(currentParagraph) || 
-                              /\d+$/.test(currentParagraph); // Line ends with a number
-    
-    // Check if this line looks like a heading or list item
-    const isHeadingOrList = /^[IVX]+\.|\d+\.|\*|\-|\•|\–/.test(line);
-    
-    // Check if line is very short (likely a heading)
-    const isShortLine = line.length < 30 && /^[A-Z]/.test(line);
-    
-    // If line starts with lowercase and previous line doesn't end with terminator,
-    // it's likely a continuation
-    const isContinuation = /^[a-z]/.test(line) && currentParagraph && !endsWithTerminator;
-    
-    // Join lines that are part of the same paragraph
-    if (isContinuation && !isHeadingOrList) {
-      currentParagraph += ' ' + line;
-    } else {
-      if (currentParagraph) {
-        paragraphs.push(currentParagraph);
-      }
-      currentParagraph = line;
-    }
-  }
-  
-  // Add the last paragraph if it exists
-  if (currentParagraph) {
-    paragraphs.push(currentParagraph);
-  }
-  
-  // Remove very short paragraphs that are likely artifacts (less than 3 characters)
-  const filteredParagraphs = paragraphs.filter(p => p.length > 3);
-  
-  // Join paragraphs with double line breaks
-  let result = filteredParagraphs.join('\n\n');
-  
-  // Final cleanup pass for any missed split words
-  result = result.replace(/(\w+)\s+(\w{1,2})\s+(\w+)/g, (match, p1, p2, p3) => {
-    // Check if middle part is likely part of one of the surrounding words
-    if (p1.endsWith(p2.charAt(0)) || p3.startsWith(p2.charAt(p2.length-1))) {
-      return `${p1} ${p3}`;
-    }
-    return match;
-  });
-  
-  // Process common Portuguese words that might have been incorrectly split
-  const portugueseFixPatterns = [
-    /\bna\s+o\b/g, 'no',
-    /\bna\s+a\b/g, 'na',
-    /\bem\s+o\b/g, 'no',
-    /\bde\s+o\b/g, 'do',
-    /\bde\s+a\b/g, 'da',
-    /\ba\s+o\b/g, 'ao',
-    /\bé\s+o\b/g, 'é o',
-  ];
-  
-  for (let i = 0; i < portugueseFixPatterns.length; i += 2) {
-    const pattern = portugueseFixPatterns[i] as RegExp;
-    const replacement = portugueseFixPatterns[i + 1] as string;
-    result = result.replace(pattern, replacement);
-  }
-  
-  return result;
+interface OcrCleaningConfig {
+  preserveFormatting?: boolean;
+  detectLineBreaks?: boolean;
+  minParagraphLength?: number;
 }
 
 /**
- * Determines if text is likely OCR output based on common OCR artifacts
+ * Cleans OCR text by intelligently removing artifacts while preserving original text characteristics
+ * @param text The raw OCR text to clean
+ * @param config Configuration options for text cleaning
+ * @returns Cleaned and formatted text
+ */
+export function cleanOcrText(text: string, config: OcrCleaningConfig = {}): string {
+  if (!text) return '';
+
+  const {
+    preserveFormatting = true,
+    detectLineBreaks = true,
+    minParagraphLength = 3
+  } = config;
+
+  // Utility function to determine if a word is likely a genuine word
+  const isValidWord = (word: string): boolean => {
+    // Check if word contains letters and meets minimum length
+    if (word.length < 2) return false;
+
+    // Allow words with apostrophes (like contractions)
+    const cleanWord = word.replace(/[''-]/g, '');
+
+    // Check for a mix of letters
+    const hasLetters = /[a-zA-Z]/.test(cleanWord);
+    const hasReasonableLength = cleanWord.length >= 2 && cleanWord.length <= 20;
+
+    return hasLetters && hasReasonableLength;
+  };
+
+  // Intelligent line break detection and preservation
+  const detectAndPreserveLineBreaks = (text: string): string => {
+    // Split text into lines
+    const lines = text.split('\n');
+    
+    // Analyze line characteristics
+    const processedLines: string[] = [];
+    let currentParagraph: string[] = [];
+
+    lines.forEach((line, index) => {
+      const trimmedLine = line.trim();
+      
+      // Skip completely empty lines
+      if (!trimmedLine) {
+        // If we have a paragraph in progress, add it
+        if (currentParagraph.length > 0) {
+          processedLines.push(currentParagraph.join(' '));
+          currentParagraph = [];
+        }
+        return;
+      }
+
+      // Split line into words
+      const words = trimmedLine.split(/\s+/);
+      const validWords = words.filter(isValidWord);
+
+      // Heuristics for line break preservation
+      const isLikelyIndependentLine = 
+        // Short, capitalized line (possible heading or poetic line)
+        (trimmedLine.length < 50 && /^[A-Z]/.test(trimmedLine)) ||
+        // Line with very distinctive punctuation
+        /[—–\[\]{}()]/.test(trimmedLine) ||
+        // Line that looks like a title or section header
+        (/^[A-Z\d]/.test(trimmedLine) && validWords.length <= 6);
+
+      // Determine if line should be kept separate or joined
+      if (isLikelyIndependentLine) {
+        // If we have a paragraph in progress, add it first
+        if (currentParagraph.length > 0) {
+          processedLines.push(currentParagraph.join(' '));
+          currentParagraph = [];
+        }
+        processedLines.push(trimmedLine);
+      } else {
+        // Try to join the line with ongoing paragraph
+        currentParagraph.push(trimmedLine);
+      }
+    });
+
+    // Add any remaining paragraph
+    if (currentParagraph.length > 0) {
+      processedLines.push(currentParagraph.join(' '));
+    }
+
+    return processedLines.join('\n\n');
+  };
+
+  // Main cleaning process
+  let cleaned = text;
+
+  // Remove problematic OCR artifacts
+  cleaned = cleaned
+    // Remove multiple consecutive spaces
+    .replace(/\s{2,}/g, ' ')
+    
+    // Remove isolated single characters (except known single-letter words like 'a', 'I')
+    .replace(/\s+([b-hj-kn-z])\s+/gi, ' ')
+    
+    // Fix common hyphenation errors (words split across lines)
+    .replace(/(\w+)-\s*\n\s*(\w+)/g, '$1$2')
+    
+    // Normalize line breaks
+    .replace(/\r\n|\r/g, '\n');
+
+  // Normalize historical punctuation while preserving original intent
+  cleaned = cleaned
+    .replace(/[\u2018\u2019]/g, "'")   // Smart single quotes
+    .replace(/[\u201C\u201D]/g, '"')   // Smart double quotes
+    .replace(/\u2013|\u2014/g, '-')    // Em/en dashes to hyphens
+    .replace(/\u00A0/g, ' ');          // Non-breaking spaces to regular spaces
+
+  // Line break detection and preservation
+  if (detectLineBreaks) {
+    cleaned = detectAndPreserveLineBreaks(cleaned);
+  }
+
+  // Final cleanup: remove excessive whitespace
+  cleaned = cleaned
+    .replace(/\n{3,}/g, '\n\n')   // Limit multiple line breaks
+    .trim();
+
+  return cleaned;
+}
+
+/**
+ * Determines if text is likely OCR output based on common artifacts
  * @param text The text to analyze
  * @returns True if the text appears to be OCR output
  */
 export function isLikelyOcrText(text: string): boolean {
   if (!text) return false;
   
-  // Common OCR artifact patterns
+  // Enhanced OCR artifact patterns
   const ocrPatterns = [
     /\b\w{1,2}\s{2,}\w+/,         // Isolated 1-2 character words followed by extra spaces
     /\n\s*\n\s*\n/,               // Multiple consecutive line breaks
@@ -134,7 +151,7 @@ export function isLikelyOcrText(text: string): boolean {
     /[a-z]\s+[a-z]/,              // Lowercase letters separated by space
     /\w+\s+-\s+\w+/,              // Words separated by spaced hyphens
     /\n\w{1,2}\n/,                // Single characters on their own lines
-    /\w+\n\w+/                    // Words split by line breaks (common in PDFs)
+    /\w+\n\w+/                    // Words split by line breaks
   ];
   
   // Check for short lines that don't end with punctuation
@@ -153,4 +170,13 @@ export function isLikelyOcrText(text: string): boolean {
   
   // Check for OCR patterns or high percentage of short lines
   return ocrPatterns.some(pattern => pattern.test(text)) || shortLinePercentage > 20;
+}
+
+// Example usage demonstrating configuration options
+export function processText(text: string) {
+  return cleanOcrText(text, {
+    preserveFormatting: true,
+    detectLineBreaks: true,
+    minParagraphLength: 3
+  });
 }

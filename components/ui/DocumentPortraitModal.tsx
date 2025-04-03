@@ -1,7 +1,7 @@
 // components/ui/DocumentPortraitModal.tsx
 // Modal component that displays an expanded version of the document portrait
 // Shows larger image/emoji with document metadata in a terminal-style interface
-// Features dynamic header background with location image that fades across the header
+// Features dynamic header background with location image that can be expanded to fullscreen
 
 'use client';
 
@@ -9,6 +9,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useAppStore } from '@/lib/store';
 import { extractCentury, normalizeLocation } from './LocationBackgroundUtils';
+import { getPrioritizedImagePaths } from './LocationBackgroundUtils';
 
 interface DocumentPortraitModalProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export default function DocumentPortraitModal({
   // Add state for image expansion
   const [isImageExpanded, setIsImageExpanded] = useState(false);
   const [headerBackgroundImage, setHeaderBackgroundImage] = useState<string | null>(null);
+  const [isLocationImageExpanded, setIsLocationImageExpanded] = useState(false);
   
   // Get store data if props not provided
   const store = useAppStore();
@@ -40,76 +42,58 @@ export default function DocumentPortraitModal({
   const actualMetadata = metadata || store.metadata || {};
   const thumbnailUrl = portraitUrl || store.sourceThumbnailUrl;
 
-  // Find best header background image based on date and location
-  useEffect(() => {
-    if (!actualMetadata) return;
+  // Add this helper function before the useEffect
+const checkImageExists = async (path: string): Promise<boolean> => {
+  try {
+    const response = await fetch(path, { method: 'HEAD' });
+    return response.ok;
+  } catch (error) {
+    console.error(`Error checking image path ${path}:`, error);
+    return false;
+  }
+};
+
+
+useEffect(() => {
+  if (!actualMetadata) return;
+  
+  const date = actualMetadata.date || '';
+  const location = actualMetadata.placeOfPublication || '';
+  
+  if (!date && !location) {
+    setHeaderBackgroundImage(null);
+    return;
+  }
+  
+  const findBestImage = async () => {
+    const imagePaths = getPrioritizedImagePaths(date, location);
     
-    const date = actualMetadata.date || '';
-    const location = actualMetadata.placeOfPublication || '';
-    
-    if (!date && !location) {
-      setHeaderBackgroundImage(null);
-      return;
+    for (const path of imagePaths) {
+      try {
+        const exists = await checkImageExists(path);
+        if (exists) {
+          setHeaderBackgroundImage(path);
+          return;
+        }
+      } catch (error) {
+        console.error(`Error checking image path ${path}:`, error);
+      }
     }
     
-    const century = extractCentury(date);
-    const normalizedLocation = normalizeLocation(location);
-    
-    // Try specific century + location
-    const specificImage = `/locations/${century}${normalizedLocation}.jpg`;
-    
-    // Fallbacks in order of preference
-    const centuryGenericImage = `/locations/${century}generic.jpg`;
-    const locationGenericImage = `/locations/generic${normalizedLocation}.jpg`;
-    const defaultImage = '/locations/default.jpg';
-    
-    // Test if an image exists at the specific path
-    const checkImageExists = async (path: string): Promise<boolean> => {
-      try {
-        const response = await fetch(path, { method: 'HEAD' });
-        return response.ok;
-      } catch (error) {
-        return false;
-      }
-    };
-    
-    const findBestImage = async () => {
-      // Try specific century+location combination
-      if (await checkImageExists(specificImage)) {
-        setHeaderBackgroundImage(specificImage);
-        return;
-      }
-      
-      // Try century-only image
-      if (await checkImageExists(centuryGenericImage)) {
-        setHeaderBackgroundImage(centuryGenericImage);
-        return;
-      }
-      
-      // Try location-only image
-      if (normalizedLocation && await checkImageExists(locationGenericImage)) {
-        setHeaderBackgroundImage(locationGenericImage);
-        return;
-      }
-      
-      // Fallback to default
-      if (await checkImageExists(defaultImage)) {
-        setHeaderBackgroundImage(defaultImage);
-        return;
-      }
-      
-      // No image found
-      setHeaderBackgroundImage(null);
-    };
-    
-    findBestImage();
-  }, [actualMetadata]);
+    // No image found
+    setHeaderBackgroundImage(null);
+  };
+
+  findBestImage();
+}, [actualMetadata]);
 
   // Close on escape key
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (isImageExpanded) {
+        if (isLocationImageExpanded) {
+          setIsLocationImageExpanded(false);
+        } else if (isImageExpanded) {
           setIsImageExpanded(false);
         } else {
           onClose();
@@ -127,12 +111,14 @@ export default function DocumentPortraitModal({
       document.removeEventListener('keydown', handleEsc);
       document.body.style.overflow = '';
     };
-  }, [isOpen, onClose, isImageExpanded]);
+  }, [isOpen, onClose, isImageExpanded, isLocationImageExpanded]);
 
   // Close if clicking outside the modal content
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
-      if (isImageExpanded) {
+      if (isLocationImageExpanded) {
+        setIsLocationImageExpanded(false);
+      } else if (isImageExpanded) {
         setIsImageExpanded(false);
       } else {
         onClose();
@@ -143,6 +129,11 @@ export default function DocumentPortraitModal({
   // Toggle image expansion
   const toggleImageExpansion = () => {
     setIsImageExpanded(!isImageExpanded);
+  };
+
+  // Toggle location image expansion
+  const toggleLocationImageExpansion = () => {
+    setIsLocationImageExpanded(!isLocationImageExpanded);
   };
 
   if (!isOpen) return null;
@@ -186,47 +177,47 @@ export default function DocumentPortraitModal({
   };
 
   // Generate a description of the document based on century and type
-const getDocumentDescription = (metadata: any): string => {
-  // Get century from the date
-  let century = '';
-  if (metadata.date) {
-    // Extract year
-    const yearMatch = metadata.date.match(/\b(\d{4})\b/);
-    if (yearMatch) {
-      const year = parseInt(yearMatch[1], 10);
-      const centuryNum = Math.ceil(year / 100);
-      
-      // Convert to ordinal text
-      const ordinal = centuryNum === 1 ? '1st' : 
+  const getDocumentDescription = (metadata: any): string => {
+    // Get century from the date
+    let century = '';
+    if (metadata.date) {
+      // Extract year
+      const yearMatch = metadata.date.match(/\b(\d{4})\b/);
+      if (yearMatch) {
+        const year = parseInt(yearMatch[1], 10);
+        const centuryNum = Math.ceil(year / 100);
+        
+        // Convert to ordinal text
+        const ordinal = centuryNum === 1 ? '1st' : 
                       centuryNum === 2 ? '2nd' : 
                       centuryNum === 3 ? '3rd' : 
                       `${centuryNum}th`;
-      
-      century = `${ordinal} century`;
-    } else {
-      // Try using the extract century function
-      const centuryNum = extractCentury(metadata.date);
-      if (centuryNum > 0) {
-        const ordinal = centuryNum === 1 ? '1st' : 
+        
+        century = `${ordinal} century`;
+      } else {
+        // Try using the extract century function
+        const centuryNum = extractCentury(metadata.date);
+        if (centuryNum > 0) {
+          const ordinal = centuryNum === 1 ? '1st' : 
                         centuryNum === 2 ? '2nd' : 
                         centuryNum === 3 ? '3rd' : 
                         `${centuryNum}th`;
-        century = `${ordinal} century`;
-      } else if (centuryNum === -1) {
-        century = 'antiquity';
-      } else if (centuryNum === -2) {
-        century = 'ancient';
+          century = `${ordinal} century`;
+        } else if (centuryNum === -1) {
+          century = 'antiquity';
+        } else if (centuryNum === -2) {
+          century = 'ancient';
+        }
       }
     }
-  }
-  
-  // Get document type
-  let docType = metadata.documentType?.toLowerCase() || 
+    
+    // Get document type
+    let docType = metadata.documentType?.toLowerCase() || 
                 metadata.genre?.toLowerCase() || 
                 'document';
-  
-  // Simplify common document types for better display
-  docType = docType.replace('article', 'article')
+    
+    // Simplify common document types for better display
+    docType = docType.replace('article', 'article')
                   .replace('report', 'report')
                   .replace('manuscript', 'manuscript')
                   .replace('letter', 'letter')
@@ -236,28 +227,73 @@ const getDocumentDescription = (metadata: any): string => {
                   .replace('journal', 'journal')
                   .replace('diary', 'diary')
                   .replace('pamphlet', 'pamphlet');
-  
-  // Combine into a phrase
-  if (century && docType) {
-    return `a ${century} ${docType}`;
-  } else if (century) {
-    return `a ${century} document`;
-  } else if (docType) {
-    return `a ${docType}`;
-  } else {
-    return 'historical document';
-  }
-};
+    
+    // Combine into a phrase
+    if (century && docType) {
+      return `a ${century} ${docType}`;
+    } else if (century) {
+      return `a ${century} document`;
+    } else if (docType) {
+      return `a ${docType}`;
+    } else {
+      return 'historical document';
+    }
+  };
 
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 modal-fade-in"
       onClick={handleBackdropClick}
     >
-      {/* Expanded image overlay */}
+      {/* Expanded location image overlay */}
+{isLocationImageExpanded && headerBackgroundImage && (
+  <div 
+    className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-black/95 animate-in fade-in duration-200"
+    onClick={() => setIsLocationImageExpanded(false)}
+  >
+    <div className="relative w-full max-w-4xl max-h-[80vh] p-4 animate-in slide-in-from-top duration-300">
+      <div className="relative">
+        <div className="relative rounded-lg overflow-hidden shadow-2xl border-2 border-slate-700">
+          {/* Updated Image component with proper sizing */}
+          <div className="relative w-full h-[60vh]">
+            <Image 
+              src={headerBackgroundImage}
+              alt={actualMetadata?.placeOfPublication || "Historical location image"}
+              fill
+              sizes="(max-width: 768px) 100vw, 80vw"
+              className="object-contain cursor-zoom-out"
+              onClick={() => setIsLocationImageExpanded(false)}
+            />
+          </div>
+        </div>
+      </div>
+      
+      {/* Location caption */}
+      <div className="mt-4 text-center">
+        <h3 className="text-white text-lg font-serif">
+          {actualMetadata?.placeOfPublication || "Historical location"}, 
+          <span className="text-amber-300 ml-2 font-light">{formatDate(actualMetadata?.date || '')}</span>
+        </h3>
+        <p className="text-slate-400 text-sm mt-1 font-light">AI-generated historical representation</p>
+      </div>
+      
+      {/* Close button */}
+      <button 
+        className="absolute -top-4 right-4 bg-slate-800 text-white rounded-full p-2 hover:bg-slate-700 transition-colors shadow-lg"
+        onClick={() => setIsLocationImageExpanded(false)}
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  </div>
+)}
+
+      {/* Expanded document image overlay */}
       {isImageExpanded && thumbnailUrl && (
         <div 
-          className="fixed  inset-0 z-[60] flex items-center justify-center bg-black/90 animate-in fade-in duration-200"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 animate-in fade-in duration-200"
           onClick={() => setIsImageExpanded(false)}
         >
           <div className="relative flex items-center max-w-[95vw] max-h-[90vh] transition-all duration-300 animate-in zoom-in-105 duration-200">
@@ -287,9 +323,9 @@ const getDocumentDescription = (metadata: any): string => {
               <Image 
                 src={thumbnailUrl}
                 alt={actualMetadata?.title || "Document image"}
-                width={1200}
-                height={1200}
-                className="object-contain max-h-[90vh] cursor-zoom-out"
+                width={1000}
+                height={1000}
+                className="object-contain max-h-[80vh] cursor-zoom-out"
                 onClick={() => setIsImageExpanded(false)}
               />
               
@@ -315,64 +351,83 @@ const getDocumentDescription = (metadata: any): string => {
         className="bg-white border-2 border-slate-900 dark:bg-slate-800 rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden modal-slide-in"
         onClick={e => e.stopPropagation()}
       >
-
-{/* Header with background image if available */}
-<div className="relative overflow-hidden">
-  {/* Background image layer */}
-  {headerBackgroundImage && (
-    <div className="absolute inset-0 w-full h-full">
-      <div 
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url('${headerBackgroundImage}')` }}
-      />
-      {/* Gradient overlay that transitions more gradually */}
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 via-slate-800/40 to-transparent" />
-    </div>
-  )}
-  
-  {/* Header content */}
-  <div className={`flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700 relative z-10 ${
-    headerBackgroundImage ? 'text-white' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100'
-  }`}>
-    <div className="flex items-center">
-      <h2 className="text-xl font-semibold flex items-center">
-        {headerBackgroundImage && (
-          <span className="mr-2 w-1.5 h-6 bg-gradient-to-r from-amber-400 to-amber-200 rounded-full inline-block" />
-        )}
-      &nbsp;  Source Details
-      </h2>
-      
-      {/* Document description phrase */}
-      {actualMetadata && (
-        <div className="ml-2 flex items-center">
-          <span className={`mx-2 opacity-60 ${headerBackgroundImage ? 'text-white/70' : 'text-slate-400'}`}>/</span>
-          <span className={`font-mono text-sm font-medium tracking ${headerBackgroundImage ? 'text-cyan-300' : 'text-slate-500'}`}>
-              &nbsp; {getDocumentDescription(actualMetadata)}
-          </span>
+        {/* Header with background image if available */}
+        <div className="relative overflow-hidden">
+          {/* Background image layer */}
+          {headerBackgroundImage && (
+            <div className="absolute inset-0 w-full h-full">
+              <div 
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url('${headerBackgroundImage}')` }}
+              />
+              {/* Gradient overlay that transitions more gradually */}
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 via-slate-800/40 to-transparent" />
+            </div>
+          )}
+          
+          {/* Header content */}
+          <div className={`flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700 relative z-10 ${
+            headerBackgroundImage ? 'text-white' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100'
+          }`}>
+            <div className="flex items-center">
+              <h2 className="text-xl font-semibold flex items-center">
+                {headerBackgroundImage && (
+                  <span className="mr-2 w-1.5 h-6 bg-gradient-to-r from-amber-400 to-amber-200 rounded-full inline-block" />
+                )}
+              &nbsp;  Source Details
+              </h2>
+              
+              {/* Document description phrase */}
+              {actualMetadata && (
+                <div className="ml-2 flex items-center">
+                  <span className={`mx-2 opacity-60 ${headerBackgroundImage ? 'text-white/70' : 'text-slate-400'}`}>/</span>
+                  <span className={`font-mono text-sm font-medium tracking ${headerBackgroundImage ? 'text-cyan-300' : 'text-slate-500'}`}>
+                      &nbsp; {getDocumentDescription(actualMetadata)}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {/* Location image button */}
+              {headerBackgroundImage && (
+                <button
+                  onClick={toggleLocationImageExpansion}
+                  className="group relative p-1.5 rounded-full transition-colors hover:bg-white/20"
+                  title="View full location image"
+                >
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  
+                  {/* Tooltip that appears on hover */}
+                  <span className="absolute -top-12 left-1/2 transform -translate-x-1/2 w-40 bg-black/80 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                    View full location image
+                  </span>
+                </button>
+              )}
+              
+              {/* Close button */}
+              <button 
+                onClick={onClose}
+                className={`rounded-full p-1.5 transition-colors ${
+                  headerBackgroundImage 
+                    ? 'text-white/90 hover:bg-white/20 hover:text-white' 
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+                aria-label="Close"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
-      )}
-    </div>
-    
-    <button 
-      onClick={onClose}
-      className={`rounded-full p-1.5 transition-colors ${
-        headerBackgroundImage 
-          ? 'text-white/90 hover:bg-white/20 hover:text-white' 
-          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-      }`}
-      aria-label="Close"
-    >
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
-  </div>
-</div>
 
-  {/* Divider */}
-      <div className="h-1 mt-0 bg-gradient-to-r from-indigo-900 via-purple-400 to-amber-400 shadow-md"></div>
-
-        
+        {/* Divider */}
+        <div className="h-1 mt-0 bg-gradient-to-r from-indigo-900 via-purple-400 to-amber-400 shadow-md"></div>
+          
         {/* Modal Body - Two Column Layout */}
         <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-700">
           {/* Left Column - Visual */}
@@ -393,7 +448,7 @@ const getDocumentDescription = (metadata: any): string => {
                   />
                   {/* Zoom icon overlay that appears on hover */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 bg-black/20">
-                    <div className="bg-black/50 rounded-full p-2">
+                    <div className="bg-black/50 roundd-full p-2">
                       <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                       </svg>
@@ -514,7 +569,7 @@ const getDocumentDescription = (metadata: any): string => {
                     </>
                   )}
                   
-                  {/* Research Goals */}
+         {/* Research Goals */}
                   {actualMetadata?.researchGoals && (
                     <>
                       <p className="text-purple-300 mt-3">┌─ Research Goals ───────────────────┐</p>
@@ -554,6 +609,11 @@ const getDocumentDescription = (metadata: any): string => {
           to { transform: translateY(0); opacity: 1; }
         }
         
+        @keyframes slideInFromTop {
+          from { transform: translateY(-100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
         .modal-fade-in {
           animation: modalFadeIn 0.3s ease-out forwards;
         }
@@ -576,6 +636,10 @@ const getDocumentDescription = (metadata: any): string => {
           animation-name: zoomIn105;
         }
         
+        .slide-in-from-top {
+          animation-name: slideInFromTop;
+        }
+        
         @keyframes zoomIn105 {
           from { transform: scale(0.95); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
@@ -584,3 +648,5 @@ const getDocumentDescription = (metadata: any): string => {
     </div>
   );
 }
+
+

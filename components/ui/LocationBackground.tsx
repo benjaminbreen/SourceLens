@@ -1,12 +1,12 @@
 // components/ui/LocationBackground.tsx
-// Component for dynamically selecting and displaying historical location backgrounds
-// based on century and location for use in the roleplay feature
+// Enhanced version that uses the improved LocationBackgroundUtils
+// Follows decade-first approach with better handling of cities and regions
 
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { extractCentury, normalizeLocation } from './LocationBackgroundUtils';
+import { getPrioritizedImagePaths } from './LocationBackgroundUtils';
 
 interface LocationBackgroundProps {
   date?: string;
@@ -14,6 +14,7 @@ interface LocationBackgroundProps {
   opacity?: number;
   className?: string;
   children?: React.ReactNode;
+  backgroundStyle?: 'light' | 'dark' | 'paper' | 'parchment'; 
 }
 
 export default function LocationBackground({
@@ -21,7 +22,8 @@ export default function LocationBackground({
   location = '',
   opacity = 0.15,
   className = '',
-  children
+  children,
+  backgroundStyle = 'light'
 }: LocationBackgroundProps) {
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
@@ -33,57 +35,45 @@ export default function LocationBackground({
       return;
     }
     
-    const century = extractCentury(date);
-    const normalizedLocation = normalizeLocation(location);
+    // Simple debug log function
+    const debugLog = (message: string, data?: any) => {
+      console.log(`[LocationBg] ${message}`, data || '');
+    };
     
-    console.log(`Looking for location background: century=${century}, location=${normalizedLocation}`);
-    
-    // Try specific century + location
-    const specificImage = `/locations/${century}${normalizedLocation}.jpg`;
-    
-    // Fallbacks in order of preference
-    const centuryGenericImage = `/locations/${century}generic.jpg`;
-    const locationGenericImage = `/locations/generic${normalizedLocation}.jpg`;
-    const defaultImage = '/locations/default.jpg';
-    
-    // Test if an image exists at the specific path
+    // Check if an image exists at the given path
     const checkImageExists = async (path: string): Promise<boolean> => {
       try {
         const response = await fetch(path, { method: 'HEAD' });
-        return response.ok;
+        const exists = response.ok;
+        debugLog(`Trying: ${path} - ${exists ? 'SUCCESS' : 'not found'}`);
+        return exists;
       } catch (error) {
+        debugLog(`Error checking image ${path}:`, error);
         return false;
       }
     };
     
+    // Find the best image using prioritized paths
     const findBestImage = async () => {
       setImageError(false);
       
-      // Try specific century+location combination
-      if (await checkImageExists(specificImage)) {
-        setBackgroundImage(specificImage);
-        return;
-      }
+      debugLog('Finding background for:', { date, location });
       
-      // Try century-only image
-      if (await checkImageExists(centuryGenericImage)) {
-        setBackgroundImage(centuryGenericImage);
-        return;
-      }
+      // Get prioritized image paths from utils function
+      const imagePaths = getPrioritizedImagePaths(date, location);
+      debugLog('Image search order:', imagePaths);
       
-      // Try location-only image
-      if (normalizedLocation && await checkImageExists(locationGenericImage)) {
-        setBackgroundImage(locationGenericImage);
-        return;
-      }
-      
-      // Fallback to default
-      if (await checkImageExists(defaultImage)) {
-        setBackgroundImage(defaultImage);
-        return;
+      // Try each path in priority order
+      for (const path of imagePaths) {
+        if (await checkImageExists(path)) {
+          debugLog(`SUCCESS! Using ${path}`);
+          setBackgroundImage(path);
+          return;
+        }
       }
       
       // No image found
+      debugLog('No suitable background image found');
       setBackgroundImage(null);
       setImageError(true);
     };
@@ -91,31 +81,55 @@ export default function LocationBackground({
     findBestImage();
   }, [date, location]);
 
+  // Get texture background based on style
+  const getTextureBg = () => {
+    switch (backgroundStyle) {
+      case 'paper':
+        return 'bg-[url(/textures/paper.jpg)] bg-repeat';
+      case 'parchment':
+        return 'bg-[url(/textures/parchment.jpg)] bg-repeat';
+      case 'dark':
+        return 'bg-slate-800';
+      default:
+        return 'bg-slate-50';
+    }
+  };
+
   if (!backgroundImage || imageError) {
-    // Return container with children but no background
+    // Return container with subtle texture background
     return (
-      <div className={`relative ${className}`}>
-        {children}
+      <div className={`relative ${getTextureBg()} ${className}`}>
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-200/40 to-white/10 mix-blend-overlay"></div>
+        <div className="relative z-10">{children}</div>
       </div>
     );
   }
 
   return (
-    <div className={`relative ${className}`}>
-      {/* Background image with fade effect */}
-      <div className="absolute inset-0 overflow-hidden">
+    <div className={`relative overflow-hidden ${className}`}>
+      {/* Image Background with enhanced overlay effects */}
+      <div className="absolute inset-0 z-0">
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage: `url('${backgroundImage}')`,
-            opacity: opacity,
+            opacity: opacity * 1.2, // Slightly increase opacity
           }}
         />
         
-        {/* Gradient overlay fade effect */}
-        <div className="absolute inset-0 bg-gradient-to-t from-amber to-white to-transparent" />
-
+        {/* Multi-layer overlay for better depth and readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/0 via-white/50 to-white/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-white/90 via-transparent to-white/30"></div>
+        
+        {/* Subtle vignette effect */}
+        <div className="absolute inset-0 shadow-[inset_0_0_50px_rgba(0,0,0,0.1)]"></div>
+        
+        {/* Texture overlay for depth */}
+        <div className="absolute inset-0 bg-[url(/textures/noise.png)] opacity-20 mix-blend-overlay"></div>
       </div>
+      
+      {/* Subtle inner border to enhance depth */}
+      <div className="absolute inset-[3px] ring-1 ring-inset ring-black/5 rounded-[inherit] pointer-events-none"></div>
       
       {/* Content */}
       <div className="relative z-10">
@@ -124,6 +138,3 @@ export default function LocationBackground({
     </div>
   );
 }
-
-// Export utility functions
-export { extractCentury, normalizeLocation };

@@ -45,7 +45,8 @@ Take cognizance that (from now on) I will not accept here any copper from you th
       academicSubfield: 'Ancient Near Eastern Studies',
       tags: ['Mesopotamia', 'Business History', 'Commercial Disputes'],
       summary: 'Ancient customer complaint about inferior copper',
-      fullCitation: 'Nanni. "Complaint to Ea-nasir." Clay tablet letter, Ur, Mesopotamia, circa 1750 BCE. Translated by A. Leo Oppenheim.'
+      fullCitation: 'Nanni. "Complaint to Ea-nasir." Clay tablet letter, Ur, Mesopotamia, circa 1750 BCE. Translated by A. Leo Oppenheim.',
+       thumbnailUrl: '/demo-thumbnails/nannitablet.jpg'
     }
   },
 
@@ -157,7 +158,8 @@ qualia etiam solet fieri inter maleficos congressus.
     academicSubfield: 'Theology / Moral Philosophy',
     tags: ['Demonology', 'Cassianus', 'Pelbartus', 'Spiritual Temptation', 'Rosarium', 'Latin Scholasticism'],
     summary: 'Complex Latin theological discourse on the nature, classification, and function of demons in temptation, possession, and divine permission.',
-    fullCitation: 'Pelbartus de Themeswar. *Secundus Liber Rosarii Theologiae Aurei: ad Sententiarum secundum librum accommodatissimus.* Hagenau: 1504.'
+    fullCitation: 'Pelbartus de Themeswar. *Secundus Liber Rosarii Theologiae Aurei: ad Sententiarum secundum librum accommodatissimus.* Hagenau: 1504.',
+     thumbnailUrl: '/demo-thumbnails/pelbartus.jpg'
   }
 },
 
@@ -218,7 +220,8 @@ Audiencia A diez y nueue dias del mes de Iunio de mill y seiscientos y veinte af
       academicSubfield: 'Colonial Latin American History',
       tags: ['Spanish Inquisition', 'Indigenous Practices', 'Colonial Control'],
       summary: 'Official ban on psychoactive plant use in colonies',
-      fullCitation: 'Nabarre de Isla, Don Pedro. "Edict Prohibiting the Use of Peyote." Mexico City: Holy Office of the Inquisition, June 29, 1620.'
+      fullCitation: 'Nabarre de Isla, Don Pedro. "Edict Prohibiting the Use of Peyote." Mexico City: Holy Office of the Inquisition, June 29, 1620.',
+       thumbnailUrl: '/demo-thumbnails/inquisition.jpg'
     }
   },
 
@@ -281,7 +284,8 @@ The revenue or stock of a Kingdom by which it is provided of forraign wares is e
       academicSubfield: 'Economic History',
       tags: ['Mercantilism', 'Early Modern Economics', 'Trade Policy'],
       summary: 'Early mercantilist tract on foreign trade balance',
-      fullCitation: 'Mun, Thomas. England\'s Treasure by Forraign Trade. London: Thomas Clark, 1664.'
+      fullCitation: 'Mun, Thomas. England\'s Treasure by Forraign Trade. London: Thomas Clark, 1664.',
+      thumbnailUrl: '/demo-thumbnails/munbook.jpg'
     }
   },
 
