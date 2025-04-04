@@ -243,3 +243,22 @@ code, pre, .code {
 .analysis-panel p {
   margin-bottom: 0.75rem;
 }
+
+        @keyframes tagFadeIn {
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        
+        .tag-animate-in {
+          animation: tagFadeIn 0.3s ease-out forwards;
+        }
+        
+        @keyframes tagFadeOut {
+          from { opacity: 1; transform: scale(1); }
+          to { opacity: 0; transform: scale(0.9); }
+        }
+        
+        .tag-animate-out {
+          animation: tagFadeOut 0.2s ease-in forwards;
+        }
+   

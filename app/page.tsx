@@ -1,10 +1,12 @@
 // app/page.tsx
 // Landing page for SourceLens - provides text and file upload options,
-// metadata collection, and navigation to the analysis interface
+// metadata collection, and navigation to the analysis interface.
+// Features a responsive layout with demo options, metadata detection,
+// and multiple interactive components for user engagement.
 
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import HamburgerMenu from '@/components/ui/HamburgerMenu';
@@ -15,9 +17,189 @@ import AnalysisFooter from '../components/ui/AnalysisFooter';
 import SourceUpload from '@/components/upload/SourceUpload';
 import { demoTexts, demoExtractConfigs } from '@/lib/demoData';
 import Footer from '@/components/ui/Footer';
+import MetadataModal from '@/components/upload/MetadataModal';
 
+// ----- Separate Component for Metadata Auto Timer -----
+// Fix setState in render issue by redesigning component
+const MetadataAutoTimer = ({ onComplete, duration = 5 }: { onComplete: () => void, duration?: number }) => {
+  const [timeLeft, setTimeLeft] = useState(duration);
+  const [progress, setProgress] = useState(0);
+  
+  // Use a ref to track whether component is mounted
+  const isMountedRef = useRef(true);
+  
+  useEffect(() => {
+    // Focus the parent element to enable Enter key capture
+    const parentEl = document.getElementById('metadata-prompt-modal');
+    if (parentEl) parentEl.focus();
+    
+    // Reset state on mount
+    setTimeLeft(duration);
+    setProgress(0);
+    
+    // Start countdown
+    const timer = setInterval(() => {
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        setTimeLeft(prev => {
+          const newTime = prev - 1;
+          if (newTime <= 0) {
+            clearInterval(timer);
+            onComplete();
+            return 0;
+          }
+          return newTime;
+        });
+        
+        // Calculate progress separately to avoid setState during render
+        setProgress(((duration - timeLeft + 1) / duration) * 100);
+      }
+    }, 1000);
+    
+    // Cleanup
+    return () => {
+      isMountedRef.current = false;
+      clearInterval(timer);
+    };
+  }, [duration, onComplete, timeLeft]);
+  
+  return (
+    <div className="mb-3">
+      <div className="flex justify-between items-center mb-1">
+        <span className="text-xs text-slate-500">Auto-applying in {timeLeft}s</span>
+        <button 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onComplete();
+          }}
+          className="text-xs text-amber-700 hover:text-amber-900 transition-colors"
+        >
+          Apply now
+        </button>
+      </div>
+      <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
+        <div 
+          className="h-full bg-amber-500 transition-all duration-300 ease-linear"
+          style={{ width: `${progress}%` }}
+        ></div>
+      </div>
+    </div>
+  );
+};
+
+// ----- Feature Demo Card Component -----
+// Extracted for better organization and reusability
+const FeatureCard = ({ 
+  title, 
+  icon, 
+  isExpanded, 
+  onToggle, 
+  color,
+  children 
+}: { 
+  title: string, 
+  icon: React.ReactNode, 
+  isExpanded: boolean, 
+  onToggle: () => void, 
+  color: string,
+  children: React.ReactNode 
+}) => {
+  // Color scheme mapping based on theme
+  const colorSchemes = {
+    amber: {
+      border: 'border-amber-100',
+      ring: 'ring-amber-300',
+      iconBg: 'bg-amber-50',
+      iconText: 'text-amber-600',
+      iconHoverBg: 'group-hover:bg-amber-100',
+      iconHoverText: 'group-hover:text-amber-700',
+      dropdownBg: 'bg-amber-50',
+      gradientFrom: 'from-amber-200',
+      gradientVia: 'via-amber-400',
+      gradientTo: 'to-amber-200'
+    },
+    blue: {
+      border: 'border-blue-100',
+      ring: 'ring-blue-300',
+      iconBg: 'bg-blue-50',
+      iconText: 'text-blue-600',
+      iconHoverBg: 'group-hover:bg-blue-100',
+      iconHoverText: 'group-hover:text-blue-700',
+      dropdownBg: 'bg-blue-50',
+      gradientFrom: 'from-blue-200',
+      gradientVia: 'via-blue-400',
+      gradientTo: 'to-blue-200'
+    },
+    purple: {
+      border: 'border-purple-100',
+      ring: 'ring-purple-300',
+      iconBg: 'bg-purple-50',
+      iconText: 'text-purple-600',
+      iconHoverBg: 'group-hover:bg-purple-100',
+      iconHoverText: 'group-hover:text-purple-700',
+      dropdownBg: 'bg-purple-50',
+      gradientFrom: 'from-purple-200',
+      gradientVia: 'via-purple-400',
+      gradientTo: 'to-purple-200'
+    }
+  };
+  
+  const scheme = colorSchemes[color as keyof typeof colorSchemes] || colorSchemes.amber;
+  
+  return (
+    <div 
+      className={`flex-1 bg-white border ${scheme.border} rounded-xl shadow-md hover:shadow-lg 
+        transition-all duration-300 overflow-hidden group ${isExpanded ? `ring-1 ${scheme.ring}` : ''}`}
+    >
+      <div 
+        className="p-4 cursor-pointer flex items-center justify-between"
+        onClick={onToggle}
+      >
+        <div className="flex items-center">
+          <div className={`w-9 h-9 mr-3 ${scheme.iconBg} ${scheme.iconText} rounded-lg flex items-center 
+            justify-center transition-all duration-300 ${scheme.iconHoverBg} ${scheme.iconHoverText}`}>
+            {icon}
+          </div>
+          <h3 className="font-medium text-slate-800 text-base">{title}</h3>
+        </div>
+        
+        <div className={`p-1 rounded-full transition-colors duration-300 ${isExpanded ? scheme.dropdownBg : ''}`}>
+          <svg 
+            className={`w-4 h-4 ${scheme.iconText} transition-transform duration-300 ${
+              isExpanded ? 'rotate-180' : ''
+            }`} 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+      
+      <div 
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isExpanded ? 'max-h-48' : 'max-h-0'
+        }`}
+      >
+        <div className="px-4 pb-4 pt-0">
+          <div className="h-px bg-slate-100 w-full mb-3"></div>
+          {children}
+        </div>
+      </div>
+      
+      <div className={`h-0.5 bg-gradient-to-r ${scheme.gradientFrom} ${scheme.gradientVia} ${scheme.gradientTo} 
+        transition-all duration-500 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}></div>
+    </div>
+  );
+};
+
+// ----- Main Home Component -----
 export default function Home() {
   const router = useRouter();
+  
+  // Destructure store values and functions
   const { 
     setSourceContent, 
     setMetadata,
@@ -36,7 +218,8 @@ export default function Home() {
     setSpecialLensRequest
   } = useAppStore();
   
-  // --- State Management ---
+  // ----- State Management -----
+  // Form and content state
   const [textInput, setTextInput] = useState('');
   const [metadata, setLocalMetadata] = useState<Metadata>({
     date: '',
@@ -53,16 +236,27 @@ export default function Home() {
     tags: [],
     fullCitation: ''
   });
+  
+  // UI state
   const [activeTab, setActiveTab] = useState('text');
   const [expandedFeature, setExpandedFeature] = useState<number | null>(null);
   const [formValid, setFormValid] = useState(false);
   const [animateIn, setAnimateIn] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showFAQModal, setShowFAQModal] = useState(false);
+  const [showMetadataModal, setShowMetadataModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Demo and options state
   const [showDemoOptions, setShowDemoOptions] = useState(false);
   const [selectedDemo, setSelectedDemo] = useState<number | null>(null);
-  const [disableMetadataDetection, setDisableMetadataDetection] = useState(false);
   const [useAIVision, setUseAIVision] = useState(false);
+  const [fields, setFields] = useState({
+    visionModel: 'gemini-2.0-pro-exp-02-05' // Default to Gemini
+  });
+  
+  // Metadata detection state
+  const [disableMetadataDetection, setDisableMetadataDetection] = useState(false);
   const [detectedMetadata, setDetectedMetadata] = useState<any>(null);
   const [showMetadataPrompt, setShowMetadataPrompt] = useState(false);
   const [isExtractingMetadata, setIsExtractingMetadata] = useState(false);
@@ -70,39 +264,30 @@ export default function Home() {
     additionalInfo: false,
     researchGoals: false 
   });
-  const [fields, setFields] = useState({
-    visionModel: 'gemini-2.0-pro-exp-02-05' // Default to Gemini
-  });
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-  const checkIfMobile = () => {
-    setIsMobile(window.innerWidth < 768);
-  };
   
-  // Initial check
-  checkIfMobile();
+  // Use refs to track async operations and prevent duplicate calls
+  const metadataExtractionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastExtractedTextRef = useRef<string>('');
   
-  // Add event listener
-  window.addEventListener('resize', checkIfMobile);
+  // ----- Effects and Handlers -----
   
-  // Cleanup
-  return () => window.removeEventListener('resize', checkIfMobile);
-}, []);
-
-  // --- Cleanup on unmount ---
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // Clean up any object URLs when the component unmounts
+      // Clean up any object URLs when component unmounts
       const thumbnailUrl = useAppStore.getState().sourceThumbnailUrl;
       if (thumbnailUrl && thumbnailUrl.startsWith('blob:')) {
         URL.revokeObjectURL(thumbnailUrl);
-        console.log("Cleaned up thumbnail URL on unmount");
+      }
+      
+      // Clear any pending timers
+      if (metadataExtractionTimerRef.current) {
+        clearTimeout(metadataExtractionTimerRef.current);
       }
     };
   }, []);
 
-  // --- Form validation ---
+  // Form validation
   useEffect(() => {
     setFormValid(
       textInput.trim().length > 0 && 
@@ -111,12 +296,33 @@ export default function Home() {
     );
   }, [textInput, metadata]);
   
-  // --- Animation on mount ---
+  // Animation on mount
   useEffect(() => {
-    setAnimateIn(true);
+    // Start animation after slight delay for smoother appearance
+    const animationTimer = setTimeout(() => {
+      setAnimateIn(true);
+    }, 50);
+    
+    return () => clearTimeout(animationTimer);
   }, []);
   
-  // --- Close demo dropdown when clicking outside ---
+  // Check device size for responsive design
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Initial check
+    checkIfMobile();
+    
+    // Add event listener
+    window.addEventListener('resize', checkIfMobile);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', checkIfMobile);
+  }, []);
+  
+  // Close demo dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showDemoOptions) {
@@ -137,56 +343,69 @@ export default function Home() {
     };
   }, [showDemoOptions]);
 
-  // --- Metadata extraction ---
-  const extractMetadata = async (text: string) => {
-    if (disableMetadataDetection) {
-      return null; // Skip metadata detection entirely if disabled
-    }
-    if (!text || text.trim().length < 50) {
-      return null; // Skip if text is too short
-    }
-    
-    // Avoid multiple simultaneous extraction attempts
-    if (isExtractingMetadata) return null;
-    
-    setIsExtractingMetadata(true);
-    
-    try {
-      const response = await fetch('/api/extract-metadata', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
-      }
-      
-      const metadata = await response.json();
-      console.log("Extracted metadata:", metadata);
-      
-      // Only show prompt if we have meaningful metadata
-      if (metadata.date || metadata.author || metadata.title) {
-        setDetectedMetadata(metadata);
-        setShowMetadataPrompt(true);
-      }
-      
-      return metadata;
-    } catch (error) {
-      console.error("Error extracting metadata:", error);
+  // ----- Metadata Functions -----
+  
+  // Extract metadata - memoized with useCallback
+  const extractMetadata = useCallback(async (text: string) => {
+    // Skip extraction under these conditions
+    if (disableMetadataDetection || 
+        !text || 
+        text.trim().length < 50 || 
+        isExtractingMetadata || 
+        text === lastExtractedTextRef.current) {
       return null;
-    } finally {
-      setIsExtractingMetadata(false);
     }
-  };
-
-  // --- Apply detected metadata ---
-  const applyDetectedMetadata = () => {
+    
+    // Update ref to prevent duplicate extraction
+    lastExtractedTextRef.current = text;
+    
+    // Add a debounce to prevent excessive API calls
+    if (metadataExtractionTimerRef.current) {
+      clearTimeout(metadataExtractionTimerRef.current);
+    }
+    
+    // Debounce extraction to avoid rapid successive calls
+    return new Promise<any>(resolve => {
+      metadataExtractionTimerRef.current = setTimeout(async () => {
+        try {
+          setIsExtractingMetadata(true);
+          
+          const response = await fetch('/api/extract-metadata', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text }),
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}`);
+          }
+          
+          const metadata = await response.json();
+          
+          // Add timestamp to track when this metadata was detected
+          metadata._timestamp = Date.now();
+          
+          // Only show prompt if we have meaningful metadata
+          if (metadata.date || metadata.author || metadata.title) {
+            setDetectedMetadata(metadata);
+            setShowMetadataPrompt(true);
+          }
+          
+          resolve(metadata);
+        } catch (error) {
+          console.error("Error extracting metadata:", error);
+          resolve(null);
+        } finally {
+          setIsExtractingMetadata(false);
+        }
+      }, 800); // 800ms debounce
+    });
+  }, [disableMetadataDetection, isExtractingMetadata]);
+  
+  // Apply detected metadata
+  const applyDetectedMetadata = useCallback(() => {
     if (!detectedMetadata) return;
     
-    // Apply each detected metadata field if it exists and the user's field is empty
     setLocalMetadata(prevMetadata => {
       const newMetadata = { ...prevMetadata };
       
@@ -205,35 +424,22 @@ export default function Home() {
       }
       
       // Add optional fields with null checks
-      if (detectedMetadata.title) {
-        newMetadata.title = detectedMetadata.title;
-      }
+      Object.entries({
+        title: detectedMetadata.title,
+        summary: detectedMetadata.summary,
+        documentEmoji: detectedMetadata.documentEmoji,
+        placeOfPublication: detectedMetadata.placeOfPublication,
+        genre: detectedMetadata.genre,
+        documentType: detectedMetadata.documentType,
+        academicSubfield: detectedMetadata.academicSubfield,
+        fullCitation: detectedMetadata.fullCitation
+      }).forEach(([key, value]) => {
+        if (value) {
+          (newMetadata as any)[key] = value;
+        }
+      });
       
-      if (detectedMetadata.summary) {
-        newMetadata.summary = detectedMetadata.summary;
-      }
-      
-      if (detectedMetadata.documentEmoji) {
-        newMetadata.documentEmoji = detectedMetadata.documentEmoji;
-      }
-      
-      // Add other potential metadata fields
-      if (detectedMetadata.placeOfPublication) {
-        newMetadata.placeOfPublication = detectedMetadata.placeOfPublication;
-      }
-      
-      if (detectedMetadata.genre) {
-        newMetadata.genre = detectedMetadata.genre;
-      }
-      
-      if (detectedMetadata.documentType) {
-        newMetadata.documentType = detectedMetadata.documentType;
-      }
-      
-      if (detectedMetadata.academicSubfield) {
-        newMetadata.academicSubfield = detectedMetadata.academicSubfield;
-      }
-      
+      // Handle tags which might be array or string
       if (detectedMetadata.tags) {
         newMetadata.tags = Array.isArray(detectedMetadata.tags) 
           ? detectedMetadata.tags 
@@ -242,116 +448,117 @@ export default function Home() {
             : [];
       }
       
-      if (detectedMetadata.fullCitation) {
-        newMetadata.fullCitation = detectedMetadata.fullCitation;
-      }
-      
       return newMetadata;
     });
     
     // Hide the prompt after applying
     setShowMetadataPrompt(false);
-  };
+  }, [detectedMetadata]);
 
-  // --- Demo content management ---
-  const toggleDemoOptions = (e: React.MouseEvent<HTMLElement>) => {
-    e.preventDefault(); // Prevent any default behavior
-    e.stopPropagation(); // Stop event from propagating up
-    setShowDemoOptions(!showDemoOptions);
-  };
+  // Handle metadata modal save
+  const handleSaveMetadata = useCallback((updatedMetadata: Metadata) => {
+    setLocalMetadata(updatedMetadata);
+  }, []);
+  
+  // ----- Demo/Example Functions -----
+  
+  // Toggle demo options dropdown
+  const toggleDemoOptions = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowDemoOptions(prev => !prev);
+  }, []);
 
-  const loadDemoContent = (index: number) => {
-  setDisableMetadataDetection(true);
-  setSelectedDemo(index);
-  
-  // Set the demo text to both local state and app store
-  const demoText = demoTexts[index].text;
-  setTextInput(demoText);
-  setSourceContent(demoText);
-  
-  // Update the metadata
-  setLocalMetadata(demoTexts[index].metadata);
+  // Load demo content
+  const loadDemoContent = useCallback((index: number) => {
+    setDisableMetadataDetection(true);
+    setSelectedDemo(index);
+    
+    // Set the demo text to both local state and app store
+    const demoText = demoTexts[index].text;
+    setTextInput(demoText);
+    setSourceContent(demoText);
+    
+    // Update the metadata
+    setLocalMetadata(demoTexts[index].metadata);
 
-  // Set the thumbnail URL if present
-  const demoThumbnailUrl = demoTexts[index].metadata.thumbnailUrl || null;
-  setSourceThumbnailUrl(demoThumbnailUrl);
-  
-  // Set extract info configuration if applicable
-  setExtractInfoConfig(demoExtractConfigs[index]);
-  
-  // Ensure we're on the text input tab when demo is loaded
-  setActiveTab('text');
-  
-  // Hide the demo options after selection
-  setTimeout(() => {
-    setShowDemoOptions(false);
+    // Set the thumbnail URL if present
+    const demoThumbnailUrl = demoTexts[index].metadata.thumbnailUrl || null;
+    setSourceThumbnailUrl(demoThumbnailUrl);
+    
+    // Set extract info configuration if applicable
+    setExtractInfoConfig(demoExtractConfigs[index]);
+    
+    // Ensure we're on the text input tab when demo is loaded
+    setActiveTab('text');
+    
+    // Hide the demo options after selection
+    setTimeout(() => {
+      setShowDemoOptions(false);
+      
+      // Re-enable metadata detection after a delay
+      setTimeout(() => {
+        setDisableMetadataDetection(false);
+      }, 1000);
+    }, 500);
+  }, [setExtractInfoConfig, setSourceContent, setSourceThumbnailUrl]);
+
+  // Handle quick demo for specific features
+  const handleQuickDemo = useCallback((
+    demoIndex: number, 
+    targetPanel: 'roleplay' | 'detailed-analysis' | 'counter' | 'references' | 'extract-info' | 'highlight'
+  ) => {
+    // Disable metadata detection temporarily
+    setDisableMetadataDetection(true);
+    
+    // Load the demo content
+    setSelectedDemo(demoIndex);
+    
+    // Make sure to update both local state and app store
+    const demoText = demoTexts[demoIndex].text;
+    setTextInput(demoText);
+    setSourceContent(demoText);
+    
+    setLocalMetadata(demoTexts[demoIndex].metadata);
+
+    // Get the thumbnail URL from the demo
+    const demoThumbnailUrl = demoTexts[demoIndex].metadata.thumbnailUrl || null;
+    setSourceThumbnailUrl(demoThumbnailUrl);
+    
+    // Ensure we're on the text tab
+    setActiveTab('text');
+    
+    // Set any relevant extract info configuration
+    if (demoExtractConfigs[demoIndex]) {
+      setExtractInfoConfig(demoExtractConfigs[demoIndex]);
+    }
+    
+    // Set the appropriate panel and any special modes
+    setActivePanel(targetPanel);
+    
+    if (targetPanel === 'roleplay') {
+      setRoleplayMode(true);
+    }
+
+    // IMPORTANT: If detailed analysis is requested, force detailed analysis to null
+    // This will trigger the API call when the component mounts
+    if (targetPanel === 'detailed-analysis') {
+      setDetailedAnalysis(null);
+      setDetailedAnalysisLoaded(false);
+    }
+    
+    // Prepare the source content for analysis
+    setSourceContent(demoText);
+    setMetadata(demoTexts[demoIndex].metadata);
+    setLoading(true);
     
     // Re-enable metadata detection after a delay
     setTimeout(() => {
       setDisableMetadataDetection(false);
     }, 1000);
-  }, 500);
-};
-
-  // --- Quick Demo Functions ---
-  const handleQuickDemo = (demoIndex: number, targetPanel: 'roleplay' | 'detailed-analysis' | 'counter' | 'references' | 'extract-info' | 'highlight') => {
-  // Disable metadata detection temporarily
-  setDisableMetadataDetection(true);
-  
-  // Load the demo content
-  setSelectedDemo(demoIndex);
-  
-  // Make sure to update both local state and app store
-  const demoText = demoTexts[demoIndex].text;
-  setTextInput(demoText);
-  setSourceContent(demoText);
-  
-  setLocalMetadata(demoTexts[demoIndex].metadata);
-
-  // Get the thumbnail URL from the demo
-  const demoThumbnailUrl = demoTexts[demoIndex].metadata.thumbnailUrl || null;
-  setSourceThumbnailUrl(demoThumbnailUrl);
-  
-  // Ensure we're on the text tab
-  setActiveTab('text');
-  
-  // Set any relevant extract info configuration
-  if (demoExtractConfigs[demoIndex]) {
-    setExtractInfoConfig(demoExtractConfigs[demoIndex]);
-  }
-  
-  // Set the appropriate panel and any special modes
-  setActivePanel(targetPanel);
-  
-  if (targetPanel === 'roleplay') {
-    setRoleplayMode(true);
-  }
-
-  // Special handling for extract-info panel
-  if (targetPanel === 'extract-info' && demoExtractConfigs[demoIndex]) {
-    // Set the extract info configuration for this specific demo
-    setExtractInfoConfig(demoExtractConfigs[demoIndex]);
-  }
-  
-  // Prepare the source content for analysis
-  setSourceContent(demoText);
-  setMetadata(demoTexts[demoIndex].metadata);
-  setLoading(true);
-  
-  // IMPORTANT: If detailed analysis is requested, force detailed analysis to null
-  // This will trigger the API call when the component mounts
-  if (targetPanel === 'detailed-analysis') {
-    setDetailedAnalysis(null);
-    setDetailedAnalysisLoaded(false);
-  }
-  
-  // Re-enable metadata detection after a delay
-  setTimeout(() => {
-    setDisableMetadataDetection(false);
-  }, 1000);
-  
-  // Navigate to analysis page
-  router.push('/analysis');
+    
+    // Navigate to analysis page
+    router.push('/analysis');
     
     // If going to roleplay, set up a pre-populated input after page load
     if (targetPanel === 'roleplay') {
@@ -391,9 +598,13 @@ export default function Home() {
         }
       }, 3000);
     }
-  };
+  }, [
+    router, setActivePanel, setRoleplayMode, setSourceContent, setMetadata, setLoading, 
+    setSourceThumbnailUrl, setExtractInfoConfig, setDetailedAnalysis, setDetailedAnalysisLoaded
+  ]);
 
-  const handleManhattanNarrative = async () => {
+  // Handle Manhattan narrative special case
+  const handleManhattanNarrative = useCallback(async () => {
     // This is the index of the Delaware oral tradition about Manhattan in your demoTexts array
     const manhattanDemoIndex = 5;
     
@@ -447,9 +658,13 @@ export default function Home() {
         console.error("Error generating counter narrative:", error);
       }
     }, 300);
-  };
+  }, [
+    router, setActivePanel, setLoading, setMetadata, setSourceContent, 
+    setSpecialLensRequest
+  ]);
 
-  const handleHighlightDemo = (demoIndex: number, highlightQuery: string) => {
+  // Handle highlight demo
+  const handleHighlightDemo = useCallback((demoIndex: number, highlightQuery: string) => {
     // Disable metadata detection temporarily
     setDisableMetadataDetection(true);
     
@@ -475,10 +690,19 @@ export default function Home() {
     
     // Navigate to analysis page
     router.push('/analysis');
-  };
+  }, [
+    router, setActivePanel, setHighlightMode, setHighlightQuery, 
+    setSourceContent, setMetadata, setLoading
+  ]);
 
-  // --- Debug component for development ---
- 
+  // Toggle an expanded field
+  const toggleExpandedField = useCallback((field: keyof typeof expandedFields) => {
+    setExpandedFields(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  }, []);
+
 
   // --- Main UI ---
   return (
@@ -595,6 +819,7 @@ export default function Home() {
 
       {/* Main content - Enhanced UI */}
       <div className="flex-1 max-w-7xl mx-auto px-3 py-3 -mt-0 relative z-10">
+        
         {/* Feature cards section */}
         <div className={`flex mt-2 flex-col md:flex-row items-start gap-4 transition-all duration-700 transform ${
           animateIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
@@ -726,7 +951,7 @@ export default function Home() {
                   </button>
                   <button
                     className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                    onClick={() => handleQuickDemo(5, 'roleplay')} // Index 5 is the Freud's cocaine treatise
+                    onClick={() => handleQuickDemo(8, 'roleplay')} // Index 5 is the Freud's cocaine treatise
                   >
                     <svg className="w-3.5 h-3.5 mr-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
@@ -1041,80 +1266,98 @@ export default function Home() {
                 )}
               </div>
               
-              {/* Metadata detection overlay */}
-{showMetadataPrompt && detectedMetadata && (
-  <div className="absolute inset-0 z-10 flex items-center justify-center animate-in fade-in duration-300">
-    <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-[2px]" onClick={() => setShowMetadataPrompt(false)}></div>
-    <div className="relative bg-white/95 border-2 border-amber-200 rounded-lg shadow-xl max-w-md w-full p-4 mx-4 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="text-sm font-semibold text-amber-900 flex items-center">
-          <span className="inline-flex items-center justify-center w-5 h-5 mr-2 bg-amber-100 rounded-full">
-            <svg className="w-3.5 h-3.5 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </span>
-          Metadata Detected
-        </h3>
-        <button 
-          onClick={() => setShowMetadataPrompt(false)}
-          className="text-slate-400 hover:text-slate-700 transition-colors rounded-full hover:bg-slate-100 p-1"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      
-      <div className="bg-amber-50/70 rounded-md p-3 mb-3 border border-amber-100">
-        <p className="text-xs text-amber-800 font-medium mb-1">SourceLens detected the following data:</p>
-        <div className="space-y-1 text-xs">
-          {detectedMetadata.title && (
-            <div className="flex">
-              <span className="font-medium w-14 text-amber-700">Title:</span>
-              <span className="text-slate-700">{detectedMetadata.title}</span>
-            </div>
-          )}
-          {detectedMetadata.author && (
-            <div className="flex">
-              <span className="font-medium w-14 text-amber-700">Author:</span>
-              <span className="text-slate-700">{detectedMetadata.author}</span>
-            </div>
-          )}
-          {detectedMetadata.date && (
-            <div className="flex">
-              <span className="font-medium w-14 text-amber-700">Date:</span>
-              <span className="text-slate-700">{detectedMetadata.date}</span>
-            </div>
-          )}
-          {detectedMetadata.documentType && (
-            <div className="flex">
-              <span className="font-medium w-14 text-amber-700">Type:</span>
-              <span className="text-slate-700">{detectedMetadata.documentType}</span>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      <div className="flex space-x-3">
-        <button
-          onClick={() => setShowMetadataPrompt(false)}
-          className="flex-1 py-1.5 bg-slate-100 text-slate-700 text-xs font-medium rounded hover:bg-slate-200 transition-colors"
-        >
-          Ignore
-        </button>
-        <button
-          onClick={() => {
-            applyDetectedMetadata();
-            setShowMetadataPrompt(false);
-          }}
-          className="flex-1 py-1.5 bg-amber-600 text-white text-xs font-medium rounded hover:bg-amber-700 transition-colors"
-        >
-          Apply Metadata
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+ {/* Metadata detection overlay */}
+ {showMetadataPrompt && detectedMetadata && (
+   <div className="absolute inset-0 z-10 flex items-center justify-center animate-in fade-in duration-300">
+     <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-[2px]" onClick={() => setShowMetadataPrompt(false)}></div>
+     <div 
+       className="relative bg-white/95 border-2 border-amber-200 rounded-lg shadow-xl max-w-md w-full p-4 mx-4 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+       onKeyDown={(e) => {
+         if (e.key === 'Enter') {
+           applyDetectedMetadata();
+           setShowMetadataPrompt(false);
+         }
+       }}
+       tabIndex={0} // Make div focusable to capture Enter key
+       id="metadata-prompt-modal" // Add an ID for more reliable selection
+     >
+       <div className="flex justify-between items-start mb-2">
+         <h3 className="text-sm font-semibold text-amber-900 flex items-center">
+           <span className="inline-flex items-center justify-center w-5 h-5 mr-2 bg-amber-100 rounded-full">
+             <svg className="w-3.5 h-3.5 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+             </svg>
+           </span>
+           Metadata Detected
+         </h3>
+         <button 
+           onClick={() => setShowMetadataPrompt(false)}
+           className="text-slate-400 hover:text-slate-700 transition-colors rounded-full hover:bg-slate-100 p-1"
+         >
+           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+           </svg>
+         </button>
+       </div>
+       
+       <div className="bg-amber-50/70 rounded-md p-3 mb-3 border border-amber-100">
+         <p className="text-xs text-amber-800 font-medium mb-1">SourceLens detected the following data:</p>
+         <div className="space-y-1 text-xs">
+           {detectedMetadata.title && (
+             <div className="flex">
+               <span className="font-medium w-14 text-amber-700">Title:</span>
+               <span className="text-slate-700">{detectedMetadata.title}</span>
+             </div>
+           )}
+           {detectedMetadata.author && (
+             <div className="flex">
+               <span className="font-medium w-14 text-amber-700">Author:</span>
+               <span className="text-slate-700">{detectedMetadata.author}</span>
+             </div>
+           )}
+           {detectedMetadata.date && (
+             <div className="flex">
+               <span className="font-medium w-14 text-amber-700">Date:</span>
+               <span className="text-slate-700">{detectedMetadata.date}</span>
+             </div>
+           )}
+           {detectedMetadata.documentType && (
+             <div className="flex">
+               <span className="font-medium w-14 text-amber-700">Type:</span>
+               <span className="text-slate-700">{detectedMetadata.documentType}</span>
+             </div>
+           )}
+         </div>
+       </div>
+       
+       <MetadataAutoTimer 
+         onComplete={() => {
+           applyDetectedMetadata();
+           setShowMetadataPrompt(false);
+         }}
+         duration={5}
+       />
+       
+       <div className="flex space-x-3">
+         <button
+           onClick={() => setShowMetadataPrompt(false)}
+           className="flex-1 py-1.5 bg-slate-100 text-slate-700 text-xs font-medium rounded hover:bg-slate-200 transition-colors"
+         >
+           Ignore
+         </button>
+         <button
+           onClick={() => {
+             applyDetectedMetadata();
+             setShowMetadataPrompt(false);
+           }}
+           className="flex-1 py-1.5 bg-amber-600 text-white text-xs font-medium rounded hover:bg-amber-700 transition-colors"
+         >
+           Apply Metadata
+         </button>
+       </div>
+     </div>
+   </div>
+ )}
               
               <div className="space-y-2 p-2">
                 {/* Required fields */}
@@ -1244,25 +1487,24 @@ export default function Home() {
                     ></textarea>
                   </div>
 
-                  {/* Additional Context input */}
+                  {/* Metadata modal button */}
                   <div 
-                    onClick={() => setExpandedFields({...expandedFields, additionalInfo: !expandedFields.additionalInfo})} 
-                    className="flex items-center justify-between cursor-pointer p-2 hover:bg-slate-50 rounded-md transition-colors"
-                  >
-                    <span className="text-sm font-medium text-slate-700 flex items-center">
-                      Additional Context (Optional)
-                    </span>
-                    <svg 
-                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${
-                        expandedFields.additionalInfo ? 'rotate-180' : ''
-                      }`} 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
+  className="flex items-center justify-between cursor-pointer p-2 hover:bg-slate-50 rounded-md transition-colors"
+>
+  <span className="text-sm font-medium text-slate-700 flex items-center">
+    Add more fields
+  </span>
+  <div className="flex items-center gap-2">
+    <button
+      onClick={() => setShowMetadataModal(true)}
+      className="text-xs text-amber-600 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-1 rounded-md transition-colors"
+      type="button"
+    >
+      Edit All Metadata
+    </button>
+    
+  </div>
+</div>
                   
                   <div className={`overflow-hidden transition-all duration-200 ease-in-out ${
                     expandedFields.additionalInfo ? 'max-h-36' : 'max-h-0'
@@ -1323,6 +1565,12 @@ export default function Home() {
         isOpen={showFAQModal} 
         onClose={() => setShowFAQModal(false)} 
       />
+      <MetadataModal 
+  isOpen={showMetadataModal}
+  onClose={() => setShowMetadataModal(false)}
+  initialMetadata={metadata}
+  onSave={handleSaveMetadata}
+/>
       
       
     </main>

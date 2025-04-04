@@ -755,8 +755,7 @@ const [showSummary, setShowSummary] = useState(false);
   </div>
 )}
 
-      {/* Metadata Modal */}
-      {showMetadataModal && <MetadataModal />}
+     
 
 <div className="mt-3">
   <SlimFooter />
