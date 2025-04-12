@@ -1,255 +1,171 @@
-// components/AnalysisFooter.tsx
-// Responsive footer section with a 3-column grid of analysis option buttons
-// Matches the clean aesthetic from the reference design
+// components/ui/AnalysisFooter.tsx
+// Footer section to initiate analysis, offering default and specific Lens options.
 
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAppStore } from '@/lib/store';
-import { useEffect } from 'react';
+import { useAppStore, Metadata } from '@/lib/store'; // Assuming Metadata type is exported from store
 
 interface AnalysisFooterProps {
   formValid: boolean;
-  textInput: string;
-  metadata: any;
+  textInput: string; // Needed to set source content
+  metadata: Metadata; // Pass the full metadata object
 }
+
+// Define the possible panel types
+type AnalysisPanel = 'analysis' | 'detailed-analysis' | 'extract-info' | 'references' | 'roleplay' | 'counter' | 'highlight';
 
 export default function AnalysisFooter({ formValid, textInput, metadata }: AnalysisFooterProps) {
   const router = useRouter();
-  const { 
-    setSourceContent, 
-    setMetadata, 
-    setLoading, 
+  const {
+    setSourceContent,
+    setMetadata: setGlobalMetadata, // Rename to avoid conflict
+    setLoading,
     setActivePanel,
-    setRoleplayMode
+    setRoleplayMode,
+    // Add setters for other modes if needed (e.g., setHighlightMode, setExtractConfig)
   } = useAppStore();
 
-  // NEW: Add this useEffect hook
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Enter' && formValid) {
-        event.preventDefault(); // Prevent default Enter key behavior
-        navigateToMethod('analysis');
-      }
-    };
-
-    // Add event listener
-    window.addEventListener('keydown', handleKeyDown);
-
-    // Cleanup event listener on component unmount
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [formValid]); // Depend on formValid to ensure the listener updates
-
-
-  // Method navigation handlers
-  const navigateToMethod = (panel: 'analysis' | 'detailed-analysis' | 'extract-info' | 'references' | 'roleplay' | 'counter' | 'highlight') => {
+  // Navigation function
+  const navigateToAnalysis = (panel: AnalysisPanel = 'analysis') => { // Default to 'analysis' panel
     if (!formValid) return;
-    
+
+    console.log(`Navigating to analysis with panel: ${panel}`);
     setSourceContent(textInput);
-    setMetadata(metadata);
+    setGlobalMetadata(metadata); // Update global metadata state
     setLoading(true);
-    
-    // Set the appropriate panel active
     setActivePanel(panel);
-    
-    // Handle roleplay mode specifically
-    if (panel === 'roleplay') {
-      setRoleplayMode(true);
-    }
-    
+
+    // Reset/Set specific modes based on the chosen panel
+    setRoleplayMode(panel === 'roleplay');
+    // Reset other modes if necessary:
+    // if (panel !== 'highlight') setHighlightMode(false);
+    // if (panel !== 'extract-info') setExtractConfig(null);
+
     router.push('/analysis');
   };
 
+  // Handle Enter key press for the main analyze button
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check if Enter key is pressed, form is valid, and focus isn't on an input/textarea
+       if (event.key === 'Enter' && formValid &&
+           !(document.activeElement instanceof HTMLInputElement) &&
+           !(document.activeElement instanceof HTMLTextAreaElement) &&
+           !(document.activeElement instanceof HTMLButtonElement && document.activeElement.type !== 'submit') // Allow Enter on submit buttons if any
+          )
+       {
+        event.preventDefault(); // Prevent default form submission behavior
+        console.log("Enter key pressed, initiating analysis...");
+        navigateToAnalysis('analysis'); // Trigger default analysis
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+    // Ensure dependencies cover everything used inside, especially formValid and navigateToAnalysis
+  }, [formValid, navigateToAnalysis]);
+
+
+  // Define Lens options for cleaner mapping
+  const lensOptions: { id: AnalysisPanel; label: string; description: string; icon: React.ReactNode; color: string }[] = [
+    { id: 'detailed-analysis', label: 'Detailed Analysis', description: 'Close read the text', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>, color: 'blue' },
+    { id: 'extract-info', label: 'Extract Info', description: 'Pull structured data', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M19 13l-4 4m0 0l-4-4m4 4V7" /></svg>, color: 'green' },
+    { id: 'references', label: 'Find References', description: 'Discover sources', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>, color: 'amber' },
+    { id: 'roleplay', label: 'Simulation Mode', description: 'Talk to the author', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>, color: 'sky' }, // Changed blue to sky
+    { id: 'counter', label: 'Counter-Narrative', description: 'Read against the grain', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4" /></svg>, color: 'purple' },
+    { id: 'highlight', label: 'Highlight Text', description: 'Find key passages', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>, color: 'yellow' },
+  ];
+
+   // Color mapping for icons and hover states
+   const colorClasses: Record<string, { bg: string, text: string, hoverBg: string }> = {
+      blue: { bg: 'bg-blue-100', text: 'text-blue-600', hoverBg: 'hover:bg-blue-200/60' },
+      green: { bg: 'bg-green-100', text: 'text-green-600', hoverBg: 'hover:bg-green-200/60' },
+      amber: { bg: 'bg-amber-100', text: 'text-amber-600', hoverBg: 'hover:bg-amber-200/60' },
+      sky: { bg: 'bg-sky-100', text: 'text-sky-600', hoverBg: 'hover:bg-sky-200/60' },
+      purple: { bg: 'bg-purple-100', text: 'text-purple-600', hoverBg: 'hover:bg-purple-200/60' },
+      yellow: { bg: 'bg-yellow-100', text: 'text-yellow-600', hoverBg: 'hover:bg-yellow-200/60' },
+  };
 
 
   return (
-    <div className="mt-0 z-1 mb-3">
-      {/* Responsive grid layout - side by side on md+ screens, stacked on mobile */}
-      <div className="grid grid-cols-1 md:grid-cols-2  gap-4">
-        {/* Left side - analyze button */}
-        <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-slate-200 p-5">
-          <div className="space-y-2"> 
-            <h3 className="text-slate-800 text-xl font-semibold flex items-center text-base">
-              <svg className="w-5 h-5 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              3. Start exploring 
-            </h3>
-            <p className="text-slate-700 font-medium text-sm mb-4">
-              Drag and drop a PDF or insert text, enter metadata, then click below. 
-            </p>
-            
-            {/* Main Analyze Button */}
-        <button 
-  onClick={() => navigateToMethod('analysis')} 
-  disabled={!formValid} 
-  className={`
-    w-full 
-    py-4 
-    px-5 
-    rounded-lg 
-    text-white 
-    font-semibold 
-    text-base 
-    transition-all 
-    duration-300 
+    // Single container card for the footer actions
+    <div className="bg-white z-1 rounded-xl shadow-lg border border-slate-200/80 p-4 md:p-6 ">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
 
-    z-1
-    ease-in-out
-    ${formValid 
-      ? 'bg-amber-600  hover:brightness-130 hover:shadow-xl  hover:scale-[1.015] active:brightness-99 shadow-lg ' 
-      : 'bg-slate-400 cursor-not-allowed'
-    }
-  `}
->
-  <span className="flex items-center justify-center ">
-    <svg 
-      className={`w-5 h-5 mr-2 flex-shrink-0 transition-opacity duration-600 ${
-        formValid ? 'opacity-100' : 'opacity-90'
-      }`}
-      fill="none" 
-      stroke="currentColor" 
-      viewBox="0 0 24 24"
-    >
-      <path 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
-        strokeWidth={2} 
-        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" 
-      />
-    </svg>
-    <span>
-      {formValid ? 'Analyze Source' : 'Complete Required Fields to Start'}
-    </span>
-  </span>
-</button>
+            {/* Left Side: Primary Action */}
+            <div className="flex flex-col h-full">
+                 <h3 className="text-xl font-bold text-slate-800 flex items-center mb-2">
+                 <span className={`mr-2 flex items-center justify-center w-8 h-8 
+  ${formValid 
+    ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white' 
+    : 'bg-white text-amber-600 border-emerald-400'} 
+  rounded-full text-2xl font-bold transition-all duration-300`}>
+  3
+</span>
 
+                   Start Exploring
+                 </h3>
+                 <p className="text-sm text-slate-600 mb-4 flex-grow">
+                    Once you've added your source text and required metadata (Date & Author), click below to begin the default analysis, or choose a specific Lens on the right.
+                 </p>
+                 {/* Main "Analyze Source" Button */}
+                <button
+                    onClick={() => navigateToAnalysis('analysis')} // Default analysis panel
+                    disabled={!formValid}
+                    className={`
+                      w-full py-3 px-5 rounded-lg text-white font-semibold
+                      transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500
+                      ${formValid
+                        ? 'bg-gradient-to-r from-amber-500 to-orange-600 hover:bg-amber-900 shadow-md hover:shadow-sm transform hover:-translate-y-0.5 hover:scale-101 active:translate-y-0 active:shadow-inner animate-glow-warm will-change-[box-shadow]'
+                        : 'bg-slate-400 cursor-not-allowed shadow-inner'
+                      }
+                    `}
+                    aria-label={formValid ? "Analyze Source with default settings" : "Complete required fields to analyze source"}
+                 >
+                    <span className="flex items-center justify-center text-base">
+                        <svg className={`w-5 h-5 mr-2 flex-shrink-0 ${formValid ? '' : 'opacity-70'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                        {formValid ? 'Analyze Source' : 'Add Source & Metadata'}
+                    </span>
+                 </button>
+            </div>
 
-
-            
-          </div>
+             {/* Right Side: Specific Lens Options */}
+            <div>
+                <h4 className="text-base font-semibold z-1 text-slate-700 mb-3">
+                   Or, start with a specific Lens:
+                </h4>
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                     {lensOptions.map((lens) => {
+                         const colors = colorClasses[lens.color] || colorClasses.blue; // Fallback color
+                         return (
+                             <button
+                                 key={lens.id}
+                                 onClick={() => navigateToAnalysis(lens.id)}
+                                 disabled={!formValid}
+                                 className={`p-2 rounded-lg border transition-all duration-200 flex items-start text-left group ${
+                                     formValid
+                                        ? `${colors.hoverBg} border-slate-200 hover:border-slate-300 hover:shadow-sm`
+                                        : 'bg-slate-50 border-slate-200 opacity-60 cursor-not-allowed'
+                                 }`}
+                                 aria-label={`Analyze using ${lens.label}`}
+                              >
+                                 <div className={`flex-shrink-0 w-8 h-8 rounded-full ${colors.bg} flex items-center justify-center mr-2.5 transition-colors duration-200 ${formValid ? `group-hover:${colors.text}` : colors.text}`}>
+                                      <span className={colors.text}>{lens.icon}</span>
+                                 </div>
+                                 <div className="flex-grow">
+                                      <div className="text-sm font-medium text-slate-800">{lens.label}</div>
+                                      <div className="text-xs text-slate-500 mt-px">{lens.description}</div>
+                                 </div>
+                             </button>
+                         );
+                     })}
+                 </div>
+            </div>
         </div>
-        
-       {/* Right side - what happens next info panel */}
-       <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-slate-200 p-4">
-         <p className="text-slate-600 font-semibold text-sm mb-5">
-           Or if you already know what Lens you want, select it here:
-         </p>
-
-         {/* Container panel for button grid */}
-
-           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-             {/* Detailed Analysis */}
-             <button 
-               onClick={() => navigateToMethod('detailed-analysis')}
-               disabled={!formValid}
-               className="p-1 b hover:bg-slate-200/50 rounded-lg transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-start text-left"
-             >
-               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2">
-                 <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                 </svg>
-               </div>
-               <div>
-                 <div className="text-sm font-medium ">Detailed Analysis</div>
-                 <div className="text-xs text-slate-700">Close read the text</div>
-               </div>
-             </button>
-
-             {/* Extract Info */}
-             <button 
-               onClick={() => navigateToMethod('extract-info')}
-               disabled={!formValid}
-               className="p-1 rounded-lg   hover:bg-slate-200/50 transition-all  transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-start text-left"
-             >
-               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-2">
-                 <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M19 13l-4 4m0 0l-4-4m4 4V7" />
-                 </svg>
-               </div>
-               <div>
-                 <div className="text-sm font-medium ">Extract Info</div>
-                 <div className="text-xs text-slate-700">Pull structured data</div>
-               </div>
-             </button>
-
-             {/* Find References */}
-             <button 
-               onClick={() => navigateToMethod('references')}
-               disabled={!formValid}
-               className="p-1 rounded-lg   hover:bg-slate-200/50 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-start text-left"
-             >
-               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center mr-2">
-                 <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                 </svg>
-               </div>
-               <div>
-                 <div className="text-sm font-medium">Find References</div>
-                 <div className="text-xs text-slate-700">Discover sources</div>
-               </div>
-             </button>
-
-             {/* Talk to Author */}
-             <button 
-               onClick={() => navigateToMethod('roleplay')}
-               disabled={!formValid}
-               className="p-1 rounded-lg   hover:bg-slate-200/50 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-start text-left"
-             >
-               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2">
-                 <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-                 </svg>
-               </div>
-               <div>
-                 <div className="text-sm font-medium ">Simulation mode</div>
-                 <div className="text-xs text-slate-700">Talk to the author</div>
-               </div>
-             </button>
-
-             {/* Counter-Narrative */}
-             <button 
-               onClick={() => navigateToMethod('counter')}
-               disabled={!formValid}
-               className="p-1 rounded-lg   hover:bg-slate-200/50 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-start text-left"
-             >
-               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center mr-2">
-                 <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4" />
-                 </svg>
-               </div>
-               <div>
-                 <div className="text-sm font-medium">Counter-Narrative</div>
-                 <div className="text-xs text-slate-700">Read against the grain</div>
-               </div>
-             </button>
-
-             {/* Highlight Text */}
-             <button 
-               onClick={() => navigateToMethod('highlight')}
-               disabled={!formValid}
-               className="p-1 rounded-lg   hover:bg-slate-200/50 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-start text-left"
-             >
-               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center mr-2">
-                 <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                 </svg>
-               </div>
-               <div>
-                 <div className="text-sm font-medium">Highlight Text</div>
-                 <div className="text-xs text-slate-700">Find important passages</div>
-               </div>
-             </button>
-           </div>
-      
-     
-
-         
-        </div>
-      </div>
     </div>
   );
 }

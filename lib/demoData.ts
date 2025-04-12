@@ -44,7 +44,7 @@ Take cognizance that (from now on) I will not accept here any copper from you th
       placeOfPublication: 'Ur, Mesopotamia',
       academicSubfield: 'Ancient Near Eastern Studies',
       tags: ['Mesopotamia', 'Business History', 'Commercial Disputes'],
-      summary: 'Ancient customer complaint about inferior copper',
+      summary: 'Ancient customer complaint about inferior copper.',
       fullCitation: 'Nanni. "Complaint to Ea-nasir." Clay tablet letter, Ur, Mesopotamia, circa 1750 BCE. Translated by A. Leo Oppenheim.',
        thumbnailUrl: '/demo-thumbnails/nannitablet.jpg'
     }
@@ -157,7 +157,7 @@ qualia etiam solet fieri inter maleficos congressus.
     placeOfPublication: 'Hagenau, Holy Roman Empire',
     academicSubfield: 'Theology / Moral Philosophy',
     tags: ['Demonology', 'Cassianus', 'Pelbartus', 'Spiritual Temptation', 'Rosarium', 'Latin Scholasticism'],
-    summary: 'Complex Latin theological discourse on the nature, classification, and function of demons in temptation, possession, and divine permission.',
+    summary: 'Complex Latin theological discourse on the nature, classification, and function of demons.',
     fullCitation: 'Pelbartus de Themeswar. *Secundus Liber Rosarii Theologiae Aurei: ad Sententiarum secundum librum accommodatissimus.* Hagenau: 1504.',
      thumbnailUrl: '/demo-thumbnails/pelbartus.jpg'
   }
@@ -219,7 +219,7 @@ Audiencia A diez y nueue dias del mes de Iunio de mill y seiscientos y veinte af
       placeOfPublication: 'Mexico City, New Spain',
       academicSubfield: 'Colonial Latin American History',
       tags: ['Spanish Inquisition', 'Indigenous Practices', 'Colonial Control'],
-      summary: 'Official ban on psychoactive plant use in colonies',
+      summary: 'Official ban on use of the psychedelic cactus in New Spain.',
       fullCitation: 'Nabarre de Isla, Don Pedro. "Edict Prohibiting the Use of Peyote." Mexico City: Holy Office of the Inquisition, June 29, 1620.',
        thumbnailUrl: '/demo-thumbnails/inquisition.jpg'
     }
@@ -283,7 +283,7 @@ The revenue or stock of a Kingdom by which it is provided of forraign wares is e
       placeOfPublication: 'London, England',
       academicSubfield: 'Economic History',
       tags: ['Mercantilism', 'Early Modern Economics', 'Trade Policy'],
-      summary: 'Early mercantilist tract on foreign trade balance',
+      summary: 'Early mercantilist tract on foreign trade balance.',
       fullCitation: 'Mun, Thomas. England\'s Treasure by Forraign Trade. London: Thomas Clark, 1664.',
       thumbnailUrl: '/demo-thumbnails/munbook.jpg'
     }
@@ -1104,7 +1104,7 @@ FINIS, LAUS DEO, Virginique Matri.`,
  
  // Native oral tradition source
 {
-  emoji: "🪶",
+  emoji: "🌃",
   title: "Delaware Oral Tradition of Manhattan",
   description: "Indigenous account of first European contact at Manhattan Island",
   text: `The following account of the first arrival of Europeans at York Island (now Manhattan) was related to me 
@@ -1147,7 +1147,7 @@ But the whites returned, asking for more and more land—until, as they say, the
 [End of relation.]`,
   metadata: {
     date: 'January 26, 1801',
-    author: 'John Heckewelder (as told by Delaware and Mahican elders)',
+    author: 'John Heckewelder (retold by)',
     researchGoals: 'Understand Indigenous oral traditions about first contact with Europeans in the Northeast',
     additionalInfo: 'Original manuscript sent by Heckewelder to Rev. Samuel Miller; included in the 1819 publication by the American Philosophical Society, though altered from the original.',
     title: 'Indian Tradition of the First Arrival of the Dutch at Manhattan Island',
@@ -1157,7 +1157,7 @@ But the whites returned, asking for more and more land—until, as they say, the
     placeOfPublication: 'Bethlehem, Pennsylvania',
     academicSubfield: 'Early American History / Indigenous Studies',
     tags: ['First Contact', 'Dutch Colonization', 'Lenape History', 'Oral Tradition', 'Manhattan'],
-    summary: 'Native account of the Dutch arrival, interpreted as a divine visitation followed by intoxication and land transfer',
+    summary: 'Native account of the Dutch arrival in what later became New York City.',
     fullCitation: 'Heckewelder, John. “Indian Tradition of the First Arrival of the Dutch at Manhattan Island.” Communicated to Rev. Samuel Miller, 1801. Later printed in American Philosophical Society Transactions, 1819.',
         thumbnailUrl: '/demo-thumbnails/manhattan.jpg'
   }
@@ -1183,7 +1183,7 @@ But the whites returned, asking for more and more land—until, as they say, the
       placeOfPublication: 'Gettysburg, Pennsylvania',
       academicSubfield: 'Political History',
       tags: ['Civil War', 'American History', 'Presidential Speech'],
-      summary: 'A concise dedication honoring Union soldiers',
+      summary: 'A concise dedication honoring Union soldiers.',
       thumbnailUrl: '/demo-thumbnails/gettysburg.jpg'
     }
   },
@@ -1252,7 +1252,7 @@ My conclusion is that the togetherness of things in a common world, the law of s
     placeOfPublication: 'Oxford, England',
     academicSubfield: 'Philosophy of Mind / Psychology of Mysticism',
     tags: ['William James', 'Nitrous Oxide', 'Altered States', 'Metaphysics', 'Hegel', 'Consciousness Studies'],
-    summary: 'James’s firsthand account of the metaphysical euphoria and horror induced by nitrous oxide intoxication and its implications for Hegelian philosophy',
+    summary: 'James’s account of the euphoria and horror induced by nitrous oxide... and Hegel.',
     fullCitation: 'William James. "The Subjective Effects of Nitrous Oxide." *Mind*, Vol. 7, No. 27 (Jul. 1882), pp. 186–208.',
         thumbnailUrl: '/demo-thumbnails/nitrous.jpg'
   }
@@ -1352,7 +1352,7 @@ und rechtfertigt ihre weitere medizinische Untersuchung.`,
     placeOfPublication: 'Vienna, Austria',
     academicSubfield: 'History of Medicine / Psychoanalysis',
     tags: ['Freud', 'Coca', 'Cocaine', '19th Century Medicine', 'Experimental Pharmacology'],
-    summary: 'Freud’s detailed account of coca leaf use, its chemistry, indigenous history, and his personal trials with cocaine',
+    summary: 'Freud’s account of coca leaf use, its chemistry, history, and his personal trials with cocaine.',
     fullCitation: 'Freud, Sigmund. *Über Coca*. Vienna: Verlag von Moritz Perles, 1885.',
       thumbnailUrl: '/demo-thumbnails/coca.jpg'
   }
@@ -1383,7 +1383,7 @@ Dearest Mrs. Nicholson, Goodnight`,
       placeOfPublication: 'London, England',
       academicSubfield: 'Modernist Literary Studies',
       tags: ['Bloomsbury Group', 'LGBTQ+ History', 'Literary Modernism'],
-      summary: 'Intimate correspondence about writing Orlando',
+      summary: 'Intimate correspondence about writing Orlando, sent to her lover Vita.',
        thumbnailUrl: '/demo-thumbnails/woolfletter.jpg'
     }
   },
@@ -1485,7 +1485,7 @@ Returned later to arrange a series of partly completed *Damas*—he understood t
     placeOfPublication: 'Negara, Bali',
     academicSubfield: 'Cultural Anthropology / Performance Studies',
     tags: ['Margaret Mead', 'Wajang', 'Bali', 'Shadow Puppets', 'Craft Labor', 'Ethnography'],
-    summary: 'Detailed notes and dialogue from Margaret Mead and Madé Kalér’s study of Balinese wajang production and its social structure',
+    summary: 'Field notes from Margaret Mead and Madé Kalér’s study of Balinese wajang production.',
     fullCitation: 'Mead, Margaret & Madé Kalér. “Notes on Wajang-Making in Negara.” Field Notes, November 1937. Margaret Mead Papers, Library of Congress.',
      thumbnailUrl: '/demo-thumbnails/meadnotes.jpg'
  }

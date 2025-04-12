@@ -87,27 +87,34 @@ export default function ChatContainer() {
   };
   
   return (
-    <div className="bg-white rounded-xl shadow-md border-1 border-slate-300 overflow-hidden">
+    <div className="bg-white rounded-xl  shadow-sm border-1 border-slate-200/80 hover:shadow-md hover:border-slate-300 overflow-hidden duration-100 ease-out">
       {/* Header - clean and professional */}
       <div 
         onClick={() => setIsExpanded(!isExpanded)}
-        className={`flex justify-between items-center px-5 py-3 bg-slate-50 border-l-4 border-indigo-500 
+        className={`flex justify-between items-center px-5 py-3 bg-slate-50 border-l-3 border-indigo-400 
           text-slate-800 cursor-pointer transition-all duration-300 
           ${isExpanded ? 'border-b border-b-indigo-200 border-b-2 shadow-sm' : ''}`}
       >
         <div className="flex items-center">
           <h3 className="font-medium">Discuss this source with</h3>
           
-          {/* Model indicator */}
-          <div className="ml-2 flex items-center">
-            <span className="text-xs px-1 py-1 bg-slate-100 rounded font-mono text-slate-600 flex items-center border border-slate-200">
-              <svg className="w-3 h-3 mr-1 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              {getModelDisplayName()}
-            </span>
-          </div>
-        </div>
+         {/* Model indicator */}
+<div className="ml-2 flex items-center">
+  <span className="text-xs px-1.5 py-1 mr-1 rounded font-mono text-slate-600 flex items-center 
+    border border-slate-200 bg-slate-100 
+    hover:indigo-100 
+    hover:border-indigo-300 hover:shadow-[inset_0_0_4px_rgba(99,102,241,0.4),_0_1px_2px_rgba(0,0,0,0.05)] 
+    hover:text-indigo-600 
+    transition-all duration-300 ease-out">
+    
+    <svg className="w-3 h-3 mr-1 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+    
+    {getModelDisplayName()}
+  </span>
+</div>
+</div>
         
         <button
           aria-label={isExpanded ? "Collapse conversation" : "Expand conversation"}
@@ -145,7 +152,7 @@ export default function ChatContainer() {
           
           {/* Subtle resizer handle */}
           <div 
-            className="absolute bottom-0 left-0 right-0 h-5 cursor-ns-resize flex justify-center items-end"
+            className="absolute bottom-0 b left-0 right-0 h-5 cursor-ns-resize flex justify-center items-end"
             onMouseDown={handleMouseDown}
           >
             <div className="w-10 h-1 mb-1 bg-slate-200 rounded-full hover:bg-slate-300 transition-colors"></div>
@@ -153,7 +160,7 @@ export default function ChatContainer() {
         </div>
         
         {/* Input area with inset styling */}
-        <div className="h-[60px] p-3 border-t-2  border-indigo-300 bg-gradient-to-b from-slate-300 to-white">
+        <div className="h-[60px] p-3 border-t-2  border-indigo-800 border-b-2 border-slate-300 bg-gradient-to-b from-slate-300 to-white">
           <div className="bg-slate-100 rounded border-b-2 shadow-inner ring-1 ring-slate-200">
             <ChatInput />
           </div>

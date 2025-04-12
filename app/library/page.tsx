@@ -14,6 +14,9 @@ import SavedAnalysisPanel from '@/components/library/SavedAnalysisPanel';
 import SavedSourcesPanel from '@/components/library/SavedSourcesPanel';
 import SavedDraftsPanel from '@/components/library/SavedDraftsPanel';
 import { useAppStore } from '@/lib/store';
+import StrategyDeck from '@/components/ui/StrategyDeck';
+import AccountButton from '@/components/auth/AccountButton';
+import Link from 'next/link';
 
 export default function LibraryPage() {
   const router = useRouter();
@@ -28,92 +31,113 @@ export default function LibraryPage() {
   }, []);
 
   useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const tabParam = params.get('tab');
-  if (tabParam && ['references', 'analysis', 'sources', 'drafts'].includes(tabParam)) {
-    setActiveTab(tabParam as any);
-  }
-}, []);
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam && ['references', 'analysis', 'sources', 'drafts'].includes(tabParam)) {
+      setActiveTab(tabParam as any);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      {/* Header with gradient background similar to main app */}
-      <header className={`relative overflow-hidden bg-gradient-to-r from-indigo-900 via-indigo-700 to-transparent text-white shadow-lg transition-all duration-700 ${animateHeader ? 'opacity-100' : 'opacity-10'}`}>
-        {/* Background image on right side */}
-        <div className="absolute top-0 right-0 h-full w-1/2 z-0">
+      {/* Header with gradient background and sourcelensbar.jpg fade */}
+      <header className="relative bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-lg overflow-hidden">
+        {/* Background image and gradient overlay */}
+        <div className="absolute top-0 right-0 h-full w-3/4 z-0">
           <Image 
             src="/sourcelensbar.jpg" 
             alt="SourceLens Header" 
             fill 
-            priority
-            className="object-cover object-left" 
+            priority 
+            className="object-cover opacity-80" 
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-700/100 via-indigo-700/70 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-800/90 to-indigo-900/10"></div>
         </div>
-        
-       {/* Header content container */}
-       <div className="max-w-9xl mx-auto p-4 relative z-10">
-         <div className="flex justify-between items-center">
-           <div className="flex items-center">
-             {/* Logo with home link */}
-             <div className="pl-10 pr-10 flex items-center">
-               <button 
-                 onClick={() => router.push('/')}
-                 className="transition-transform hover:scale-105 focus:outline-none rounded-full drop-shadow-md cursor-pointer"
-                 aria-label="Return to home page"
-               >
-                 <Image 
-                   src="/sourcelenslogo.png" 
-                   alt="SourceLens Logo" 
-                   width={70} 
-                   height={70} 
-                   className="rounded-full border border-indigo-800/10 ring-1 ring-yellow-300/20"
-                 />
-               </button>
-             </div>
-              
-              <div>
-                {/* Title with subtle text shadow */}
-                <h1 className="text-3xl font-bold tracking-wide drop-shadow-sm font-serif">Your Library</h1>
-                
-                <div className="flex items-center mt-1.5">
-                  <span className="text-sm font-medium bg-white/20 px-3 py-0.5 rounded-full backdrop-blur-sm">
-                    Saved items
+
+        <div className="relative z-20 max-w-8xl mx-auto px-4 sm:px-6 lg:px-0 py-4 gap-2">
+          <div className="px-6 flex items-center justify-between gap-4 flex-wrap w-full">
+            {/* Far left: Hamburger menu */}
+            <div className="flex items-center gap-3">
+              <div className="pl-2 px-12">
+                <HamburgerMenu />
+              </div>
+
+              {/* Logo and title */}
+              <div className="flex px-0 flex-col justify-center ml-2">
+                <Link href="/" className="group inline-block relative overflow-hidden">
+                  <h1 className="text-2xl font-bold text-white shadow shadow-indigo-800/10">
+                    SourceLens
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-indigo-400 via-white to-indigo-400 transform scale-x-0 origin-left transition-transform duration-300 ease-out group-hover:scale-x-100"></span>
+                  </h1>
+                </Link>
+
+                {/* Library title */}
+                <div className="flex flex-wrap gap-2 items-center mt-1 text-sm font-medium text-white/80">
+                  <span className="bg-white/10 px-3 py-1 rounded-full">
+                    Your Library
                   </span>
                 </div>
               </div>
             </div>
-            
-            {/* Right side controls */}
-            <div className="flex items-center space-x-4">
-              {/* Loading indicator */}
+
+            {/* Right side: nav, strategy, account, loading */}
+            <div className="flex items-center gap-3 ml-auto">
+              <nav className="hidden md:flex items-center space-x-2 text-sm font-medium">
+                <Link
+                  href="/"
+                  className="px-3 py-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-md flex items-center transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                  Home
+                </Link>
+
+                <Link
+                  href="/analysis"
+                  className="px-3 py-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-md flex items-center transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  Analysis
+                </Link>
+
+                <button
+                  onClick={() => {}}
+                  className="px-3 py-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-md flex items-center transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  About
+                </button>
+              </nav>
+              
+              <div className="flex px-0 flex-col justify-center ml-3">
+                <StrategyDeck />
+              </div>
+
+              <div className="flex px-0 flex-col justify-center ml-4">
+                <AccountButton />
+              </div>
+
               {isLoading && (
-                <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm py-1.5 px-4 rounded-full animate-pulse">
+                <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm py-1.5 px-3 rounded-full shadow-sm">
                   <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-                  <span className="text-sm font-medium">Loading...</span>
+                  <span className="text-xs font-medium text-white/90">Processing...</span>
                 </div>
               )}
-              
-              {/* Back to Home button */}
-              <button 
-                onClick={() => router.push('/')}
-                className="flex items-center space-x-1 bg-white/10 hover:bg-white/20 backdrop-blur-sm py-1.5 px-4 rounded-full transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                <span className="text-sm font-medium">Home</span>
-              </button>
-              {/* Menu button */}
-              <HamburgerMenu />
             </div>
           </div>
         </div>
-        
-        {/* Decorative highlight line below header */}
-        <div className="h-1 bg-gradient-to-r from-amber-400 via-purple-400 to-indigo-400 opacity-80"></div>
       </header>
 
+      {/* Decorative highlight line below header */}
+      <div className="h-1 bg-gradient-to-r from-amber-400 via-purple-400 to-indigo-900 opacity-100"></div>
+
+      {/* Rest of your existing code remains the same */}
+      
       {/* Navigation Tabs */}
       <div className="bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto">
@@ -223,4 +247,3 @@ export default function LibraryPage() {
     </div>
   );
 }
-              

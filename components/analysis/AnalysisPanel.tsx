@@ -396,7 +396,7 @@ const fastTravelIcons = [
   };
 
 
-// Replace the loading indicator in AnalysisPanel.tsx with this modified version
+// loading indicator
 if (isLoading && !initialAnalysis && activePanel !== 'roleplay') {
   return (
     <div className="h-full flex flex-col items-center justify-center p-8 text-center">
@@ -452,33 +452,16 @@ const processContentWithCitations = (text: string) => {
   switch (activePanel) {
 case 'counter':
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium text-slate-800">Counter-Narrative</h3>
-        <SaveToLibraryButton 
-          type="analysis"
-          data={{
-            type: 'counter',
-            title: `Counter-Narrative ${metadata?.author ? `for ${metadata.author}` : ''}`,
-            content: counterNarrative || '',
-            sourceName: metadata?.title || 'Untitled Source',
-            sourceAuthor: metadata?.author || 'Unknown',
-            sourceDate: metadata?.date || 'Unknown date',
-            perspective: perspective || 'Default'
-          }}
-          variant="secondary"
-          size="sm"
-        />
-      </div>
+
+
       <CounterNarrative />
-    </div>
+
   );
       
-   // Replace the existing roleplay case in AnalysisPanel.tsx
+   // roleplay case 
 case 'roleplay':
   return (
     <div className="space-y-4">
-
 
       {/* simulation mode explanation panel */}
       
@@ -487,15 +470,10 @@ case 'roleplay':
           About Simulation Mode
         </h3>
 
-      
-    
-
         <div className="flex items-start mb-2">
           <p className="text-sm text-slate-700 leading-relaxed">
             This is an experimental simulation tool that feeds a Large Language Model extensive context relating to the author of a primary source and allows you to "speak" to "them."  
           </p>
-
-     
         </div>
         
         <div className="mt-4 pt-3 border-t border-dashed border-slate-200">
@@ -513,27 +491,23 @@ case 'roleplay':
 {/* text highlights panel */}
      case 'highlight':
   return (
-      
-      
         <HighlightPanel />
   );
-
-
       
           case 'detailed-analysis':
         if (detailedAnalysis) {
           return (
-            // Add the ref here
-            <div ref={analysisPanelRef} className="space-y-3 scroll-mt-4" id="detailed-analysis-top"> {/* Adjust scroll-mt if you have a sticky header */}
+           
+            <div ref={analysisPanelRef} className="space-y-3 p-2 scroll-mt-4" id="detailed-analysis-top"> {/* Adjust scroll-mt if you have a sticky header */}
               {/* Top Header & Buttons */}
-              <div className="flex justify-between items-start pb-2 border-b border-slate-200">
+              <div className="flex justify-between items-start pb-2 ">
                  {/* Left side: Title */}
                  <h3 className="text-xl font-semibold text-slate-800 pt-1">Detailed Analysis</h3>
 
                  {/* Right side: Fast Travel Icons & Save Button */}
                  <div className="flex items-center space-x-3">
                     {/* Fast Travel Icons */}
-                   <div className="flex items-center space-x-1 border border-slate-200 rounded-full px-2 py-0.5 bg-slate-50 shadow-sm">
+                   <div className="flex items-center space-x-1 border border-slate-200 rounded-full px-2 py-0.5 bg-slate-100/60 hover:bg-slate-200/50 shadow-inner">
                      {/* Scroll to Top Button */}
                       
 
@@ -584,17 +558,17 @@ case 'roleplay':
 
               {/* Context Section */}
               {parsedSections.context && (
-                <section aria-labelledby="context-heading" id="analysis-context" className="scroll-mt-4"> {/* Add ID and scroll-margin */}
-                   <div className={`border ${sectionStyles.context.borderColor} rounded-lg overflow-hidden shadow-sm`}>
-                    <h4 id="context-heading" className={`flex items-center p-3 ${sectionStyles.context.bg} border-b ${sectionStyles.context.borderColor}`}>
+                <section aria-labelledby="context-heading" id="analysis-context" className="scroll-mt-4 "> {/* Add ID and scroll-margin */}
+                   <div className={`mb-5 rounded-lg shadow-inner   overflow-hidden`}>
+                    <h4 id="context-heading" className={`flex items-center  p-3 bg-${sectionStyles.context.bg} border-b ${sectionStyles.context.borderColor}`}>
                        <span className={`mr-3 ${sectionStyles.context.iconColor}`}>
                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                        </span>
-                       <span className={`text-base font-semibold ${sectionStyles.context.color}`}>1. CONTEXT</span>
+                       <span className={`font-medium tracking-wider ${sectionStyles.context.color}`}>1. CONTEXT</span>
                        <span className="ml-auto text-sm text-slate-500 italic font-normal mr-1">What is the historical background?</span>
                     </h4>
                     <div
-                      className="prose prose-sm max-w-none p-4 text-slate-800 leading-relaxed bg-white"
+                      className="prose  prose-sm max-w-none p-6 text-slate-800 leading-relaxed bg-white "
                       dangerouslySetInnerHTML={{ __html: processContentWithCitations(parsedSections.context) }}
                     />
                   </div>
@@ -604,16 +578,16 @@ case 'roleplay':
               {/* Author Perspective Section */}
               {parsedSections.author && (
                  <section aria-labelledby="author-heading" id="analysis-author" className="scroll-mt-4"> {/* Add ID and scroll-margin */}
-                   <div className={`border ${sectionStyles.author.borderColor} rounded-lg overflow-hidden shadow-sm`}>
+                   <div className={`mmb-5 rounded-lg shadow-inner hover:shadow-xs overflow-hidden`}>
                      <h4 id="author-heading" className={`flex items-center p-3 ${sectionStyles.author.bg} border-b ${sectionStyles.author.borderColor}`}>
                        <span className={`mr-3 ${sectionStyles.author.iconColor}`}>
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                        </span>
-                       <span className={`text-base font-semibold ${sectionStyles.author.color}`}>2. AUTHOR PERSPECTIVE</span>
+                       <span className={`font-medium tracking-wider ${sectionStyles.author.color}`}>2. AUTHOR PERSPECTIVE</span>
                         <span className="ml-auto text-sm text-slate-500 italic font-normal mr-1">Who is the author? What are their goals?</span>
                      </h4>
                      <div
-                       className="prose prose-sm max-w-none p-4 text-slate-800 leading-relaxed bg-white"
+                       className="prose prose-sm max-w-none p-6 text-slate-800 leading-relaxed bg-white"
                        dangerouslySetInnerHTML={{ __html: processContentWithCitations(parsedSections.author) }}
                      />
                    </div>
@@ -623,16 +597,16 @@ case 'roleplay':
               {/* Key Themes Section */}
                {parsedSections.themes && (
                  <section aria-labelledby="themes-heading" id="analysis-themes" className="scroll-mt-4"> {/* Add ID and scroll-margin */}
-                   <div className={`border ${sectionStyles.themes.borderColor} rounded-lg overflow-hidden shadow-sm`}>
+                   <div className={`mb-5 rounded-lg overflow-hidden shadow-inner hover:shadow-xs`}>
                      <h4 id="themes-heading" className={`flex items-center p-3 ${sectionStyles.themes.bg} border-b ${sectionStyles.themes.borderColor}`}>
                        <span className={`mr-3 ${sectionStyles.themes.iconColor}`}>
                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
                        </span>
-                       <span className={`text-base font-semibold ${sectionStyles.themes.color}`}>3. KEY THEMES</span>
+                       <span className={`font-medium tracking-wider ${sectionStyles.themes.color}`}>3. KEY THEMES</span>
                        <span className="ml-auto text-sm text-slate-500 italic font-normal mr-1">What are the main themes?</span>
                      </h4>
                      <div
-                       className="prose prose-sm max-w-none p-4 text-slate-800 leading-relaxed bg-white"
+                       className="prose prose-sm max-w-none p-6 text-slate-800 leading-relaxed bg-white"
                        dangerouslySetInnerHTML={{ __html: processContentWithCitations(parsedSections.themes) }}
                      />
                    </div>
@@ -642,16 +616,16 @@ case 'roleplay':
               {/* Evidence & Rhetoric Section */}
               {parsedSections.evidence && (
                  <section aria-labelledby="evidence-heading" id="analysis-evidence" className="scroll-mt-4"> {/* Add ID and scroll-margin */}
-                   <div className={`border ${sectionStyles.evidence.borderColor} rounded-lg overflow-hidden shadow-sm`}>
+                   <div className={`mb-5 rounded-lg overflow-hidden shadow-inner hover:shadow-xs`}>
                      <h4 id="evidence-heading" className={`flex items-center p-3 ${sectionStyles.evidence.bg} border-b ${sectionStyles.evidence.borderColor}`}>
                        <span className={`mr-3 ${sectionStyles.evidence.iconColor}`}>
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                        </span>
-                       <span className={`text-base font-semibold ${sectionStyles.evidence.color}`}>4. EVIDENCE & RHETORIC</span>
+                       <span className={`font-medium tracking-wider ${sectionStyles.evidence.color}`}>4. EVIDENCE & RHETORIC</span>
                         <span className="ml-auto text-sm text-slate-500 italic font-normal mr-1">What evidence and arguments are deployed?</span>
                      </h4>
                      <div
-                       className="prose prose-sm max-w-none p-4 text-slate-800 leading-relaxed bg-white"
+                       className="prose prose-sm max-w-none p-6 text-slate-800 leading-relaxed bg-white"
                        dangerouslySetInnerHTML={{ __html: processContentWithCitations(parsedSections.evidence) }}
                      />
                    </div>
@@ -661,16 +635,16 @@ case 'roleplay':
               {/* Significance Section */}
               {parsedSections.significance && (
                 <section aria-labelledby="significance-heading" id="analysis-significance" className="scroll-mt-4"> {/* Add ID and scroll-margin */}
-                   <div className={`border ${sectionStyles.significance.borderColor} rounded-lg overflow-hidden shadow-sm`}>
+                   <div className={`mb-6 rounded-lg overflow-hidden shadow-inner hover:shadow-xs`}>
                     <h4 id="significance-heading" className={`flex items-center p-3 ${sectionStyles.significance.bg} border-b ${sectionStyles.significance.borderColor}`}>
                       <span className={`mr-3 ${sectionStyles.significance.iconColor}`}>
                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
                       </span>
-                      <span className={`text-base font-semibold ${sectionStyles.significance.color}`}>5. SIGNIFICANCE</span>
+                      <span className={`font-medium tracking-wider ${sectionStyles.significance.color}`}>5. SIGNIFICANCE</span>
                        <span className="ml-auto text-sm text-slate-500 italic font-normal mr-1">Why it matters</span>
                     </h4>
                     <div
-                      className="prose prose-sm max-w-none p-4 text-slate-800 leading-relaxed bg-white"
+                      className="prose prose-sm max-w-none p-6 text-slate-800 leading-relaxed bg-white"
                       dangerouslySetInnerHTML={{ __html: processContentWithCitations(parsedSections.significance) }}
                     />
                   </div>
@@ -686,7 +660,7 @@ case 'roleplay':
                           <span className={`mr-3 ${sectionStyles.references.iconColor}`}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                           </span>
-                          <span className={`text-base font-semibold ${sectionStyles.references.color}`}>6. SCHOLARLY REFERENCES</span>
+                          <span className={`font-medium tracking-wider ${sectionStyles.references.color}`}>6. SCHOLARLY REFERENCES</span>
                       </div>
                        <span className="text-xs font-sans bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full">
                          {references.length} {references.length === 1 ? 'source' : 'sources'}
@@ -777,8 +751,8 @@ default:
   return (
     <div>
       {/* Summary section */}
-      <div className="mb-4">
-        <h3 className="text-lg font-medium text-slate-800 mb-2 pb-1 border-b border-slate-200">
+      <div className="mb-4 px-2">
+        <h3 className="text-md font-medium uppercase tracking-wider text-slate-700 mb-2 pb-1 border-b border-slate-200">
           Summary
         </h3>
         {/* Wrap ReactMarkdown in a parent div */}
@@ -789,8 +763,8 @@ default:
         </div>
       </div>
 
-     <div className="mb-4">
-  <h3 className="text-lg font-medium text-slate-800 mb-2 pb-1 border-b border-slate-200">
+     <div className="mb-4 px-2">
+  <h3 className="text-md font-medium uppercase tracking-wider text-slate-700 mb-2 pb-1 border-b border-slate-200">
     Preliminary Analysis
   </h3>
   <div className="text-slate-700">
@@ -801,20 +775,20 @@ default:
 </div>
 
      <div>
-       <h3 className="text-lg font-medium text-slate-800 mb-2 pb-1 border-b border-dashed border-slate-300">
+       <h3 className="text-md px-2 font-medium mt-8 text-slate-700 mb-2 pb-1 border-b border-dashed border-slate-300">
          Follow-up Questions
        </h3>
-       <p className="text-sm italic text-slate-500 mb-3">
-         Click a question to add it in the discussion:
+       <p className="text-sm italic px-2 text-slate-500 mb-5">
+         Click a question to add it in the discussion
        </p>
-       <div className="space-y-2">
+       <div className="space-y-5 px-3 mb-3">
   {initialAnalysis?.followupQuestions?.map((question, idx) => (
     <div
       key={idx}
-      className={`p-3 border rounded-md cursor-pointer transition-colors ${
+      className={`p-3 border text-sm shadow-inner rounded-md cursor-pointer transition-colors ${
         selectedQuestion === idx 
           ? 'bg-indigo-50 border-indigo-300 shadow-sm' 
-          : 'hover:bg-blue-100/80 border-slate-200'
+          : 'hover:bg-slate-100/80 border-slate-200'
       }`}
       onClick={() => {
         setSelectedQuestion(idx);

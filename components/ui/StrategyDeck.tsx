@@ -243,8 +243,8 @@ export default function StrategyDeck({ className = '' }: StrategyDeckProps) {
         disabled={isAnimating}
       >
         <div className="relative group">
-          <span className="text-sm font-bold bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-            Need inspiration?
+          <span className=" font-bold bg-white/20 px-2 py-2 rounded-full backdrop-blur-sm">
+            🃏
           </span>
           
           {/* Card deck hover effect */}

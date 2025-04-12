@@ -220,39 +220,25 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
             <div className="p-6 space-y-6">
               <h3 className="text-xl font-medium text-indigo-900 mb-4">Research Case Studies</h3>
               
-              <h4 className="text-lg font-medium text-indigo-800 mt-4 mb-3">Historical Letters</h4>
-              <p className="text-slate-700">
-                A project analyzing correspondence between colonial administrators in 17th-century Spanish America revealed 
-                previously overlooked patterns in how information about Indigenous resistance movements was communicated 
-                and sometimes deliberately obscured.
-              </p>
               
               <h4 className="text-lg font-medium text-indigo-800 mt-4 mb-3">Medical Texts</h4>
               <p className="text-slate-700">
                 Analysis of early modern medical treatises identified language patterns revealing shifting attitudes 
-                toward empirical observation versus classical authority, with the Counter-Narrative lens highlighting 
-                tensions between stated methodologies and actual practice.
+                toward empirical observation versus classical authority.
               </p>
               
               <h4 className="text-lg font-medium text-indigo-800 mt-4 mb-3">Travel Narratives</h4>
               <p className="text-slate-700">
-                The Place as Witness lens applied to 19th-century travel accounts of South America revealed how 
-                landscape descriptions functioned rhetorically to justify colonial exploitation while simultaneously 
-                recording environmental conditions now valuable for historical ecology.
+                The Place as Witness lens applied to 19th-century travel accounts is quite intersting. More to come here.
               </p>
               
               <h4 className="text-lg font-medium text-indigo-800 mt-4 mb-3">Personal Diaries</h4>
               <p className="text-slate-700">
-                A study of Victorian-era personal diaries demonstrated how the Silenced Voice lens could reconstruct 
+                A study of Victorian-era personal diaries demonstrated how the counternarrative and simulation lenses could reconstruct 
                 plausible perspectives of domestic servants mentioned but rarely described in their employers' accounts.
               </p>
               
-              <h4 className="text-lg font-medium text-indigo-800 mt-4 mb-3">Research Publications</h4>
-              <p className="text-slate-700">
-                Results from these cases studies are being compiled into a forthcoming article, "Multiple Lenses: 
-                AI-Augmented Reading Practices for Historical Research," to be published in the Journal of Digital 
-                Humanities.
-              </p>
+              
             </div>
           )}
           
@@ -263,13 +249,12 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
               
               <h4 className="text-lg font-medium text-indigo-800 mt-4 mb-3">Planned Features</h4>
               <p className="text-slate-700">
-                We're working on several enhancements to SourceLens:
+                I am working on several enhancements to SourceLens:
               </p>
               <ul className="list-disc pl-5 space-y-2 text-slate-700 mt-3">
-                <li><strong>Collaborative Analysis:</strong> Tools for research teams to share sources and analyses</li>
                 <li><strong>Enhanced OCR:</strong> Improved text extraction for historical manuscripts and documents</li>
                 <li><strong>Corpus Analysis:</strong> Tools for analyzing collections rather than individual documents</li>
-                <li><strong>Material Culture Analysis:</strong> Support for analyzing non-textual artifacts</li>
+                <li><strong>Material Culture Analysis:</strong> Support for analyzing non-textual images</li>
                 <li><strong>Integration with Citation Managers:</strong> Export capabilities for Zotero and other tools</li>
               </ul>
               
@@ -285,29 +270,14 @@ export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
               </ul>
               
               <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 mt-6">
-                <h4 className="text-lg font-medium text-indigo-800 mb-3">Get Involved</h4>
-                <p className="text-slate-700">
-                  We welcome collaboration from researchers, developers, and educators interested in AI-augmented 
-                  historical research. Ways to contribute:
-                </p>
-                <ul className="list-disc pl-5 space-y-2 text-slate-700 mt-3">
-                  <li>Participate in user testing and provide feedback</li>
-                  <li>Contribute case studies using SourceLens in your research</li>
-                  <li>Suggest new interpretive lenses or analytical approaches</li>
-                  <li>Collaborate on code development (open source on GitHub)</li>
-                </ul>
-                
+             
                 <p className="text-slate-700 mt-4">
                   Contact <a href="mailto:bebreen@ucsc.edu" className="text-indigo-600 hover:text-indigo-800 underline">bebreen@ucsc.edu</a> to learn more about getting involved.
                 </p>
               </div>
               
               <div className="border-t border-slate-200 pt-4 mt-6">
-                <p className="text-sm text-slate-500 italic">
-                  Note: SourceLens is an experimental tool. The AI analysis provided should be verified against scholarly sources 
-                  and your own critical judgment. All AI-generated content should be approached with the same skepticism and verification 
-                  practices applied to any secondary source.
-                </p>
+           
               </div>
             </div>
           )}

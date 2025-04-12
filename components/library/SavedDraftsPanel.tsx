@@ -8,6 +8,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLibrary, SavedDraft } from '@/lib/libraryContext';
 import { useAppStore } from '@/lib/store';
+import { useAuth } from '@/lib/auth/authContext';
 
 export default function SavedDraftsPanel() {
   const router = useRouter();
@@ -19,7 +20,8 @@ export default function SavedDraftsPanel() {
     draftExists
   } = useLibrary();
   const { setLoading } = useAppStore();
-  
+  const { user } = useAuth();
+
   // Local state
   const [selectedDrafts, setSelectedDrafts] = useState<string[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -46,12 +48,12 @@ export default function SavedDraftsPanel() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   interface MenuItem {
-  label: string;
-  href?: string;
-  icon: React.ReactNode;
-  onClick?: () => void;
-  target?: string;
-}
+    label: string;
+    href?: string;
+    icon: React.ReactNode;
+    onClick?: () => void;
+    target?: string;
+  }
   
   // Load effect with simulation
   useEffect(() => {
@@ -158,67 +160,79 @@ export default function SavedDraftsPanel() {
   };
 
   // Create or update draft with summary
-  const processDraft = async (draft: Partial<SavedDraft> & {content: string, title: string}, isNew = true) => {
-  try {
-    setIsCreatingDraft(true);
-    setUploadError(null);
-    
-    // Generate a summary for the draft
-    const response = await fetch('/api/summarize-draft', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ draft }),
-    });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to generate summary');
-    }
-    
-    const summaryData = await response.json();
-    
-    // Add required properties for SafeDraft type
-    const draftWithSummary: SavedDraft = {
-      id: draft.id || crypto.randomUUID(), // Ensure ID exists
-      dateAdded: draft.dateAdded || Date.now(), // Ensure dateAdded exists
-      title: draft.title,
-      content: draft.content,
-      type: draft.type || 'text',
-      status: draft.status || 'in-progress',
-      tags: draft.tags || [],
-      summary: summaryData.overallSummary,
-      sections: summaryData.sections,
-      wordCount: summaryData.wordCount
-    };
+  const processDraft = async (draft: Omit<SavedDraft, 'id' | 'dateAdded' | 'userId'> & { id?: string, dateAdded?: number }) => {
+    try {
+      if (!user) {
+        setUploadError('You must be logged in to create or update drafts.');
+        return "";
+      }
 
-    // Add or update the draft
-    if (isNew) {
-      addDraft(draftWithSummary);
-    } else {
-      updateDraft(draft.id!, draftWithSummary);
+      setIsCreatingDraft(true);
+      setUploadError(null);
+      
+      // Generate a summary for the draft
+      const response = await fetch('/api/summarize-draft', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ draft }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to generate summary');
+      }
+      
+      const summaryData = await response.json();
+      
+      // Add required properties for SavedDraft type
+      const draftWithSummary: Omit<SavedDraft, 'id' | 'dateAdded' | 'userId'> = {
+        title: draft.title,
+        content: draft.content,
+        type: draft.type || 'text',
+        status: draft.status || 'in-progress',
+        tags: draft.tags || [],
+        summary: summaryData.overallSummary,
+        sections: summaryData.sections,
+        wordCount: summaryData.wordCount,
+      };
+
+      // Add or update the draft
+      let draftId = '';
+      if (draft.id) {
+        await updateDraft(draft.id, draftWithSummary);
+        draftId = draft.id;
+      } else {
+        draftId = await addDraft(draftWithSummary);
+      }
+      
+      if (!draft.id) {
+        setNewDraftTitle('');
+        setNewDraftContent('');
+        setNewDraftTags('');
+        setShowAddModal(false);
+      }
+      
+      return draftId;
+    } catch (error) {
+      console.error('Draft processing error:', error);
+      setUploadError(error instanceof Error ? error.message : 'Unknown error processing draft');
+      return "";
+    } finally {
+      setIsCreatingDraft(false);
     }
-    
-    if (isNew) {
-      setNewDraftTitle('');
-      setNewDraftContent('');
-      setNewDraftTags('');
-      setShowAddModal(false);
-    }
-    
-  } catch (error) {
-    console.error('Draft processing error:', error);
-    setUploadError(error instanceof Error ? error.message : 'Unknown error processing draft');
-  } finally {
-    setIsCreatingDraft(false);
-  }
-};
+  };
 
   // Handle file upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    if (!user) {
+      setUploadError('You must be logged in to upload drafts.');
+      return;
+    }
     
     setUploadError(null);
     
@@ -253,15 +267,15 @@ export default function SavedDraftsPanel() {
       });
       
       // Create a draft object
-      const newDraft: Omit<SavedDraft, 'id' | 'dateAdded'> = {
+      const newDraft: Omit<SavedDraft, 'id' | 'dateAdded' | 'userId'> = {
         title: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
         content: fileContent,
         type: fileType,
-        status: 'in-progress',
-        tags: newDraftTags.split(',').map(tag => tag.trim()).filter(Boolean)
+        status: 'in-progress' as const,
+        tags: newDraftTags.split(',').map(tag => tag.trim()).filter(Boolean),
       };
       
-await processDraft(newDraft as SavedDraft);
+      await processDraft(newDraft);
       
     } catch (error) {
       console.error('File upload error:', error);
@@ -277,6 +291,11 @@ await processDraft(newDraft as SavedDraft);
 
   // Handle manual draft creation
   const handleCreateDraft = async () => {
+    if (!user) {
+      setUploadError('You must be logged in to create drafts.');
+      return;
+    }
+
     if (!newDraftTitle || !newDraftContent) {
       setUploadError('Title and content are required');
       return;
@@ -287,16 +306,14 @@ await processDraft(newDraft as SavedDraft);
       return;
     }
     
-    // Create a draft object with correct variables
-    const newDraft = {
-      id: crypto.randomUUID(), // Generate temporary ID
-      dateAdded: Date.now(),   // Add current timestamp
-      title: newDraftTitle, // Fixed: use newDraftTitle instead of file.name
-      content: newDraftContent, // Fixed: use newDraftContent instead of fileContent
-      type: 'text', // Default type for manually created drafts
+    // Create a draft object with correct types
+    const newDraft: Omit<SavedDraft, 'id' | 'dateAdded' | 'userId'> = {
+      title: newDraftTitle,
+      content: newDraftContent,
+      type: 'text' as const,
       status: newDraftStatus,
-      tags: newDraftTags.split(',').map(tag => tag.trim()).filter(Boolean)
-    } as SavedDraft;
+      tags: newDraftTags.split(',').map(tag => tag.trim()).filter(Boolean),
+    };
 
     await processDraft(newDraft);
   };

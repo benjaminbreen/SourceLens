@@ -201,6 +201,8 @@ Use in-line short form chicago style citations the most relevant and useful acad
 
 When citing a source, ALWAYS use the format 📚(Author, Year) - for example 📚(Smith, 2010) or 📚(Johnson, 2010). This ensures the citations are properly linked in the interface.
 
+If an ANALYTICAL PERSPECTIVE is provided, ALWAYS explore it in all its dimensions, creatively, persceptively, humanely, and surprisingly (i.e. privately identify the obvious approach, then DON'T communicate that to the user - do the NON OBVIOUS and more intriguing approach). 
+
 Provide ONLY the following entries, with absolutely no prefatory material or opening sentence. 
 
 1.###CONTEXT: Place this source in its historical context, including relevant events, movements, or trends from the period. 3-4 sentences. Always discuss the wider context of the time period, and cite at least one source.

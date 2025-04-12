@@ -1,13 +1,26 @@
 // components/analysis/UserInputPanel.tsx
-// Manages user controls for analysis tools and perspective input.
-// Also shows the "About Selected Model" section with provider logos.
+// Manages user controls for analysis tools and perspective input with a 2025-inspired design
+// Also shows the "About Selected Model" section with provider logos
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
 import ModelSelector from '@/components/ui/ModelSelector';
+import { AnimatePresence, motion } from 'framer-motion';
 import { models } from '@/lib/models';
+import { 
+  ArrowRight, 
+  Sparkles, 
+  MessageSquare, 
+  FileText, 
+  BookOpen, 
+  RefreshCw, 
+  Zap, 
+  Languages, 
+  PenLine, 
+  Lightbulb
+} from 'lucide-react';
 
 export default function UserInputPanel() {
   const {
@@ -35,11 +48,22 @@ export default function UserInputPanel() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isCardDropped, setIsCardDropped] = useState(false);
   const [cardText, setCardText] = useState('');
+  const [activeCategory, setActiveCategory] = useState('standard');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    if (showPerspectiveInput && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [showPerspectiveInput]);
 
   // Handler for perspective input
   const handlePerspectiveSubmit = () => {
     setPerspective(perspectiveInput);
     setShowPerspectiveInput(false);
+    setIsAnimating(true);
+    setTimeout(() => setIsAnimating(false), 600);
   };
 
   const handlePerspectiveWithCardSubmit = () => {
@@ -50,6 +74,8 @@ export default function UserInputPanel() {
       setIsCardDropped(false);
       setPerspectiveInput('');
       setCardText('');
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 600);
     }
   };
 
@@ -143,18 +169,226 @@ export default function UserInputPanel() {
     setActivePanel('references');
   };
 
+  const getToolColorClasses = (color: string, { isActive, isDisabled }: { isActive: boolean; isDisabled: boolean }) => {
+  // These are our color mappings for each supported color
+  const colorMappings = {
+    blue: {
+      bgActive: 'bg-blue-50',
+      bgHover: 'hover:bg-blue-50/20',
+      borderActive: 'border-l-3 border-blue-400',
+      borderHover: 'hover:border-blue-200',
+      textActive: 'text-blue-800',
+      iconActive: 'text-blue-600',
+      hoverIcon: 'group-hover:text-blue-500',
+      dot: 'bg-blue-400',
+    },
+    indigo: {
+      bgActive: 'bg-indigo-50',
+      bgHover: 'hover:bg-indigo-50/20',
+      borderActive: 'border-l-3 border-indigo-400',
+      borderHover: 'hover:border-indigo-200',
+      textActive: 'text-indigo-800',
+      iconActive: 'text-indigo-600',
+      hoverIcon: 'group-hover:text-indigo-500',
+      dot: 'bg-indigo-400',
+    },
+    emerald: {
+      bgActive: 'bg-emerald-50',
+      bgHover: 'hover:bg-emerald-50/20',
+      borderActive: 'border-l-3 border-emerald-400',
+      borderHover: 'hover:border-emerald-200',
+      textActive: 'text-emerald-800',
+      iconActive: 'text-emerald-600',
+      hoverIcon: 'group-hover:text-emerald-500',
+      dot: 'bg-emerald-400',
+    },
+    amber: {
+      bgActive: 'bg-amber-50',
+      bgHover: 'hover:bg-amber-50/20',
+      borderActive: 'border-l-3 border-amber-400',
+      borderHover: 'hover:border-amber-200',
+      textActive: 'text-amber-800',
+      iconActive: 'text-amber-600',
+      hoverIcon: 'group-hover:text-amber-500',
+      dot: 'bg-amber-400',
+    },
+    cyan: {
+      bgActive: 'bg-cyan-50',
+      bgHover: 'hover:bg-cyan-50/20',
+      borderActive: 'border-l-3 border-cyan-400',
+      borderHover: 'hover:border-cyan-200',
+      textActive: 'text-cyan-800',
+      iconActive: 'text-cyan-600',
+      hoverIcon: 'group-hover:text-cyan-500',
+      dot: 'bg-cyan-400',
+    },
+    purple: {
+      bgActive: 'bg-purple-50',
+      bgHover: 'hover:bg-purple-50/20',
+      borderActive: 'border-l-3 border-purple-400',
+      borderHover: 'hover:border-purple-200',
+      textActive: 'text-purple-800',
+      iconActive: 'text-purple-600',
+      hoverIcon: 'group-hover:text-purple-500',
+      dot: 'bg-purple-400',
+    },
+    violet: {
+      bgActive: 'bg-violet-50',
+      bgHover: 'hover:bg-violet-50/20',
+      borderActive: 'border-l-3 border-violet-400',
+      borderHover: 'hover:border-violet-200',
+      textActive: 'text-violet-800',
+      iconActive: 'text-violet-600',
+      hoverIcon: 'group-hover:text-violet-500',
+      dot: 'bg-violet-400',
+    },
+    rose: {
+      bgActive: 'bg-rose-50',
+      bgHover: 'hover:bg-rose-50/20',
+      borderActive: 'border-l-3 border-rose-400',
+      borderHover: 'hover:border-rose-200',
+      textActive: 'text-rose-800',
+      iconActive: 'text-rose-600',
+      hoverIcon: 'group-hover:text-rose-500',
+      dot: 'bg-rose-400',
+    },
+    sky: {
+      bgActive: 'bg-sky-50',
+      bgHover: 'hover:bg-sky-50/20',
+      borderActive: 'border-l-3 border-sky-400',
+      borderHover: 'hover:border-sky-200',
+      textActive: 'text-sky-800',
+      iconActive: 'text-sky-600',
+      hoverIcon: 'group-hover:text-sky-500',
+      dot: 'bg-sky-400',
+    },
+  };
+
+  // Get the color mapping or use fallback
+  const selectedColor = colorMappings[color as keyof typeof colorMappings] || {
+    bgActive: 'bg-slate-50',
+    bgHover: 'hover:bg-slate-50/20',
+    borderActive: 'border-l-3 border-slate-400',
+    borderHover: 'hover:border-slate-200',
+    textActive: 'text-slate-800',
+    iconActive: 'text-slate-600',
+    hoverIcon: 'group-hover:text-slate-500',
+    dot: 'bg-slate-400',
+  };
+
+  return {
+    bg: isActive ? selectedColor.bgActive : 'bg-white',
+    hoverBg: isDisabled ? '' : selectedColor.bgHover,
+    border: isActive ? selectedColor.borderActive : 'border border-slate-200',
+    hoverBorder: isDisabled ? '' : selectedColor.borderHover,
+    text: isActive ? selectedColor.textActive : isDisabled ? 'text-slate-400' : 'text-slate-700',
+    icon: isActive ? selectedColor.iconActive : isDisabled ? 'text-slate-400' : 'text-slate-500',
+    hoverIcon: isDisabled ? '' : selectedColor.hoverIcon,
+    dot: selectedColor.dot,
+  };
+};
+
+
+  // Define tool categories for better organization
+  const toolCategories = {
+    standard: [
+      { 
+        id: 'analysis', 
+        label: 'Basic Analysis', 
+        icon: <FileText size={18} />, 
+        color: 'indigo', 
+        onClick: () => setActivePanel('analysis') 
+      },
+      { 
+        id: 'detailed-analysis', 
+        label: detailedAnalysisLoaded && activePanel !== 'detailed-analysis' 
+          ? 'Show Detailed Analysis' 
+          : 'Detailed Analysis', 
+        icon: <Sparkles size={18} />, 
+        color: 'blue', 
+        onClick: handleDetailedAnalysis 
+      },
+      { 
+        id: 'extract-info', 
+        label: 'Extract Information', 
+        icon: <Zap size={18} />, 
+        color: 'emerald', 
+        onClick: () => setActivePanel('extract-info') 
+      },
+      { 
+        id: 'references', 
+        label: 'Suggest References', 
+        icon: <BookOpen size={18} />, 
+        color: 'amber', 
+        onClick: handleSuggestReferences 
+      },
+      { 
+        id: 'counter', 
+        label: 'Counter-Narrative', 
+        icon: <RefreshCw size={18} />, 
+        color: 'purple', 
+        onClick: handleCounterNarrative 
+      },
+       { 
+        id: 'roleplay', 
+        label: 'Simulation Mode', 
+        icon: <MessageSquare size={18} />, 
+        color: 'sky', 
+        onClick: handleBeginRoleplay 
+      },
+      { 
+        id: 'translate', 
+        label: 'Translate', 
+        icon: <Languages size={18} />, 
+        color: 'cyan', 
+        onClick: () => setActivePanel('translate') 
+      }
+    ],
+    experimental: [
+     
+    ]
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Analysis Perspective */}
-      <div>
-        <h3 className="font-semibold text-lg mb-2 ml-1 text-indigo-900">Analysis Perspective</h3>
+      <motion.div 
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="mb-6"
+      >
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-medium text-base ml-1 text-indigo-900 flex items-center gap-2">
+            <Lightbulb size={16} className="text-indigo-600" strokeWidth={2.5} />
+            <span>Analysis Perspective</span>
+          </h3>
+          {perspective && !showPerspectiveInput && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.05 }}
+              onClick={() => setPerspective('')}
+              className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1"
+            >
+              <span>Reset</span>
+            </motion.button>
+          )}
+        </div>
+        
         {showPerspectiveInput ? (
-          <div className="space-y-2">
+          <motion.div 
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-2"
+          >
             {isCardDropped ? (
               <div className="px-4 py-3 bg-amber-50 border border-amber-200 rounded-md flex items-start justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-amber-800 mb-1">
-                    **Creative strategy card enabled**
+                    Creative strategy card enabled
                   </p>
                   <p className="text-sm text-amber-700">{cardText}</p>
                 </div>
@@ -180,11 +414,12 @@ export default function UserInputPanel() {
             ) : (
               <div className="relative">
                 <input
+                  ref={inputRef}
                   type="text"
-                  className={`w-full p-2 border rounded focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 transition-colors ${
+                  className={`w-full p-3 border rounded-lg focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 transition-all duration-200 ${
                     isDragOver ? 'border-amber-400 bg-amber-50/30' : 'border-slate-200'
                   }`}
-                  placeholder=""
+                  placeholder="Enter an analysis perspective..."
                   value={perspectiveInput}
                   onChange={(e) => setPerspectiveInput(e.target.value)}
                   onDrop={(e) => {
@@ -216,32 +451,44 @@ export default function UserInputPanel() {
               </div>
             )}
             <div className="flex space-x-2">
-              <button
+              <motion.button
+                whileTap={{ scale: 0.97 }}
                 onClick={isCardDropped ? handlePerspectiveWithCardSubmit : handlePerspectiveSubmit}
-                className="px-3 py-1 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-md transition-all disabled:bg-slate-300 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-all disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center gap-1"
                 disabled={!isCardDropped && !perspectiveInput.trim()}
               >
-                Apply
-              </button>
-              <button
+                <span>Apply</span>
+                <ArrowRight size={16} />
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
                 onClick={() => {
                   setShowPerspectiveInput(false);
                   setIsDragOver(false);
                   setIsCardDropped(false);
                   setCardText('');
                 }}
-                className="px-3 py-1 text-sm font-medium text-slate-700 bg-amber-200 hover:bg-amber-300 rounded-md transition-all"
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-all"
               >
                 Cancel
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         ) : (
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            whileHover={{ scale: 1.01 }}
+            transition={{ duration: 0.2 }}
             onClick={() => setShowPerspectiveInput(true)}
-            className={`p-2 border rounded flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors ${
-              isDragOver ? 'border-amber-400 bg-amber-50/30' : 'border-slate-200'
-            }`}
+            className={`p-3 border rounded-lg flex justify-between items-center cursor-pointer transition-all duration-200 ${
+              isDragOver 
+                ? 'border-amber-400 bg-amber-50/30' 
+                : perspective 
+                  ? 'border-indigo-200 bg-indigo-50/40 hover:border-indigo-300' 
+                  : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+            } ${isAnimating ? 'animate-bounce-once' : ''}`}
             onDrop={(e) => {
               e.preventDefault();
               const droppedText = e.dataTransfer.getData('text/plain');
@@ -261,278 +508,92 @@ export default function UserInputPanel() {
               setIsDragOver(false);
             }}
           >
-            <span className="text-sm text-slate-700">
+            <span className={`text-sm ${perspective ? 'text-indigo-800 font-medium' : 'text-slate-500'}`}>
               {perspective && !perspective.includes('koan-like suggestion')
                 ? perspective
                 : perspective && perspective.includes('koan-like suggestion')
-                ? '**Creative strategy card enabled**'
+                ? 'Creative strategy card enabled'
                 : 'Default (no specific perspective)'}
             </span>
-            <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-          </div>
+            <PenLine size={16} className={`${perspective ? 'text-indigo-600' : 'text-slate-400'}`} />
+          </motion.div>
         )}
+      </motion.div>
+
+      {/* Analysis Tools Navigation */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="font-medium text-base text-indigo-900 ml-1">Lenses</h3>
+          
+          {/* Category Tabs */}
+          <div className="flex rounded-lg bg-slate-100 p-0.5">
+            {['standard', 'experimental',].map((category) => (
+              <button
+                key={category}
+                onClick={() => setActiveCategory(category)}
+                className={`px-3 py-1 text-xs font-medium rounded transition-all ${
+                  activeCategory === category
+                    ? 'bg-white text-indigo-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        {/* Tools Grid */}
+<div className="grid grid-cols-1 gap-2">
+  <AnimatePresence mode="wait">
+    <motion.div
+      key={activeCategory}
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -5 }}
+      transition={{ duration: 0.2 }}
+      className="grid grid-cols-1 gap-2"
+    >
+      {toolCategories[activeCategory as keyof typeof toolCategories].map((tool) => {
+        const isActive = activePanel === tool.id;
+        const isDisabled = (isLoading || !initialAnalysis) && tool.id !== 'analysis';
+        const classes = getToolColorClasses(tool.color, { isActive, isDisabled });
+        
+        return (
+          <motion.button
+            key={tool.id}
+            onClick={tool.onClick}
+            disabled={isDisabled}
+            whileHover={!isDisabled ? { scale: 1.01, y: -1 } : {}}
+            whileTap={!isDisabled ? { scale: 0.98 } : {}}
+            className={`
+              flex items-center p-3 rounded-lg transition-all duration-200 group
+              ${classes.bg} ${classes.hoverBg} ${classes.border} ${classes.hoverBorder} pl-3
+            `}
+          >
+            <span className={`mr-3 flex-shrink-0 ${classes.icon} ${classes.hoverIcon}`}>
+              {tool.icon}
+            </span>
+            <span className={`text-sm font-medium ${classes.text}`}>
+              {tool.label}
+            </span>
+            {isActive && (
+              <motion.span
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className={`ml-auto h-2 w-2 rounded-full ${classes.dot}`}
+              />
+            )}
+          </motion.button>
+        );
+      })}
+    </motion.div>
+  </AnimatePresence>
+</div>
       </div>
 
-
- {/* Analysis Tools */}
-<div className="space-y-2">
-  <h3 className="font-semibold text-lg text-indigo-900">Analysis Tools</h3>
-  
-  {/* Basic Analysis */}
-  <button
-    onClick={() => setActivePanel('analysis')}
-    className={`flex items-center w-full shadow-sm px-4 py-2.5 rounded-md font-medium text-left transition-all duration-200 ${
-      activePanel === 'analysis'
-        ? 'bg-slate-100 border-l-4 border-indigo-400 pl-3'
-        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
-    }`}
-  >
-    <svg 
-      className={`w-5 h-5 mr-3 flex-shrink-0 text-indigo-600 ${
-        activePanel === 'analysis' ? 'text-indigo-600' : 'hover:text-indigo-700 transition-colors'
-      }`} 
-      fill="none" 
-      stroke="currentColor" 
-      viewBox="0 0 24 24"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-    </svg>
-    <span className={activePanel === 'analysis' ? 'text-indigo-800' : 'text-slate-700'}>Basic Analysis</span>
-  </button>
-  
-  {/* Detailed Analysis */}
-  <button
-    onClick={handleDetailedAnalysis}
-    disabled={isLoading || !initialAnalysis}
-    className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
-      activePanel === 'detailed-analysis'
-        ? 'bg-slate-100 border-l-4 border-amber-400 pl-3'
-        : isLoading || !initialAnalysis
-        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
-        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
-    }`}
-  >
-    <svg 
-      className={`w-5 h-5 mr-3 flex-shrink-0 text-amber-600 ${
-        activePanel === 'detailed-analysis' 
-          ? 'text-amber-600' 
-          : isLoading || !initialAnalysis 
-          ? 'text-slate-400' 
-          : 'hover:text-amber-700 transition-colors'
-      }`} 
-      fill="none" 
-      stroke="currentColor" 
-      viewBox="0 0 24 24"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
-    <span className={
-      activePanel === 'detailed-analysis' 
-        ? 'text-amber-800' 
-        : isLoading || !initialAnalysis 
-        ? 'text-slate-400' 
-        : 'text-slate-700'
-    }>
-      {detailedAnalysisLoaded && activePanel !== 'detailed-analysis'
-        ? 'Show Detailed Analysis'
-        : 'Detailed Analysis'}
-    </span>
-  </button>
-  
-  {/* Extract Information */}
-  <button
-    onClick={() => setActivePanel('extract-info')}
-    disabled={isLoading || !initialAnalysis}
-    className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
-      activePanel === 'extract-info'
-        ? 'bg-slate-100 border-l-4 border-emerald-400 pl-3'
-        : isLoading || !initialAnalysis
-        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
-        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
-    }`}
-  >
-    <svg 
-      className={`w-5 h-5 mr-3 flex-shrink-0 text-emerald-600 ${
-        activePanel === 'extract-info' 
-          ? 'text-emerald-600' 
-          : isLoading || !initialAnalysis 
-          ? 'text-slate-400' 
-          : 'hover:text-emerald-700 transition-colors'
-      }`} 
-      fill="none" 
-      stroke="currentColor" 
-      viewBox="0 0 24 24"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M19 13l-4 4m0 0l-4-4m4 4V7" />
-    </svg>
-    <span className={
-      activePanel === 'extract-info' 
-        ? 'text-emerald-800' 
-        : isLoading || !initialAnalysis 
-        ? 'text-slate-400' 
-        : 'text-slate-700'
-    }>
-      Extract Information
-    </span>
-  </button>
-  
-  {/* Suggest References */}
-  <button
-    onClick={handleSuggestReferences}
-    disabled={isLoading || !initialAnalysis}
-    className={`flex items-center w-full px-4 py-2.5 rounded-md shadow-sm font-medium text-left transition-all duration-200 ${
-      activePanel === 'references'
-        ? 'bg-slate-100 shadow-sm border-l-4 border-amber-500 pl-3 '
-        : isLoading || !initialAnalysis
-        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
-        : 'bg-slate-100 text-slate-700  hover:bg-slate-200 border-l-4 border-transparent pl-3'
-    }`}
-  >
-    <svg 
-      className={`w-5 h-5 mr-3 flex-shrink-0 text-amber-700 ${
-        activePanel === 'references' 
-          ? 'text-amber-700' 
-          : isLoading || !initialAnalysis 
-          ? 'text-slate-400' 
-          : 'hover:text-amber-800 transition-colors'
-      }`} 
-      fill="none" 
-      stroke="currentColor" 
-      viewBox="0 0 24 24"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-    </svg>
-    <span className={
-      activePanel === 'references' 
-        ? 'text-amber-800 ' 
-        : isLoading || !initialAnalysis 
-        ? 'text-slate-400' 
-        : 'text-slate-700'
-    }>
-      Suggest References
-    </span>
-  </button>
-  
-  {/* Begin Roleplay */}
-  <button
-    onClick={handleBeginRoleplay}
-    disabled={isLoading || !initialAnalysis}
-    className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
-      activePanel === 'roleplay'
-        ? 'bg-slate-100 border-l-4 border-blue-400 pl-3'
-        : isLoading || !initialAnalysis
-        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
-        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
-    }`}
-  >
-    <svg 
-      className={`w-5 h-5 mr-3 flex-shrink-0 text-blue-600 ${
-        activePanel === 'roleplay' 
-          ? 'text-blue-600' 
-          : isLoading || !initialAnalysis 
-          ? 'text-slate-400' 
-          : 'hover:text-blue-700 transition-colors'
-      }`} 
-      fill="none" 
-      stroke="currentColor" 
-      viewBox="0 0 24 24"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-    </svg>
-    <span className={
-      activePanel === 'roleplay' 
-        ? 'text-blue-800' 
-        : isLoading || !initialAnalysis 
-        ? 'text-slate-400' 
-        : 'text-slate-700'
-    }>
-      Simulation Mode
-    </span>
-  </button>
-  
-  {/* Counter-Narrative */}
-  <button
-    onClick={handleCounterNarrative}
-    disabled={isLoading || !initialAnalysis}
-    className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
-      activePanel === 'counter'
-        ? 'bg-slate-100 border-l-4 border-purple-400 pl-3'
-        : isLoading || !initialAnalysis
-        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
-        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-l-4 border-transparent pl-3'
-    }`}
-  >
-    <svg 
-      className={`w-5 h-5 mr-3 flex-shrink-0 text-purple-600 ${
-        activePanel === 'counter' 
-          ? 'text-purple-600' 
-          : isLoading || !initialAnalysis 
-          ? 'text-slate-400' 
-          : 'hover:text-purple-700 transition-colors'
-      }`} 
-      fill="none" 
-      stroke="currentColor" 
-      viewBox="0 0 24 24"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4" />
-    </svg>
-    <span className={
-      activePanel === 'counter' 
-        ? 'text-purple-800' 
-        : isLoading || !initialAnalysis 
-        ? 'text-slate-400' 
-        : 'text-slate-700'
-    }>
-      Counter-Narrative
-    </span>
-  </button>
-  
-  {/* Text Highlighting */}
-  <button
-    onClick={() => setActivePanel('highlight')}
-    disabled={isLoading || !initialAnalysis}
-    className={`flex items-center w-full px-4 py-2.5 shadow-sm rounded-md font-medium text-left transition-all duration-200 ${
-      activePanel === 'highlight'
-        ? 'bg-slate-100 border-l-4 border-yellow-400 pl-3'
-        : isLoading || !initialAnalysis
-        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-l-4 border-transparent pl-3'
-        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-md border-l-4 border-transparent pl-3'
-    }`}
-  >
-    <svg 
-      className={`w-5 h-5 mr-3 flex-shrink-0 text-yellow-500 ${
-        activePanel === 'highlight' 
-          ? 'text-yellow-500' 
-          : isLoading || !initialAnalysis 
-          ? 'text-slate-400' 
-          : 'hover:text-yellow-600 transition-colors'
-      }`} 
-      fill="none" 
-      stroke="currentColor" 
-      viewBox="0 0 24 24"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-    </svg>
-    <span className={
-      activePanel === 'highlight' 
-        ? 'text-yellow-700' 
-        : isLoading || !initialAnalysis 
-        ? 'text-slate-400' 
-        : 'text-slate-700'
-    }>
-      Text Highlighting
-    </span>
-  </button>
-</div>
-
-   {/* LLM Model Selection */}
+      {/* Model Selector Component */}
       <ModelSelector />
-
-
-     
-    
     </div>
   );
 }

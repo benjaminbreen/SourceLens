@@ -150,15 +150,15 @@ export default function CounterNarrative() {
     <div className="space-y-3">
       {/* Conventional Reading section */}
       {conventionalReading && ( 
-        <div className="bg-blue-100/50 rounded-lg border-b border-blue-200 shadow-md">
-          <div className="border-b border-dashed border-slate-300 px-3 py-2 bg-slate-100 flex items-center">
-            <svg className="w-5 h-5 mr-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h3 className="font-medium text-blue-900">Conventional Reading</h3>
-          </div>
+
+          <div className="border-b border-dashed border-slate-300 py-2 flex items-center">
+            
+             <h3 className="text-sm font-medium mr-4 ml-2 mb-6 tracking-wider text-slate-800 uppercase mb-1">
+              AT FIRST GLANCE:
+            </h3>
+
           <div className="p-3">
-            <div className="prose font-medium prose-slate max-w-none text-slate-700 leading-relaxed">
+            <div className="prose prose-slate max-w-none text-slate-700 ">
               <p>{conventionalReading}</p>
             </div>
           </div>
@@ -167,8 +167,8 @@ export default function CounterNarrative() {
       
       {/* Alternative Perspectives section */}
       <div className="">
-        <div className="border-b border-purple-200 px-5 py-2 mt-2 bg-gradient-to-r from-purple-100 to-slate-50">
-          <h3 className="font-medium text-purple-900">Alternative Perspectives</h3>
+        <div className="border-b border-purple-200 px-5 py-2 mt-2 bg-gradient-to-tr from-purple-100/70 to-slate-50">
+          <h3 className="font-semibold text-purple-900">Alternative Perspectives</h3>
         </div>
         <div className="p-4">
           {mainContent ? (
@@ -198,7 +198,7 @@ export default function CounterNarrative() {
                   }
                   
                   return (
-                    <li key={index} className="bg-slate-50 rounded-lg p-2 border border-slate-100 shadow-sm">
+                    <li key={index} className="bg-white rounded-lg py-2 px-5 border border-slate-100 shadow-inner hover:shadow-md">
                       {heading && (
                         <h4 className="font-medium text-purple-800 mb-2">{heading}</h4>
                       )}

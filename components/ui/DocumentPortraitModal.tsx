@@ -500,7 +500,7 @@ useEffect(() => {
           </div>
           
           {/* Right Column - Terminal-style Metadata */}
-          <div className="w-full md:w-3/5 p-6 overflow-y-auto max-h-[60vh] md:max-h-[70vh]">
+          <div className="w-full md:w-3/5 p-4 overflow-y-auto max-h-[60vh] md:max-h-[72vh]">
             <div className="font-mono text-sm bg-slate-900 text-slate-100 rounded-lg p-4 shadow-inner overflow-x-auto">
               <div className="flex items-center mb-3 text-slate-400 border-b border-slate-700 pb-2">
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -512,9 +512,9 @@ useEffect(() => {
               
               {/* ASCII terminal display start */}
               <div className="space-y-1">
-                <p><span className="text-green-400">$</span> <span className="text-yellow-300">document</span> <span className="text-cyan-300">--info</span></p>
+            
                 <div className="pl-2 border-l-2 border-slate-700 mt-2">
-                  <p className="text-purple-300">┌─ Document Identity ───────────────────┐</p>
+                  <p className="text-yellow-300">┌─ Source Data ───────────────────┐</p>
                   <p><span className="text-blue-300">title:</span> {actualMetadata?.title || 'Untitled Document'}</p>
                   <p><span className="text-blue-300">author:</span> {actualMetadata?.author || 'Unknown'}</p>
                   <p><span className="text-blue-300">date:</span> {formatDate(actualMetadata?.date || '')}</p>
@@ -522,7 +522,7 @@ useEffect(() => {
                   {actualMetadata?.documentType && <p><span className="text-blue-300">type:</span> {actualMetadata.documentType}</p>}
                   {actualMetadata?.placeOfPublication && <p><span className="text-blue-300">location:</span> {actualMetadata.placeOfPublication}</p>}
                   
-                  <p className="text-purple-300 mt-3">┌─ Technical Details ──────────────────┐</p>
+                  <p className="text-purple-300 mt-2">┌─ Technical Details ──────┐</p>
                   <p><span className="text-blue-300">source_type:</span> {actualSourceType || 'text'}</p>
                   <p><span className="text-blue-300">file_type:</span> {actualSourceFile?.type || 'N/A'}</p>
                   <p><span className="text-blue-300">file_size:</span> {actualSourceFile?.size ? `${Math.round(actualSourceFile.size / 1024)} KB` : 'N/A'}</p>
@@ -532,14 +532,14 @@ useEffect(() => {
                   
                   {actualMetadata?.academicSubfield && (
                     <>
-                      <p className="text-purple-300 mt-3">┌─ Research Context ──────────────────┐</p>
+                      <p className="text-purple-300 mt-2">┌─ Research Context ──────────────────┐</p>
                       <p><span className="text-blue-300">field:</span> {actualMetadata.academicSubfield}</p>
                     </>
                   )}
                   
                   {actualMetadata?.tags && (
                     <>
-                      <p className="text-purple-300 mt-3">┌─ Tags ───────────────────────────────┐</p>
+                      <p className="text-purple-300 mt-2">┌─ Tags ──────────────────────────┐</p>
                       <div className="pl-2">
                         {Array.isArray(actualMetadata.tags) 
                           ? actualMetadata.tags.map((tag: string, i: number) => (
@@ -562,7 +562,7 @@ useEffect(() => {
                   {/* Citation */}
                   {actualMetadata?.fullCitation && (
                     <>
-                      <p className="text-purple-300 mt-3">┌─ Citation ────────────────────────────┐</p>
+                      <p className="text-purple-300 mt-2">┌─ Citation ────────────────────────────────┐</p>
                       <div className="bg-slate-800 p-2 rounded border-l-2 border-yellow-500 text-slate-300 mt-1">
                         {actualMetadata.fullCitation}
                       </div>
@@ -572,7 +572,7 @@ useEffect(() => {
          {/* Research Goals */}
                   {actualMetadata?.researchGoals && (
                     <>
-                      <p className="text-purple-300 mt-3">┌─ Research Goals ───────────────────┐</p>
+                      <p className="text-purple-300 mt-3">┌─ Research Goals ────────────────────┐</p>
                       <div className="bg-slate-800 p-2 rounded border-l-2 border-green-500 text-slate-300 mt-1">
                         {actualMetadata.researchGoals}
                       </div>
@@ -597,54 +597,7 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* Add animations for the modal */}
-      <style jsx global>{`
-        @keyframes modalFadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        @keyframes modalSlideIn {
-          from { transform: translateY(20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        
-        @keyframes slideInFromTop {
-          from { transform: translateY(-100%); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .modal-fade-in {
-          animation: modalFadeIn 0.3s ease-out forwards;
-        }
-        
-        .modal-slide-in {
-          animation: modalSlideIn 0.3s ease-out forwards;
-        }
-        
-        .animate-in {
-          animation-duration: 0.3s;
-          animation-timing-function: ease-out;
-          animation-fill-mode: forwards;
-        }
-        
-        .fade-in {
-          animation-name: modalFadeIn;
-        }
-        
-        .zoom-in-105 {
-          animation-name: zoomIn105;
-        }
-        
-        .slide-in-from-top {
-          animation-name: slideInFromTop;
-        }
-        
-        @keyframes zoomIn105 {
-          from { transform: scale(0.95); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
+ 
     </div>
   );
 }

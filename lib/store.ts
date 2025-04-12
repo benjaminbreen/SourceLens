@@ -27,8 +27,21 @@ export interface Metadata {
   academicSubfield?: string;
   tags?: string[] | string;
   fullCitation?: string;
-thumbnailUrl?: string;
+thumbnailUrl?: string | null;
 }
+
+export interface TranslationOptions {
+  targetLanguage: string;
+  translationScope: string;
+  explanationLevel: string;
+  literalToPoetic: number;
+  preserveLineBreaks: boolean;
+  includeAlternatives: boolean;
+  fontSize: number;
+}
+
+
+
 
 export interface SpecialLensRequest {
   lensType: 'voice' | 'place' | 'provenance' | null;
@@ -76,7 +89,7 @@ export interface Reference {
 
 
 
-interface AppState {
+export interface AppState {
   // Source and metadata
   sourceContent: string;
   sourceFile: File | null;
@@ -85,6 +98,21 @@ interface AppState {
   perspective: string;
   referencesModel: string;
    sourceThumbnailUrl: string | null;
+
+// translations
+   translatedText: string;
+translationOptions: {
+  targetLanguage: string;
+  translationScope: string;
+  explanationLevel: string;
+  literalToPoetic: number;
+  preserveLineBreaks: boolean;
+  includeAlternatives: boolean;
+  fontSize: number;
+};
+
+setTranslatedText: (text: string) => void;
+setTranslationOptions: (options: TranslationOptions) => void;
 
      // Draft context
   activeDraft: SavedDraft | null;
@@ -138,7 +166,7 @@ setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
   
   // UI state
   isLoading: boolean;
- activePanel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info'| 'highlight';
+ activePanel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info' | 'highlight' | 'translate';
   showMetadataModal: boolean;
   rawPrompt: string | null;
   rawResponse: string | null;
@@ -162,7 +190,7 @@ setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
    addMessage: (message: Omit<ConversationMessage, 'timestamp'>) => void;
    clearConversation: () => void;
    setLoading: (loading: boolean) => void;
-   setActivePanel: (panel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info' | 'highlight') => void;
+   setActivePanel: (panel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info' | 'highlight' | 'translate') => void;
    setShowMetadataModal: (show: boolean) => void;
    setRawPrompt: (prompt: string | null) => void;
    setRawResponse: (response: string | null) => void;
@@ -176,6 +204,7 @@ setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
   setHighlightMode: (active: boolean) => void;
   clearHighlights: () => void;
    setSourceThumbnailUrl: (url: string | null) => void;
+
  
  }
 
@@ -212,6 +241,16 @@ highlightedSegments: [],
   specialLensRequest: null,
     sourceThumbnailUrl: null,
   activeDraft: null,
+  translatedText: '',
+translationOptions: {
+  targetLanguage: 'en',
+  translationScope: 'all',
+  explanationLevel: 'minimal',
+  literalToPoetic: 0.5,
+  preserveLineBreaks: true,
+  includeAlternatives: false,
+  fontSize: 16
+},
    
 };
 
@@ -281,7 +320,6 @@ setSummaryOverall: (summary) => set({ summaryOverall: summary }),
   toggleDarkMode: () => set(state => ({ isDarkMode: !state.isDarkMode })),
   
    setHighlightedSegments: (segments) => set({ highlightedSegments: segments }),
-  
   setHighlightQuery: (query) => set({ highlightQuery: query }),
   
   setHighlightMode: (active) => set({ isHighlightMode: active }),
@@ -290,6 +328,8 @@ setSummaryOverall: (summary) => set({ summaryOverall: summary }),
   setSourceThumbnailUrl: (url) => set({ sourceThumbnailUrl: url }),
 
   setActiveDraft: (draft) => set({ activeDraft: draft }),
+     setTranslatedText: (text: string) => set({ translatedText: text }),
+setTranslationOptions: (options: any) => set({ translationOptions: options }),
 
   
   clearHighlights: () => set({ 

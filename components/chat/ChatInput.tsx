@@ -188,9 +188,9 @@ export default function ChatInput() {
             }
           }}
           placeholder={isLoading ? 'Processing...' : 'Ask about this source...'}
-          className={`flex-grow font-mono text-sm bg-slate-600 text-white px-3 py-1 border ${
+          className={`flex-grow font-mono text-md bg-slate-600 text-white px-3 py-1 border ${
             isDragOver ? 'border-amber-500 bg-slate-800/80' : 'border-slate-700'
-          } rounded-l-sm focus:outline-none focus:border-cyan-500 transition-colors ${isLoading ? 'opacity-60' : ''}`}
+          } rounded-l-sm focus:outline-none transition-colors ${isLoading ? 'opacity-60' : ''}`}
           disabled={isLoading}
           onDrop={handleDrop}
           onDragOver={handleDragOver}

@@ -11,6 +11,7 @@ import { useAppStore, Metadata } from '@/lib/store';
 import UploadProgress from './UploadProgress';
 import { useLibrary } from '@/lib/libraryContext';
 
+
 // Constants for file size limits
 const MAX_IMAGE_TEXT_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_PDF_AUDIO_SIZE = 25 * 1024 * 1024; // 25MB
@@ -32,6 +33,7 @@ interface SourceUploadProps {
   visionModel?: string;
   onVisionModelChange?: (model: string) => void;
   disableMetadataDetection?: boolean;
+  initialText?: string;
 }
 
 export default function SourceUpload({
@@ -593,16 +595,15 @@ const handleTabChange = (tab: string) => {
       )}
 
       {/* Progress UI */}
-    {showProgressUI && (
-  <div className="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm flex items-center justify-center">
-    <div className="w-full max-w-md">
-      <UploadProgress 
-        show={showProgressUI}
-        progress={uploadProgress}
-        currentMessage={uploadStage}
-        messages={progressMessages}
-      />
-    </div>
+    {/* Progress UI */}
+{showProgressUI && (
+  <div className="absolute inset-0 z-10 bg-black/10  rounded-xl flex items-center justify-center">
+    <UploadProgress 
+      show={showProgressUI}
+      progress={uploadProgress}
+      currentMessage={uploadStage}
+      messages={progressMessages}
+    />
   </div>
 )}
 
@@ -613,7 +614,7 @@ const handleTabChange = (tab: string) => {
           // --- Text Input Tab ---
           <div className="rounded-xl overflow-hidden border border-slate-200">
             <textarea
-              className="w-full min-h-[17rem] p-5 border-none focus:ring-0 focus:outline-none resize-none text-slate-700 placeholder-slate-400 transition-colors"
+              className="w-full min-h-[22rem] p-5 border-none focus:ring-0 focus:outline-none resize-none text-slate-700 placeholder-slate-400 transition-colors"
               placeholder="Paste or type your primary source text here, or drag and drop a PDF..."
               value={textInput}
               onChange={handleTextChange}
@@ -639,7 +640,7 @@ const handleTabChange = (tab: string) => {
       ? 'bg-slate-100 border-slate-300 cursor-wait' 
       : 'border-slate-300 hover:border-amber-500 hover:bg-amber-50/60 cursor-pointer'
     } 
-    min-h-[10rem] flex flex-col items-center justify-center relative
+    min-h-[20rem] flex flex-col items-center justify-center relative
   `}
   onDragOver={isProcessing ? undefined : handleDragOver}
   onDragLeave={isProcessing ? undefined : handleDragLeave}
@@ -679,7 +680,7 @@ const handleTabChange = (tab: string) => {
 </div>
 
             {/* AI Vision Toggle */}
-            <div className={`flex items-center bg-indigo-50 p-3 rounded-md border border-indigo-100 mt-3 ${isProcessing ? 'opacity-50' : ''}`}>
+            <div className={`flex items-center bg-indigo-50 p-1 px-4 rounded-md border border-indigo-100 mt-2 ${isProcessing ? 'opacity-50' : ''}`}>
               <label className={`flex items-center ${isProcessing ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                 <div className="relative">
                   <input
@@ -745,7 +746,7 @@ const handleTabChange = (tab: string) => {
             isProcessing
               ? 'bg-slate-100 border-slate-300 cursor-wait' // Indicate waiting state
               : 'border-slate-300 hover:border-indigo-500 hover:bg-indigo-50/60 cursor-pointer'
-          } min-h-[10rem] flex flex-col items-center justify-center relative`}
+          } min-h-[20rem] flex flex-col items-center justify-center relative`}
           onDragOver={isProcessing ? undefined : handleDragOver}
           onDragLeave={isProcessing ? undefined : handleDragLeave}
           onDrop={isProcessing ? undefined : handleFileDrop}

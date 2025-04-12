@@ -1,18 +1,15 @@
 // lib/libraryContext.tsx
-// Context provider for managing library functionality across the application
-// Handles saving/loading references, analyses, and sources to localStorage
+// Enhanced context provider for managing user library data across the application
+// Now integrates with Supabase for persistent storage across devices
 
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Metadata } from '@/lib/store';
+import { useAuth } from '@/lib/auth/authContext';
 
-// Storage keys
-export const SAVED_REFERENCES_KEY = 'sourceLens_savedReferences';
-export const SAVED_ANALYSES_KEY = 'sourceLens_savedAnalyses';
-export const SAVED_SOURCES_KEY = 'sourceLens_savedSources';
-export const SAVED_DRAFTS_KEY = 'sourceLens_savedDrafts';
+
 
 // Types
 export interface SavedDraft {
@@ -32,6 +29,7 @@ export interface SavedDraft {
   status?: 'in-progress' | 'review' | 'final';
   type: 'text' | 'pdf' | 'docx';
   wordCount?: number;
+  userId: string; // Add user ID for database records
 }
 
 export interface SavedReference {
@@ -47,6 +45,7 @@ export interface SavedReference {
   sourceAuthor?: string;
   sourceDate?: string;
   reliability?: string;
+  userId: string; // Add user ID for database records
 }
 
 export interface SavedAnalysis {
@@ -61,6 +60,7 @@ export interface SavedAnalysis {
   tags?: string[];
   model?: string;
   perspective?: string;
+  userId: string; // Add user ID for database records
 }
 
 export interface SavedSource {
@@ -72,105 +72,168 @@ export interface SavedSource {
   lastAccessed?: number;
   tags?: string[];
   category?: string;
+  userId: string; // Add user ID for database records
 }
 
 // Context interface
 interface LibraryContextType {
   // References
   references: SavedReference[];
-  addReference: (reference: Omit<SavedReference, 'id' | 'dateAdded'>) => string;
-  deleteReference: (id: string) => void;
+  addReference: (reference: Omit<SavedReference, 'id' | 'dateAdded' | 'userId'>) => Promise<string>;
+  deleteReference: (id: string) => Promise<void>;
   referenceExists: (citation: string) => boolean;
   
   // Analyses
   analyses: SavedAnalysis[];
-  addAnalysis: (analysis: Omit<SavedAnalysis, 'id' | 'dateAdded'>) => string;
-  deleteAnalysis: (id: string) => void;
+  addAnalysis: (analysis: Omit<SavedAnalysis, 'id' | 'dateAdded' | 'userId'>) => Promise<string>;
+  deleteAnalysis: (id: string) => Promise<void>;
   
   // Sources
   sources: SavedSource[];
-  addSource: (source: Omit<SavedSource, 'id' | 'dateAdded'>) => string;
-  deleteSource: (id: string) => void;
+  addSource: (source: Omit<SavedSource, 'id' | 'dateAdded' | 'userId'>) => Promise<string>;
+  deleteSource: (id: string) => Promise<void>;
   sourceExists: (content: string) => boolean;
 
-    // Drafts
+  // Drafts
   drafts: SavedDraft[];
-  addDraft: (draft: Omit<SavedDraft, 'id' | 'dateAdded'>) => string;
-  updateDraft: (id: string, updates: Partial<SavedDraft>) => void;
-  deleteDraft: (id: string) => void;
+  addDraft: (draft: Omit<SavedDraft, 'id' | 'dateAdded' | 'userId'>) => Promise<string>;
+  updateDraft: (id: string, updates: Partial<SavedDraft>) => Promise<void>;
+  deleteDraft: (id: string) => Promise<void>;
   draftExists: (title: string) => boolean;
-
   
   // Import/Export
-  exportLibrary: () => void;
-  importLibrary: (data: string) => boolean;
+  exportLibrary: () => Promise<boolean>;
+  importLibrary: (data: string) => Promise<boolean>;
+  
+  // Loading state
+  isLoading: boolean;
 }
 
 // Create context
 const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
 
 // Provider component
-export function LibraryProvider({ children }: { children: ReactNode }) {
+export function LibraryProvider({ children }: { children: React.ReactNode }) {
+  const { user, supabase, isLoading: authLoading } = useAuth();
+  
   const [references, setReferences] = useState<SavedReference[]>([]);
   const [analyses, setAnalyses] = useState<SavedAnalysis[]>([]);
   const [sources, setSources] = useState<SavedSource[]>([]);
-    const [drafts, setDrafts] = useState<SavedDraft[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [drafts, setDrafts] = useState<SavedDraft[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load data from localStorage on mount
+  // Load data from Supabase when user changes
   useEffect(() => {
-    const loadFromLocalStorage = () => {
+    const fetchUserData = async () => {
+      if (!user) {
+        // Clear data when no user is logged in
+        setReferences([]);
+        setAnalyses([]);
+        setSources([]);
+        setDrafts([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      setIsLoading(true);
+      
       try {
-        // Load references
-        const referencesJson = localStorage.getItem(SAVED_REFERENCES_KEY);
-        if (referencesJson) {
-          setReferences(JSON.parse(referencesJson));
-        }
+        // Fetch references
+        const { data: referencesData, error: referencesError } = await supabase
+          .from('references')
+          .select('*')
+          .eq('userId', user.id);
+          
+        if (referencesError) throw referencesError;
+        setReferences(referencesData || []);
         
-        // Load analyses
-        const analysesJson = localStorage.getItem(SAVED_ANALYSES_KEY);
-        if (analysesJson) {
-          setAnalyses(JSON.parse(analysesJson));
-        }
+        // Fetch analyses
+        const { data: analysesData, error: analysesError } = await supabase
+          .from('analyses')
+          .select('*')
+          .eq('userId', user.id);
+          
+        if (analysesError) throw analysesError;
+        setAnalyses(analysesData || []);
         
-        // Load sources
-        const sourcesJson = localStorage.getItem(SAVED_SOURCES_KEY);
-        if (sourcesJson) {
-          setSources(JSON.parse(sourcesJson));
+        // Fetch sources
+        const { data: sourcesData, error: sourcesError } = await supabase
+          .from('sources')
+          .select('*')
+          .eq('userId', user.id);
+          
+        if (sourcesError) throw sourcesError;
+        setSources(sourcesData || []);
+        
+        // Fetch drafts
+        const { data: draftsData, error: draftsError } = await supabase
+          .from('drafts')
+          .select('*')
+          .eq('userId', user.id);
+          
+        if (draftsError) throw draftsError;
+        setDrafts(draftsData || []);
+        
+        } catch (err: any) { // Add : any to access properties easily
+        // Log the full error object and specific properties if they exist
+        console.error('Error fetching user data (raw error object):', err);
+        if (err) {
+          console.error('Error details:', {
+            message: err.message,
+            details: err.details,
+            hint: err.hint,
+            code: err.code,
+          });
         }
-          // Load drafts
-        const draftsJson = localStorage.getItem(SAVED_DRAFTS_KEY);
-        if (draftsJson) {
-          setDrafts(JSON.parse(draftsJson));
-        }
-      } catch (error) {
-        console.error('Error loading library data:', error);
       } finally {
-        setIsInitialized(true);
+        setIsLoading(false);
       }
     };
     
-    loadFromLocalStorage();
-  }, []);
+    // Only fetch data if auth is not loading
+    if (!authLoading) {
+      fetchUserData();
+    }
+  }, [user, supabase, authLoading]);
 
   // References functions
-  const addReference = (reference: Omit<SavedReference, 'id' | 'dateAdded'>) => {
+  const addReference = async (reference: Omit<SavedReference, 'id' | 'dateAdded' | 'userId'>) => {
+    if (!user) throw new Error('User not authenticated');
+    
     const newReference: SavedReference = {
       ...reference,
       id: uuidv4(),
-      dateAdded: Date.now()
+      dateAdded: Date.now(),
+      userId: user.id
     };
     
-    const updatedReferences = [...references, newReference];
-    setReferences(updatedReferences);
-    localStorage.setItem(SAVED_REFERENCES_KEY, JSON.stringify(updatedReferences));
+    // Add to Supabase
+    const { error } = await supabase
+      .from('references')
+      .insert(newReference);
+      
+    if (error) throw error;
+    
+    // Update local state
+    setReferences(prev => [...prev, newReference]);
+    
     return newReference.id;
   };
   
-  const deleteReference = (id: string) => {
-    const updatedReferences = references.filter(ref => ref.id !== id);
-    setReferences(updatedReferences);
-    localStorage.setItem(SAVED_REFERENCES_KEY, JSON.stringify(updatedReferences));
+  const deleteReference = async (id: string) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    // Delete from Supabase
+    const { error } = await supabase
+      .from('references')
+      .delete()
+      .eq('id', id)
+      .eq('userId', user.id);
+      
+    if (error) throw error;
+    
+    // Update local state
+    setReferences(prev => prev.filter(ref => ref.id !== id));
   };
   
   const referenceExists = (citation: string) => {
@@ -178,50 +241,106 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
   };
 
   // Analyses functions
-  const addAnalysis = (analysis: Omit<SavedAnalysis, 'id' | 'dateAdded'>) => {
+  const addAnalysis = async (analysis: Omit<SavedAnalysis, 'id' | 'dateAdded' | 'userId'>) => {
+    if (!user) throw new Error('User not authenticated');
+    
     const newAnalysis: SavedAnalysis = {
       ...analysis,
       id: uuidv4(),
-      dateAdded: Date.now()
+      dateAdded: Date.now(),
+      userId: user.id
     };
     
-    const updatedAnalyses = [...analyses, newAnalysis];
-    setAnalyses(updatedAnalyses);
-    localStorage.setItem(SAVED_ANALYSES_KEY, JSON.stringify(updatedAnalyses));
+    // Add to Supabase
+    const { error } = await supabase
+      .from('analyses')
+      .insert(newAnalysis);
+      
+    if (error) throw error;
+    
+    // Update local state
+    setAnalyses(prev => [...prev, newAnalysis]);
+    
     return newAnalysis.id;
   };
   
-  const deleteAnalysis = (id: string) => {
-    const updatedAnalyses = analyses.filter(analysis => analysis.id !== id);
-    setAnalyses(updatedAnalyses);
-    localStorage.setItem(SAVED_ANALYSES_KEY, JSON.stringify(updatedAnalyses));
+  const deleteAnalysis = async (id: string) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    // Delete from Supabase
+    const { error } = await supabase
+      .from('analyses')
+      .delete()
+      .eq('id', id)
+      .eq('userId', user.id);
+      
+    if (error) throw error;
+    
+    // Update local state
+    setAnalyses(prev => prev.filter(analysis => analysis.id !== id));
   };
 
-  const addDraft = (draft: Omit<SavedDraft, 'id' | 'dateAdded'>) => {
+  // Drafts functions
+  const addDraft = async (draft: Omit<SavedDraft, 'id' | 'dateAdded' | 'userId'>) => {
+    if (!user) throw new Error('User not authenticated');
+    
     const newDraft: SavedDraft = {
       ...draft,
       id: uuidv4(),
-      dateAdded: Date.now()
+      dateAdded: Date.now(),
+      userId: user.id
     };
     
-    const updatedDrafts = [...drafts, newDraft];
-    setDrafts(updatedDrafts);
-    localStorage.setItem(SAVED_DRAFTS_KEY, JSON.stringify(updatedDrafts));
+    // Add to Supabase
+    const { error } = await supabase
+      .from('drafts')
+      .insert(newDraft);
+      
+    if (error) throw error;
+    
+    // Update local state
+    setDrafts(prev => [...prev, newDraft]);
+    
     return newDraft.id;
   };
   
-  const updateDraft = (id: string, updates: Partial<SavedDraft>) => {
-    const updatedDrafts = drafts.map(draft => 
-      draft.id === id ? { ...draft, ...updates, lastEdited: Date.now() } : draft
-    );
-    setDrafts(updatedDrafts);
-    localStorage.setItem(SAVED_DRAFTS_KEY, JSON.stringify(updatedDrafts));
+  const updateDraft = async (id: string, updates: Partial<SavedDraft>) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    const updatedDraft = {
+      ...updates,
+      lastEdited: Date.now()
+    };
+    
+    // Update in Supabase
+    const { error } = await supabase
+      .from('drafts')
+      .update(updatedDraft)
+      .eq('id', id)
+      .eq('userId', user.id);
+      
+    if (error) throw error;
+    
+    // Update local state
+    setDrafts(prev => prev.map(draft => 
+      draft.id === id ? { ...draft, ...updatedDraft } : draft
+    ));
   };
   
-  const deleteDraft = (id: string) => {
-    const updatedDrafts = drafts.filter(draft => draft.id !== id);
-    setDrafts(updatedDrafts);
-    localStorage.setItem(SAVED_DRAFTS_KEY, JSON.stringify(updatedDrafts));
+  const deleteDraft = async (id: string) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    // Delete from Supabase
+    const { error } = await supabase
+      .from('drafts')
+      .delete()
+      .eq('id', id)
+      .eq('userId', user.id);
+      
+    if (error) throw error;
+    
+    // Update local state
+    setDrafts(prev => prev.filter(draft => draft.id !== id));
   };
   
   const draftExists = (title: string) => {
@@ -229,23 +348,43 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
   };
 
   // Sources functions
-  const addSource = (source: Omit<SavedSource, 'id' | 'dateAdded'>) => {
+  const addSource = async (source: Omit<SavedSource, 'id' | 'dateAdded' | 'userId'>) => {
+    if (!user) throw new Error('User not authenticated');
+    
     const newSource: SavedSource = {
       ...source,
       id: uuidv4(),
-      dateAdded: Date.now()
+      dateAdded: Date.now(),
+      userId: user.id
     };
     
-    const updatedSources = [...sources, newSource];
-    setSources(updatedSources);
-    localStorage.setItem(SAVED_SOURCES_KEY, JSON.stringify(updatedSources));
+    // Add to Supabase
+    const { error } = await supabase
+      .from('sources')
+      .insert(newSource);
+      
+    if (error) throw error;
+    
+    // Update local state
+    setSources(prev => [...prev, newSource]);
+    
     return newSource.id;
   };
   
-  const deleteSource = (id: string) => {
-    const updatedSources = sources.filter(source => source.id !== id);
-    setSources(updatedSources);
-    localStorage.setItem(SAVED_SOURCES_KEY, JSON.stringify(updatedSources));
+  const deleteSource = async (id: string) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    // Delete from Supabase
+    const { error } = await supabase
+      .from('sources')
+      .delete()
+      .eq('id', id)
+      .eq('userId', user.id);
+      
+    if (error) throw error;
+    
+    // Update local state
+    setSources(prev => prev.filter(source => source.id !== id));
   };
   
   const sourceExists = (content: string) => {
@@ -254,9 +393,11 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
     return sources.some(source => source.content.substring(0, 100) === contentStart);
   };
 
-  // Export all library data as JSON
-  const exportLibrary = () => {
+  // Export library data
+  const exportLibrary = async () => {
     try {
+      if (!user) throw new Error('User not authenticated');
+      
       const libraryData = {
         references,
         analyses,
@@ -285,28 +426,56 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Import library data from JSON
-  const importLibrary = (data: string) => {
+  // Import library data
+  const importLibrary = async (data: string) => {
     try {
+      if (!user) throw new Error('User not authenticated');
+      
       const parsed = JSON.parse(data);
       
       // Basic validation
-      if (!parsed.references || !parsed.analyses || !parsed.sources) {
+      if (!parsed.references || !parsed.analyses || !parsed.sources || !parsed.drafts) {
         throw new Error('Invalid library data format');
       }
       
-      // Update state and localStorage
-      setReferences(parsed.references);
-      localStorage.setItem(SAVED_REFERENCES_KEY, JSON.stringify(parsed.references));
+      // Add user ID to each item
+      const userReferences = parsed.references.map((ref: any) => ({ ...ref, userId: user.id }));
+      const userAnalyses = parsed.analyses.map((analysis: any) => ({ ...analysis, userId: user.id }));
+      const userSources = parsed.sources.map((source: any) => ({ ...source, userId: user.id }));
+      const userDrafts = parsed.drafts.map((draft: any) => ({ ...draft, userId: user.id }));
       
-      setAnalyses(parsed.analyses);
-      localStorage.setItem(SAVED_ANALYSES_KEY, JSON.stringify(parsed.analyses));
+      // Clear existing data for this user
+      await supabase.from('references').delete().eq('userId', user.id);
+      await supabase.from('analyses').delete().eq('userId', user.id);
+      await supabase.from('sources').delete().eq('userId', user.id);
+      await supabase.from('drafts').delete().eq('userId', user.id);
       
-      setSources(parsed.sources);
-      localStorage.setItem(SAVED_SOURCES_KEY, JSON.stringify(parsed.sources));
-
-      setDrafts(parsed.drafts);
-          localStorage.setItem(SAVED_DRAFTS_KEY, JSON.stringify(parsed.drafts));
+      // Insert imported data
+      if (userReferences.length > 0) {
+        const { error } = await supabase.from('references').insert(userReferences);
+        if (error) throw error;
+      }
+      
+      if (userAnalyses.length > 0) {
+        const { error } = await supabase.from('analyses').insert(userAnalyses);
+        if (error) throw error;
+      }
+      
+      if (userSources.length > 0) {
+        const { error } = await supabase.from('sources').insert(userSources);
+        if (error) throw error;
+      }
+      
+      if (userDrafts.length > 0) {
+        const { error } = await supabase.from('drafts').insert(userDrafts);
+        if (error) throw error;
+      }
+      
+      // Update local state
+      setReferences(userReferences);
+      setAnalyses(userAnalyses);
+      setSources(userSources);
+      setDrafts(userDrafts);
       
       return true;
     } catch (error) {
@@ -343,7 +512,10 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
     
     // Import/Export
     exportLibrary,
-    importLibrary
+    importLibrary,
+    
+    // Loading state
+    isLoading
   };
 
   return (

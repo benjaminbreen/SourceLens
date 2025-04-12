@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { useAppStore } from '@/lib/store';
 import { getModelById, LEGACY_MODEL_MAPPING } from '@/lib/models';
 import { models } from '@/lib/models';
+import Image from 'next/image';
 
 // LLM Transparency component that provides visibility into AI exchanges
 // Shows model description and allows viewing of complete prompts and responses
@@ -104,11 +105,15 @@ export default function LLMTransparency({
 
         {llmModel && (
         <div className="mt-4 p-3 bg-slate-50 rounded-md border border-slate-200 text-xs flex items-start space-x-2">
-          <img
-            src={getModelLogo(llmModel)}
-            alt="Provider Logo"
-            className="w-8 h-8 mt-0.5"
-          />
+
+         <Image
+           src={getModelLogo(llmModel)}
+           alt="Provider Logo"
+           width={32}
+           height={32}
+           className="mt-0.5 w-8 h-8"
+         />
+
           <div>
             <h4 className="font-medium text-slate-700 mb-1">About Selected Model</h4>
             <p className="text-slate-600">{getModelDescription(llmModel)}</p>

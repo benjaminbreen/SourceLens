@@ -12,27 +12,118 @@
   --color-ink: #2B1F10;
   
   /* Fonts */
-  --font-serif: 'EB Garamond', 'Lora', serif;
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), monospace;
+  --font-serif: var(--font-eb-garamond), 'Times New Roman', Times, serif; /* Prioritize EB Garamond */
+  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; /* Prioritize Inter */
+  --font-mono: var(--font-fira-code), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* Prioritize Fira Code */
 }
 
-/* Add to globals.css */
+
+ @keyframes modalFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes modalSlideIn {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slideInFromTop {
+          from { transform: translateY(-100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-fade-in {
+          animation: modalFadeIn 0.3s ease-out forwards;
+        }
+        
+        .modal-slide-in {
+          animation: modalSlideIn 0.3s ease-out forwards;
+        }
+        
+        .animate-in {
+          animation-duration: 0.3s;
+          animation-timing-function: ease-out;
+          animation-fill-mode: forwards;
+        }
+        
+        .fade-in {
+          animation-name: modalFadeIn;
+        }
+        
+        .zoom-in-105 {
+          animation-name: zoomIn105;
+        }
+        
+        .slide-in-from-top {
+          animation-name: slideInFromTop;
+        }
+        
+        @keyframes zoomIn105 {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+
+/* Radial gradient mask */
 .radial-gradient-mask {
   mask-image: radial-gradient(circle at center 40%, transparent 30%, black 70%);
   -webkit-mask-image: radial-gradient(circle at center 40%, transparent 30%, black 70%);
 }
 
+/* Filter and shadow */
 .filter-shadow {
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
 }
 
+/* Font styles */
 .font-mono {
-  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  font-family: var(--font-mono) !important;
 }
 
 code, pre, .code {
   font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+}
+
+/* Background styles */
+.bg-radial-gradient {
+  background: radial-gradient(circle, var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to));
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* Animations - consolidated to avoid duplicates */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes modalFadeIn {
@@ -51,114 +142,39 @@ code, pre, .code {
   }
 }
 
-.modal-fade-in {
-  animation: modalFadeIn 0.2s ease-out forwards;
-}
-
-.modal-slide-in {
-  animation: modalSlideIn 0.3s ease-out forwards;
-}
-  
-  
-  .bg-radial-gradient {
-    background: radial-gradient(circle, var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to));
+@keyframes fillFromBottom {
+  0% {
+    background-position: 0 100%;
+    background-size: 100% 0%;
   }
-  
-  .perspective-1000 {
-    perspective: 1000px;
+  100% {
+    background-position: 0 0%;
+    background-size: 100% 100%;
   }
-
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes tagFadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes tagFadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.9); }
+}
+
+ @keyframes shine {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .animate-shine {
+          animation: shine 8s forwards;
+          opacity: 0.25;
+        }
+
+/* Animation utility classes */
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-
-.glow-effect {
-  box-shadow: 0 0 12px 4px rgba(255, 200, 0, 0.3);
-  transition: box-shadow 0.2s ease;
-}
-
-.glow-effect:hover {
-  box-shadow: 0 0 12px 6px rgba(255, 170, 0, 0.9);
-    transform: scale(1) rotate(5deg);
-      transition: transform 0.5s ease;
-        transition: rotate 0.5s ease;
-}
-
-/* Add to globals.css for better table styling */
-.prose table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1em 0;
-  font-size: 0.9em;
-}
-
-.prose table th,
-.prose table td {
-  border: 1px solid #e5e7eb;
-  padding: 0.5em;
-  text-align: left;
-}
-
-.prose table th {
-  background-color: #f3f4f6;
-  font-weight: 600;
-}
-
-.prose tr:nth-child(even) {
-  background-color: #f9fafb;
-}
-
-/* Animation for fading in/out */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-
-/* Add these keyframes to your globals.css or use inline styles */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-/* Animation for slide in from top */
-@keyframes slideInFromTop {
-  from {
-    transform: translateY(-1rem);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* Animation for slide in from right */
-@keyframes slideInFromRight {
-  from {
-    transform: translateX(1rem);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-/* Utility classes for animations */
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
+  animation: fadeIn 0.2s ease-out forwards;
 }
 
 .animate-fade-out {
@@ -166,7 +182,7 @@ code, pre, .code {
 }
 
 .animate-slide-in-top {
-  animation: slideInFromTop 0.3s ease-out forwards;
+  animation: slideInFromTop 0.2s ease-out forwards;
 }
 
 .animate-slide-in-right {
@@ -177,36 +193,63 @@ code, pre, .code {
   animation: fadeIn 0.2s ease-out forwards, fadeOut 0.2s ease-out 1.6s forwards;
 }
 
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.modal-fade-in {
+  animation: modalFadeIn 0.2s ease-out forwards;
 }
 
-.animation-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
+.modal-slide-in {
+  animation: modalSlideIn 0.3s ease-out forwards;
+}
+
+.animate-fill-in {
+  animation: fillFromBottom 0.5s ease-out forwards;
+  background-size: 100% 0%;
+  background-repeat: no-repeat;
+}
+
+.tag-animate-in {
+  animation: tagFadeIn 0.3s ease-out forwards;
+}
+
+.tag-animate-out {
+  animation: tagFadeOut 0.2s ease-in forwards;
+}
+
+/* Glow effect */
+.glow-effect {
+  box-shadow: 0 0 12px 4px rgba(255, 200, 0, 0.3);
+  transition: box-shadow 0.2s ease;
+}
+
+.glow-effect:hover {
+  box-shadow: 0 0 12px 6px rgba(255, 170, 0, 0.9);
+  transform: scale(1) rotate(5deg);
+  transition: all 0.5s ease;
+}
+
+/* Step number styles */
+.step-number {
+  transition: all 0.3s ease-out;
+}
+
+.step-number.active {
+  animation: fillFromBottom 0.5s ease-out forwards;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 12px;
+  width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
   background: #f1f1f1;
-  border-radius: 4px;
+  border-radius: 1px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
+  background: #e2e8f0;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -244,21 +287,311 @@ code, pre, .code {
   margin-bottom: 0.75rem;
 }
 
-        @keyframes tagFadeIn {
-          from { opacity: 0; transform: scale(0.9); }
-          to { opacity: 1; transform: scale(1); }
+/* Prose table styles */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.9em;
+}
+
+.prose table th,
+.prose table td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5em;
+  text-align: left;
+}
+
+.prose table th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+}
+
+.prose tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+/* Animation for quick start buttons */
+.quick-start-button {
+  @apply text-left bg-white hover:bg-indigo-50 text-xs font-medium text-slate-700 hover:text-indigo-700 
+         rounded-md border border-slate-200 hover:border-indigo-200 p-2 
+         transition-all duration-150 shadow-xs hover:shadow-sm flex items-center;
+}
+
+
+
+.pulse-ring {
+  animation: pulseRing 3.5s cubic-bezier(0.4, 0, 0.6, 1) 9.5s infinite; /* Delay start */
+}
+
+        /* Pulse animation for the ready button */
+        @keyframes pulseRing {
+          0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
+          70% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+        .animate-pulse-ring {
+          animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+
+.animate-pulse-ring-emerald {
+  animation: pulseRingEmerald 5s cubic-bezier(0.3, 0, 0.5, 1) 4.5s infinite;
+}
+
+
+
+@keyframes pulseRingEmerald {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); /* emerald-500 */
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+        
+        /* Smooth scrolling for the entire page */
+        html {
+          scroll-behavior: smooth;
         }
         
-        .tag-animate-in {
-          animation: tagFadeIn 0.3s ease-out forwards;
+        /* Focus styles for accessibility */
+        :focus-visible {
+          outline: 2px solid rgba(245, 158, 11, 0.5);
+          outline-offset: 2px;
         }
-        
-        @keyframes tagFadeOut {
-          from { opacity: 1; transform: scale(1); }
-          to { opacity: 0; transform: scale(0.9); }
-        }
-        
-        .tag-animate-out {
-          animation: tagFadeOut 0.2s ease-in forwards;
-        }
-   
+
+
+/* Additional animation keyframes for modal effects */
+@keyframes zoomIn95 { 
+  from { opacity: 0; transform: scale(0.95); } 
+  to { opacity: 1; transform: scale(1); } 
+}
+
+@keyframes slideInFromBottom5 { 
+  from { opacity: 0; transform: translateY(5%); } 
+  to { opacity: 1; transform: translateY(0); } 
+}
+
+/* Animation classes for demo panel */
+.animate-in.zoom-in-95 { 
+  animation: zoomIn95 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; 
+}
+
+.animate-in.slide-in-from-bottom-5 { 
+  animation: slideInFromBottom5 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; 
+}
+
+/* Hover effects for demo items */
+.demo-item {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.demo-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Staggered animation for list items */
+.stagger-item {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.stagger-item-visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Shimmer effect for selected demo */
+@keyframes shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-effect {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 10s infinite;
+}
+
+/* Floating animation for highlighted elements */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.float-animation {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Animation for sliding in from bottom */
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Elegant fade in and slide up animation */
+@keyframes fadeInSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Subtle pulse animation for button */
+@keyframes elegantPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(251, 191, 36, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+  }
+}
+
+/* Shimmer effect for highlighted items */
+@keyframes shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Image zoom effect on hover */
+@keyframes subtleZoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+/* Utility classes for animations */
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-slide-in-from-bottom {
+  animation: slideInFromBottom 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.animate-fade-in-slide-up {
+  animation: fadeInSlideUp 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.pulse-ring {
+  animation: elegantPulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.shimmer-effect {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 10s infinite;
+}
+
+/* Staggered animation for items */
+.stagger-item {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.stagger-item-1 { animation-delay: 0.05s; }
+.stagger-item-2 { animation-delay: 0.1s; }
+.stagger-item-3 { animation-delay: 0.15s; }
+.stagger-item-4 { animation-delay: 0.2s; }
+.stagger-item-5 { animation-delay: 0.25s; }
+.stagger-item-6 { animation-delay: 0.3s; }
+.stagger-item-7 { animation-delay: 0.35s; }
+.stagger-item-8 { animation-delay: 0.4s; }
+
+/* Font styling for demo panel */
+.demo-panel {
+  --font-serif: 'EB Garamond', Georgia, serif;
+}
+
+.demo-panel .font-serif {
+  font-family: var(--font-serif);
+}
+
+/* Beautiful hover effects for demo items */
+.demo-item {
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.demo-item:hover {
+  transform: translateY(-2px);
+}
+
+.demo-item-image {
+  transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.demo-item:hover .demo-item-image {
+  transform: scale(1.12);
+}
+
+/* Elegant background gradients */
+.bg-elegant-gradient {
+  background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
+}
+
+.bg-soft-gradient {
+  background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(248,250,252,0.8) 100%);
+}
+
+
+
+.demo-panel::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.demo-panel::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.demo-panel::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

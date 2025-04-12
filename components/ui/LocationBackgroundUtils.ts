@@ -7,6 +7,7 @@
  * @param dateStr Date string in various formats
  * @returns Century number (negative for BCE)
  */
+
 export const extractCentury = (dateStr: string): number => {
   if (!dateStr) return 19; // Default to 19th century if no date
   
@@ -21,16 +22,22 @@ export const extractCentury = (dateStr: string): number => {
   if (yearMatch) {
     const year = parseInt(yearMatch[1], 10);
     
-    // Handle BCE dates
+    // Handle BCE dates with improved logic
     if (isBCE) {
+      console.log(`BCE date detected: ${year} BCE`);
+      
+      // Ancient period (earlier than 1000 BCE)
       if (year >= 1000) {
+        console.log(`Classified as Ancient (-2)`);
         return -2; // Ancient (1000+ BCE)
       } else {
+        console.log(`Classified as Antiquity (-1)`);
         return -1; // Antiquity (0-1000 BCE)
       }
     }
     
     // For CE dates, proceed with normal century calculation
+    // Specifically look for 3-4 digit years that are likely years
     const ceYearMatch = dateStr.match(/\b(\d{3,4})\b/);
     if (ceYearMatch) {
       const ceYear = parseInt(ceYearMatch[1], 10);
@@ -106,6 +113,9 @@ export const normalizeLocation = (locationStr: string): string => {
     'russia': 'russia',
     'china': 'china',
     'japan': 'japan',
+        'austria': 'vienna',
+          'austro-hungarian empire': 'vienna',
+
     
     // US States
     'california': 'california',

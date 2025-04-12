@@ -4,7 +4,7 @@
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { useAppStore } from '@/lib/store';
 import LocationBackground from './LocationBackground';
@@ -44,6 +44,7 @@ export default function DocumentPortrait({
   // State for modal visibility and thumbnail errors
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [thumbnailError, setThumbnailError] = useState(false);
+  const [isImageExpanded, setIsImageExpanded] = useState(false);
 
   // Handle opening modal - define as a useCallback to prevent recreating on each render
   const handleOpenModal = useCallback(() => {
@@ -53,10 +54,31 @@ export default function DocumentPortrait({
   // Calculate century based on date for color schemes
   const date = actualMetadata?.date || '';
   const century = extractCentury(date);
+
+  useEffect(() => {
+  const handleEsc = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && isImageExpanded) {
+      setIsImageExpanded(false);
+    }
+  };
+  
+  if (isImageExpanded) {
+    document.addEventListener('keydown', handleEsc);
+    // Prevent body scrolling
+    document.body.style.overflow = 'hidden';
+  }
+  
+  return () => {
+    document.removeEventListener('keydown', handleEsc);
+    if (isImageExpanded) {
+      document.body.style.overflow = '';
+    }
+  };
+}, [isImageExpanded]);
   
   // Get color scheme based on century
   const getColorScheme = () => {
-   // [Color scheme function remains the same - no changes needed]
+
    // Keeping your existing color scheme function
   
    switch (century) {
@@ -275,7 +297,7 @@ export default function DocumentPortrait({
     return (
       <>
         <div 
-          className="cursor-pointer transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl rounded-2xl"
+          className="cursor-pointer transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl  rounded-2xl"
           onClick={handleOpenModal}
         >
           {/* Use the LocationBackground component correctly */}
@@ -382,13 +404,13 @@ export default function DocumentPortrait({
     return (
       <>
         <div 
-          className="cursor-pointer transform transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl rounded-xl"
+          className="cursor-pointer border-3 border-slate-50  transform transition-all  duration-300 hover:scale-[1.02] hover:rotate-1 hover:shadow-2xl rounded-lg"
           onClick={handleOpenModal}
         >
-          <div className="relative rounded-xl overflow-hidden">
+          <div className="relative rounded-md ">
             {/* Subtle inset border/frame that sits around 10px in from edge */}
-            <div className="absolute inset-0 z-20 pointer-events-none rounded-lg">
-              <div className="absolute inset-[11px] rounded-lg border-2 border-gray-600/20 shadow-[inset_0_0_10px_rgba(0,0,0,0.1)]"></div>
+            <div className="absolute inset-0 z-20 pointer-events-none rounded-md">
+              <div className="absolute inset-[8px] shadow-inset rounded-md border-1  border-stone-900/24 shadow-[inset_0_0_10px_rgba(0,0,0,0.2)]"></div>
             </div>
             
             {/* Use the LocationBackground component correctly */}
@@ -396,51 +418,64 @@ export default function DocumentPortrait({
               date={actualMetadata?.date || ''}
               location={actualMetadata?.placeOfPublication || ''}
               opacity={0.7}
-              className="relative overflow-hidden rounded-lg border-4 shadow border-double border-slate-300/80 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.07),0_4px_6px_-4px_rgba(0,0,0,0.1)]"
+              className="relative rounded-md border-1  border-stone-400/70 shadow-lg"
             >
               {/* Content container */}
               <div className="flex flex-col items-center p-4">
                 {/* Document thumbnail with enhanced 3D effect */}
-                <div className={`group w-24 h-24 mt-1 rounded-full overflow-hidden relative 
-                  shadow-[0_0_20px_rgba(0,0,0,0.15),0_20px_10px_-5px_rgba(0,0,0,0.4)] 
-                  border-2 ${colorScheme.border} ring-2 ring-white/80
-                  transition-all duration-500 transform hover:scale-105 ${colorScheme.shadowColor}`}>
-                  
-                  {shouldShowThumbnail() ? (
-                    <div className="w-full h-full relative">
-                      <Image 
-                        src={thumbnailUrl!}
-                        alt={actualMetadata?.title || "Document"} 
-                        fill 
-                        className="object-cover"
-                        onError={() => setThumbnailError(true)}
-                      />
-                      
-                      {/* Enhanced lighting effects */}
-                      <div className="absolute inset-0 bg-gradient-to-tr from-black/10 to-transparent"></div>
-                      <div className="absolute top-0 inset-x-0 h-1/4 bg-white/30"></div>
-                      
-                      {/* Inner shadow to make the image "pop" */}
-                      <div className="absolute inset-0 shadow-[inset_0_0_8px_rgba(0,0,0,0.3)]"></div>
-                      
-                      {/* Hover overlay */}
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 
-                        transition-opacity duration-300 bg-gradient-to-b from-black/10 via-transparent to-black/30"></div>
-                    </div>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center 
-                      bg-gradient-to-br from-white to-slate-50">
-                      <span className="text-7xl drop-shadow-[0_4px_4px_rgba(0,0,0,0.2)]">
-                        {actualMetadata?.documentEmoji || '📄'}
-                      </span>
-                    </div>
-                  )}
-                </div>
+               <div className={`group w-24 h-24 mt-1 rounded-full overflow-hidden relative 
+  border-2 ${colorScheme.border} ring-2 ring-white/80
+  transition-all duration-500 transform hover:scale-105 ${colorScheme.shadowColor}`}>
+  
+  {shouldShowThumbnail() ? (
+    <div 
+      className="w-full h-full relative cursor-zoom-in" 
+      onClick={(e) => {
+        e.stopPropagation(); // Prevent triggering parent's onClick
+        setIsImageExpanded(true); // Directly set image to expanded mode
+      }}
+    >
+      <Image 
+        src={thumbnailUrl!}
+        alt={actualMetadata?.title || "Document"} 
+        fill 
+        className="object-cover"
+        onError={() => setThumbnailError(true)}
+      />
+      
+      {/* Enhanced lighting effects */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/15 to-transparent"></div>
+      <div className="absolute top-0 inset-x-0 h-1/4 bg-white/10"></div>
+      
+      {/* Inner shadow to make the image "pop" */}
+      <div className="absolute inset-0 shadow-[inset_0_0_8px_rgba(0,0,0,0.3)]"></div>
+      
+      {/* Hover overlay with magnify indicator */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 
+        transition-opacity duration-300 bg-gradient-to-b from-black/10 via-transparent to-black/30 
+        flex items-center justify-center">
+        <div className="bg-black/50 rounded-full p-2 transform scale-0 group-hover:scale-100 transition-transform duration-300">
+          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div className="w-full h-full flex items-center justify-center 
+      bg-gradient-to-br from-white to-slate-50">
+      <span className="text-7xl drop-shadow-[0_4px_4px_rgba(0,0,0,0.2)]">
+        {actualMetadata?.documentEmoji || '📄'}
+      </span>
+    </div>
+  )}
+</div>
                 
                 {/* Title with artistic and distinctive styling */}
                 <div className="relative my-2 z-20 p-1">
                   {/* Subtle glow effect behind title */}
-                  <div className="absolute backdrop-blur -inset-1 bg-gradient-to-r from-transparent via-white/70 to-transparent 
+                  <div className="absolute backdrop-blur -inset-1 bg-gradient-to-r from-transparent via-white/100 to-white/5 
                     blur-md opacity-70 rounded-lg"></div>
                   
                   {/* Title container with elegant styling */}
@@ -450,7 +485,7 @@ export default function DocumentPortrait({
                     
                     {/* Decorative underline with gradient */}
                     <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-40 h-[2px] 
-                      bg-gradient-to-r from-transparent via-current to-transparent opacity-80"></div>
+                      bg-gradient-to-r from-transparent via-current to-transparent opacity-90"></div>
                   </h3>
                 </div>
                 
@@ -501,6 +536,72 @@ export default function DocumentPortrait({
           </div>
         </div>
         
+        {/* Direct expanded image overlay */}
+{isImageExpanded && thumbnailUrl && (
+  <div 
+    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 animate-in fade-in duration-200"
+    onClick={() => setIsImageExpanded(false)}
+  >
+    <div className="relative flex items-center max-w-[95vw] max-h-[90vh] transition-all duration-300 animate-in zoom-in-105 duration-200">
+      {/* Citation panel on the left */}
+      <div className="hidden md:block bg-black/80 p-4 rounded-l-md text-slate-300 font-mono text-xs max-w-xs max-h-[90vh] overflow-y-auto">
+        <h3 className="text-sm text-white mb-2 border-b border-slate-700 pb-2">Source Information</h3>
+        <pre className="whitespace-pre-wrap">
+          {actualMetadata?.title ? `Title: ${actualMetadata.title}\n` : ''}
+          {actualMetadata?.author ? `Author: ${actualMetadata.author}\n` : ''}
+          {actualMetadata?.date ? `Date: ${formatDate(actualMetadata.date)}\n` : ''}
+          {actualMetadata?.placeOfPublication ? `Location: ${actualMetadata.placeOfPublication}\n` : ''}
+          {actualSourceFile?.name ? `Filename: ${actualSourceFile.name}` : ''}
+        </pre>
+        
+        {/* Display full citation if available */}
+        {actualMetadata?.fullCitation && (
+          <div className="mt-4 pt-4 border-t border-slate-700">
+            <h4 className="text-xs text-white mb-2">Citation</h4>
+            <pre className="whitespace-pre-wrap text-green-300 leading-relaxed opacity-90">
+              {actualMetadata.fullCitation}
+            </pre>
+          </div>
+        )}
+        
+        {/* Display viewing instructions */}
+        <div className="mt-4 pt-4 border-t border-slate-700 text-slate-400">
+          <p className="text-[10px] italic">Click image to close • ESC to exit</p>
+        </div>
+      </div>
+      
+      {/* Image container */}
+      <div className="relative bg-black/40 rounded-md md:rounded-l-none shadow-2xl">
+        <Image 
+          src={thumbnailUrl}
+          alt={actualMetadata?.title || "Document image"}
+          width={1000}
+          height={1000}
+          className="object-contain max-h-[80vh] cursor-zoom-out"
+          onClick={() => setIsImageExpanded(false)}
+        />
+        
+        {/* Mobile citation overlay (only on small screens) */}
+        <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-3 text-white font-mono text-xs backdrop-blur-sm md:hidden">
+          {actualMetadata?.title || ''} • {actualMetadata?.author || ''} • {formatDate(actualMetadata?.date || '')}
+        </div>
+        
+        <button 
+          className="absolute top-4 right-4 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsImageExpanded(false);
+          }}
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
         {/* Modal component */}
         <DocumentPortraitModal
           isOpen={isModalOpen}

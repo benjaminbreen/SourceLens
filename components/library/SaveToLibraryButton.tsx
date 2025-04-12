@@ -36,12 +36,11 @@ export default function SaveToLibraryButton({
   const [showTooltip, setShowTooltip] = useState(false);
 
   // Handle saving to library
-  const handleSave = () => {
+  const handleSave = async () => {
     if (saveStatus === 'saving') return;
     
     setSaveStatus('saving');
     let exists = false;
-    let newId: string | undefined;
     
     try {
       // Check if the item already exists in the library
@@ -63,16 +62,19 @@ export default function SaveToLibraryButton({
       }
       
       // Save the item based on its type
+      let newId: string;
       switch (type) {
         case 'reference':
-          newId = library.addReference(data);
+          newId = await library.addReference(data);
           break;
         case 'analysis':
-          newId = library.addAnalysis(data);
+          newId = await library.addAnalysis(data);
           break;
         case 'source':
-          newId = library.addSource(data);
+          newId = await library.addSource(data);
           break;
+        default:
+          throw new Error(`Unsupported type: ${type}`);
       }
       
       // Show success feedback
@@ -255,9 +257,7 @@ export default function SaveToLibraryButton({
        >
          {getTooltipText()}
 
-         <div 
-          
-         ></div>
+         <div></div>
        </div>
      )}
     </div>

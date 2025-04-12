@@ -106,7 +106,7 @@ export default function MetadataModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-150 p-4 animate-in fade-in duration-300"
       onClick={onClose}
     >
       <div 
@@ -117,14 +117,17 @@ export default function MetadataModal({
         <div className="p-3 -mb-1 border-b border-slate-200 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-slate-800">Source Details</h2>
           <button 
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100"
-            aria-label="Close"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+  onClick={(e) => {
+    e.stopPropagation(); // Prevent event propagation
+    onClose();
+  }}
+  className="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100"
+  aria-label="Close"
+>
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  </svg>
+</button>
         </div>
         
         <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
