@@ -8,10 +8,20 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Metadata } from '@/lib/store';
 import { useAuth } from '@/lib/auth/authContext';
-
-
+import { uploadThumbnail } from '@/lib/storage/uploadThumbnail';
 
 // Types
+export interface Note {
+  id: string;
+  content: string;
+  sourceId: string;
+  sourceMetadata: Metadata;
+  dateCreated: number;
+  lastModified: number;
+  tags: string[];
+  userId: string;
+}
+
 export interface SavedDraft {
   id: string;
   title: string;
@@ -29,7 +39,7 @@ export interface SavedDraft {
   status?: 'in-progress' | 'review' | 'final';
   type: 'text' | 'pdf' | 'docx';
   wordCount?: number;
-  userId: string; // Add user ID for database records
+  userId: string;
 }
 
 export interface SavedReference {
@@ -45,7 +55,7 @@ export interface SavedReference {
   sourceAuthor?: string;
   sourceDate?: string;
   reliability?: string;
-  userId: string; // Add user ID for database records
+  userId: string;
 }
 
 export interface SavedAnalysis {
@@ -60,7 +70,7 @@ export interface SavedAnalysis {
   tags?: string[];
   model?: string;
   perspective?: string;
-  userId: string; // Add user ID for database records
+  userId: string;
 }
 
 export interface SavedSource {
@@ -72,7 +82,8 @@ export interface SavedSource {
   lastAccessed?: number;
   tags?: string[];
   category?: string;
-  userId: string; // Add user ID for database records
+  userId: string;
+  thumbnailUrl?: string | null;
 }
 
 // Context interface
@@ -82,17 +93,26 @@ interface LibraryContextType {
   addReference: (reference: Omit<SavedReference, 'id' | 'dateAdded' | 'userId'>) => Promise<string>;
   deleteReference: (id: string) => Promise<void>;
   referenceExists: (citation: string) => boolean;
+  updateReference: (id: string, updates: Partial<SavedReference>) => Promise<void>;
   
+  // Notes
+  notes: Note[];
+  addNote: (note: Omit<Note, 'id' | 'dateCreated' | 'userId'>) => Promise<string>;
+  updateNote: (id: string, updates: Partial<Note>) => Promise<void>;
+  deleteNote: (id: string) => Promise<void>;
+
   // Analyses
   analyses: SavedAnalysis[];
   addAnalysis: (analysis: Omit<SavedAnalysis, 'id' | 'dateAdded' | 'userId'>) => Promise<string>;
   deleteAnalysis: (id: string) => Promise<void>;
+  updateAnalysis: (id: string, updates: Partial<SavedAnalysis>) => Promise<void>;
   
   // Sources
   sources: SavedSource[];
   addSource: (source: Omit<SavedSource, 'id' | 'dateAdded' | 'userId'>) => Promise<string>;
   deleteSource: (id: string) => Promise<void>;
   sourceExists: (content: string) => boolean;
+  updateSource: (id: string, updates: Partial<SavedSource>) => Promise<void>;
 
   // Drafts
   drafts: SavedDraft[];
@@ -120,17 +140,19 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   const [analyses, setAnalyses] = useState<SavedAnalysis[]>([]);
   const [sources, setSources] = useState<SavedSource[]>([]);
   const [drafts, setDrafts] = useState<SavedDraft[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load data from Supabase when user changes
   useEffect(() => {
     const fetchUserData = async () => {
-      if (!user) {
+      if (!user || !supabase) {
         // Clear data when no user is logged in
         setReferences([]);
         setAnalyses([]);
         setSources([]);
         setDrafts([]);
+        setNotes([]);
         setIsLoading(false);
         return;
       }
@@ -165,6 +187,26 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
         if (sourcesError) throw sourcesError;
         setSources(sourcesData || []);
         
+        // Fetch notes
+        try {
+          console.log('Fetching notes for user ID:', user.id);
+          const { data: notesData, error: notesError } = await supabase
+            .from('notes')
+            .select('*')
+            .eq('userId', user.id);
+          
+          if (notesError) {
+            console.error('Error fetching notes:', notesError);
+            throw notesError;
+          }
+          
+          console.log('Fetched notes:', notesData?.length || 0);
+          setNotes(notesData || []);
+        } catch (notesErr) {
+          console.error('Error fetching notes:', notesErr);
+          // Continue without failing the entire fetch operation
+        }
+        
         // Fetch drafts
         const { data: draftsData, error: draftsError } = await supabase
           .from('drafts')
@@ -174,16 +216,16 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
         if (draftsError) throw draftsError;
         setDrafts(draftsData || []);
         
-        } catch (err: any) { // Add : any to access properties easily
-        // Log the full error object and specific properties if they exist
-        console.error('Error fetching user data (raw error object):', err);
-        if (err) {
-          console.error('Error details:', {
-            message: err.message,
-            details: err.details,
-            hint: err.hint,
-            code: err.code,
-          });
+      } catch (err) {
+        // Log the error with more robust error checking
+        console.error('Error fetching user data:', err);
+        
+        if (err && typeof err === 'object') {
+          try {
+            console.error('Error details:', JSON.stringify(err));
+          } catch (jsonErr) {
+            console.error('Error details (non-serializable):', Object.keys(err));
+          }
         }
       } finally {
         setIsLoading(false);
@@ -196,9 +238,81 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, supabase, authLoading]);
 
+  // Note functions
+  const addNote = async (note: Omit<Note, 'id' | 'dateCreated' | 'userId'>): Promise<string> => {
+    if (!user || !supabase) throw new Error('User not authenticated');
+    
+    // Create a new note with required fields
+    const newNote: Note = {
+      ...note,
+      id: uuidv4(),
+      dateCreated: Date.now(),
+      lastModified: Date.now(),
+      userId: user.id,
+      // Ensure tags is an array
+      tags: Array.isArray(note.tags) ? note.tags : [],
+    };
+    
+    console.log('Adding new note:', JSON.stringify(newNote, null, 2));
+    
+    // Add to Supabase
+    const { error } = await supabase
+      .from('notes')
+      .insert(newNote);
+      
+    if (error) {
+      console.error('Supabase error adding note:', error);
+      throw error;
+    }
+    
+    // Update local state
+    setNotes(prev => [...prev, newNote]);
+    
+    return newNote.id;
+  };
+  
+  const updateNote = async (id: string, updates: Partial<Note>): Promise<void> => {
+    if (!user || !supabase) throw new Error('User not authenticated');
+    
+    const updatedNote = {
+      ...updates,
+      lastModified: Date.now()
+    };
+    
+    // Update in Supabase
+    const { error } = await supabase
+      .from('notes')
+      .update(updatedNote)
+      .eq('id', id)
+      .eq('userId', user.id);
+      
+    if (error) throw error;
+    
+    // Update local state
+    setNotes(prev => prev.map(note => 
+      note.id === id ? { ...note, ...updatedNote } : note
+    ));
+  };
+  
+  const deleteNote = async (id: string): Promise<void> => {
+    if (!user || !supabase) throw new Error('User not authenticated');
+    
+    // Delete from Supabase
+    const { error } = await supabase
+      .from('notes')
+      .delete()
+      .eq('id', id)
+      .eq('userId', user.id);
+      
+    if (error) throw error;
+    
+    // Update local state
+    setNotes(prev => prev.filter(note => note.id !== id));
+  };
+
   // References functions
   const addReference = async (reference: Omit<SavedReference, 'id' | 'dateAdded' | 'userId'>) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user || !supabase) throw new Error('User not authenticated');
     
     const newReference: SavedReference = {
       ...reference,
@@ -221,7 +335,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   };
   
   const deleteReference = async (id: string) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user || !supabase) throw new Error('User not authenticated');
     
     // Delete from Supabase
     const { error } = await supabase
@@ -240,9 +354,28 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     return references.some(ref => ref.citation === citation);
   };
 
+  // Update Reference
+  const updateReference = async (id: string, updates: Partial<SavedReference>) => {
+    if (!user || !supabase) throw new Error('User not authenticated');
+    
+    // Update in Supabase
+    const { error } = await supabase
+      .from('references')
+      .update(updates)
+      .eq('id', id)
+      .eq('userId', user.id);
+      
+    if (error) throw error;
+    
+    // Update local state
+    setReferences(prev => prev.map(ref => 
+      ref.id === id ? { ...ref, ...updates } : ref
+    ));
+  };
+
   // Analyses functions
   const addAnalysis = async (analysis: Omit<SavedAnalysis, 'id' | 'dateAdded' | 'userId'>) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user || !supabase) throw new Error('User not authenticated');
     
     const newAnalysis: SavedAnalysis = {
       ...analysis,
@@ -265,7 +398,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   };
   
   const deleteAnalysis = async (id: string) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user || !supabase) throw new Error('User not authenticated');
     
     // Delete from Supabase
     const { error } = await supabase
@@ -280,9 +413,108 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     setAnalyses(prev => prev.filter(analysis => analysis.id !== id));
   };
 
+  // Update Analysis
+  const updateAnalysis = async (id: string, updates: Partial<SavedAnalysis>) => {
+    if (!user || !supabase) throw new Error('User not authenticated');
+    
+    // Update in Supabase
+    const { error } = await supabase
+      .from('analyses')
+      .update(updates)
+      .eq('id', id)
+      .eq('userId', user.id);
+      
+    if (error) throw error;
+    
+    // Update local state
+    setAnalyses(prev => prev.map(analysis => 
+      analysis.id === id ? { ...analysis, ...updates } : analysis
+    ));
+  };
+
+  // Sources functions
+  const addSource = async (
+  source: Omit<SavedSource, 'id' | 'dateAdded' | 'userId'>
+): Promise<string> => {
+  if (!user || !supabase) throw new Error('User not authenticated');
+
+  // ── ①  Upload thumbnail when it’s a base‑64 data‑URL ─────────
+  let finalThumb: string | null = source.thumbnailUrl ?? null;
+  if (finalThumb?.startsWith('data:')) {
+    finalThumb = await uploadThumbnail(supabase, user.id, finalThumb);
+  }
+
+  const newSource: SavedSource = {
+    ...source,
+    thumbnailUrl: source.thumbnailUrl ?? null,
+    id: uuidv4(),
+    dateAdded: Date.now(),
+    userId: user.id
+  };
+
+  const { error } = await supabase.from('sources').insert(newSource);
+  if (error) throw error;
+
+  setSources(prev => [...prev, newSource]);
+  return newSource.id;
+};
+  
+  const deleteSource = async (id: string) => {
+    if (!user || !supabase) throw new Error('User not authenticated');
+    
+    // Delete from Supabase
+    const { error } = await supabase
+      .from('sources')
+      .delete()
+      .eq('id', id)
+      .eq('userId', user.id);
+      
+    if (error) throw error;
+    
+    // Update local state
+    setSources(prev => prev.filter(source => source.id !== id));
+  };
+  
+  // Update Source
+  const updateSource = async (
+  id: string,
+  updates: Partial<SavedSource>
+): Promise<void> => {
+  if (!user || !supabase) throw new Error('User not authenticated');
+
+  let patch: Partial<SavedSource> = { ...updates, lastAccessed: Date.now() };
+
+  // ── ②  If caller passed a fresh base‑64 thumbnail, store it ──
+  if (patch.thumbnailUrl?.startsWith?.('data:')) {
+    patch.thumbnailUrl = await uploadThumbnail(
+      supabase,
+      user.id,
+      patch.thumbnailUrl
+    );
+  }
+
+  const { error } = await supabase
+    .from('sources')
+    .update(patch)
+    .eq('id', id)
+    .eq('userId', user.id);
+
+  if (error) throw error;
+
+  setSources(prev =>
+    prev.map(src => (src.id === id ? { ...src, ...patch } : src))
+  );
+};
+  
+  const sourceExists = (content: string) => {
+    // Consider a source as existing if first 100 chars match
+    const contentStart = content.substring(0, 100);
+    return sources.some(source => source.content.substring(0, 100) === contentStart);
+  };
+
   // Drafts functions
   const addDraft = async (draft: Omit<SavedDraft, 'id' | 'dateAdded' | 'userId'>) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user || !supabase) throw new Error('User not authenticated');
     
     const newDraft: SavedDraft = {
       ...draft,
@@ -305,7 +537,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   };
   
   const updateDraft = async (id: string, updates: Partial<SavedDraft>) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user || !supabase) throw new Error('User not authenticated');
     
     const updatedDraft = {
       ...updates,
@@ -328,7 +560,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   };
   
   const deleteDraft = async (id: string) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user || !supabase) throw new Error('User not authenticated');
     
     // Delete from Supabase
     const { error } = await supabase
@@ -347,52 +579,6 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     return drafts.some(draft => draft.title.toLowerCase() === title.toLowerCase());
   };
 
-  // Sources functions
-  const addSource = async (source: Omit<SavedSource, 'id' | 'dateAdded' | 'userId'>) => {
-    if (!user) throw new Error('User not authenticated');
-    
-    const newSource: SavedSource = {
-      ...source,
-      id: uuidv4(),
-      dateAdded: Date.now(),
-      userId: user.id
-    };
-    
-    // Add to Supabase
-    const { error } = await supabase
-      .from('sources')
-      .insert(newSource);
-      
-    if (error) throw error;
-    
-    // Update local state
-    setSources(prev => [...prev, newSource]);
-    
-    return newSource.id;
-  };
-  
-  const deleteSource = async (id: string) => {
-    if (!user) throw new Error('User not authenticated');
-    
-    // Delete from Supabase
-    const { error } = await supabase
-      .from('sources')
-      .delete()
-      .eq('id', id)
-      .eq('userId', user.id);
-      
-    if (error) throw error;
-    
-    // Update local state
-    setSources(prev => prev.filter(source => source.id !== id));
-  };
-  
-  const sourceExists = (content: string) => {
-    // Consider a source as existing if first 100 chars match
-    const contentStart = content.substring(0, 100);
-    return sources.some(source => source.content.substring(0, 100) === contentStart);
-  };
-
   // Export library data
   const exportLibrary = async () => {
     try {
@@ -403,6 +589,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
         analyses,
         sources,
         drafts,
+        notes,
         exportDate: new Date().toISOString(),
         version: '1.0'
       };
@@ -426,10 +613,11 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Import library data
+
+// Import library data 
   const importLibrary = async (data: string) => {
     try {
-      if (!user) throw new Error('User not authenticated');
+      if (!user || !supabase) throw new Error('User not authenticated');
       
       const parsed = JSON.parse(data);
       
@@ -443,12 +631,14 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
       const userAnalyses = parsed.analyses.map((analysis: any) => ({ ...analysis, userId: user.id }));
       const userSources = parsed.sources.map((source: any) => ({ ...source, userId: user.id }));
       const userDrafts = parsed.drafts.map((draft: any) => ({ ...draft, userId: user.id }));
+      const userNotes = parsed.notes ? parsed.notes.map((note: any) => ({ ...note, userId: user.id })) : [];
       
       // Clear existing data for this user
       await supabase.from('references').delete().eq('userId', user.id);
       await supabase.from('analyses').delete().eq('userId', user.id);
       await supabase.from('sources').delete().eq('userId', user.id);
       await supabase.from('drafts').delete().eq('userId', user.id);
+      await supabase.from('notes').delete().eq('userId', user.id);
       
       // Insert imported data
       if (userReferences.length > 0) {
@@ -471,11 +661,17 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
       }
       
+      if (userNotes.length > 0) {
+        const { error } = await supabase.from('notes').insert(userNotes);
+        if (error) throw error;
+      }
+      
       // Update local state
       setReferences(userReferences);
       setAnalyses(userAnalyses);
       setSources(userSources);
       setDrafts(userDrafts);
+      setNotes(userNotes);
       
       return true;
     } catch (error) {
@@ -491,11 +687,19 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     addReference,
     deleteReference,
     referenceExists,
+    updateReference,
+    
+    // Notes
+    notes,
+    addNote,
+    updateNote,
+    deleteNote,
     
     // Analyses
     analyses,
     addAnalysis, 
     deleteAnalysis,
+    updateAnalysis,
 
     // Drafts
     drafts,
@@ -509,6 +713,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     addSource,
     deleteSource,
     sourceExists,
+    updateSource,
     
     // Import/Export
     exportLibrary,

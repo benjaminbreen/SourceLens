@@ -413,7 +413,7 @@ export default function SourceDisplay({
 
     // Default rendering for regular text
     return (
-      <div className="pb-4">
+        <div id="source-display" className="pb-4 source-panel">
         {showHighlights ? (
           <div className={`font-serif leading-relaxed ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
             {(sourceContent || '').split('\n\n').map(renderParagraphWithHighlights)}

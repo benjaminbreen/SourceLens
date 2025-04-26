@@ -7,10 +7,17 @@ import Link from 'next/link';
 import AboutModal from '@/components/ui/AboutModal';
 import EasterEggTerminal from '@/components/ui/EasterEggTerminal';
 
-export default function AnalysisFooter() {
+  interface SlimFooterProps {
+  isDarkMode: boolean;
+}
+
+export default function SlimFooter({ isDarkMode }: SlimFooterProps) {
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showEasterEggTerminal, setShowEasterEggTerminal] = useState(false);
   const currentYear = new Date().getFullYear();
+
+
+
 
   return (
     <>
@@ -80,6 +87,8 @@ export default function AnalysisFooter() {
   <AboutModal
     isOpen={showAboutModal}
     onClose={() => setShowAboutModal(false)}
+    isDarkMode={isDarkMode} 
+
   />
 )}
 

@@ -51,7 +51,7 @@ export default function FAQModal({ isOpen, onClose }: FAQModalProps) {
 
   return (
     <div 
-      className={`fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
+      className={`fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50000 p-4 transition-opacity duration-200 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
       onClick={handleClose}
     >
       <div 
@@ -999,7 +999,7 @@ export default function FAQModal({ isOpen, onClose }: FAQModalProps) {
                   </div>
                   
                   <div className="bg-slate-50/50 rounded-xl p-5 border border-slate-200">
-                    <h3 className="text-lg font-medium text-slate-800 mb-3">Keyboard Shortcuts</h3>
+                    <h3 className="text-lg font-medium text-slate-800 mb-3">Keyboard Shortcuts (not yet implemented)</h3>
                     
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">

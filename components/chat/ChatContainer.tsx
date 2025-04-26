@@ -10,7 +10,11 @@ import ChatInput from './ChatInput';
 import ConversationDisplay from './ConversationDisplay';
 import { useAppStore } from '@/lib/store';
 
-export default function ChatContainer() {
+interface ChatContainerProps {
+  darkMode?: boolean;
+}
+
+export default function ChatContainer({ darkMode }: ChatContainerProps) {
   const { llmModel, conversation, activePanel } = useAppStore();
   const [isExpanded, setIsExpanded] = useState(false);
   const [containerHeight, setContainerHeight] = useState(280);

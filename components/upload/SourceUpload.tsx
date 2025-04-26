@@ -34,6 +34,7 @@ interface SourceUploadProps {
   onVisionModelChange?: (model: string) => void;
   disableMetadataDetection?: boolean;
   initialText?: string;
+  isDarkMode: boolean;
 }
 
 export default function SourceUpload({
@@ -45,7 +46,8 @@ export default function SourceUpload({
   onAIVisionChange = () => {},
   visionModel = 'gemini-2.0-flash-lite',
   onVisionModelChange = () => {},
-  disableMetadataDetection = false
+  disableMetadataDetection = false,
+  isDarkMode,    
 }: SourceUploadProps) {
   const router = useRouter();
   const {
@@ -81,6 +83,13 @@ export default function SourceUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
   const progressTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Ref for hiding progress UI timer
+
+const [multiFileUpload, setMultiFileUpload] = useState({
+  inProgress: false,
+  totalFiles: 0,
+  currentFile: 0,
+  combinedContent: [] as string[],
+});
 
   // --- Sync local active tab with parent ---
   useEffect(() => {
@@ -301,6 +310,7 @@ if (!sourceExists(text)) {
     metadata: metadata,
     type: 'text',
     tags: [],
+    thumbnailUrl: generatedThumbnailUrl, 
     category: 'Text Documents'
   });
   console.log('Text source automatically saved to library with metadata:', metadata);
@@ -404,7 +414,11 @@ const enhancedMetadata = {
 if (!sourceExists(data.content)) {
   addSource({
     content: data.content || '',
-    metadata: enhancedMetadata,
+     metadata: {
+    ...enhancedMetadata,
+    thumbnailUrl: data.thumbnailUrl     // <── inside metadata (for UI)
+  },
+  thumbnailUrl: data.thumbnailUrl,      // <── top‑level column in supabase
     type: isPdf ? 'pdf' : isImage ? 'image' : isAudio ? 'text' : 'text',
     tags: sourceMetadata?.tags || [],
     category: isPdf ? 'PDF Documents' : isImage ? 'Images' : isAudio ? 'Audio Transcripts' : 'Text Documents'
@@ -434,16 +448,213 @@ const handleTabChange = (tab: string) => {
 };
 
   // --- Event Handlers ---
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => { 
-    if (e.target.files?.[0]) processFile(e.target.files[0]); 
-    e.target.value = ''; // Reset input
+  // Updated fileSelect handler for multiple files
+const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => { 
+  if (e.target.files && e.target.files.length > 0) {
+    const files = Array.from(e.target.files);
+    
+    // Limit to 5 files
+    if (files.length > 5) {
+      setError("Maximum 5 files can be uploaded at once.");
+      return;
+    }
+    
+    if (files.length === 1) {
+      // Single file upload - use existing flow
+      processFile(files[0]);
+    } else {
+      // Multiple file upload
+      processMultipleFiles(files);
+    }
+  }
+  e.target.value = ''; // Reset input
+};
+
+// Function to handle multiple file uploads
+const processMultipleFiles = async (files: File[]) => {
+  // Reset state
+  setError(null);
+  setProgressMessages([]);
+  setUploadProgress(0);
+  setUploadStage('');
+  setShowProgressUI(true);
+  setUploadingFile(true);
+  setIsProcessing(true);
+  if (progressTimeoutRef.current) clearTimeout(progressTimeoutRef.current);
+  
+  // Initialize multi-file state
+  setMultiFileUpload({
+    inProgress: true,
+    totalFiles: files.length,
+    currentFile: 0,
+    combinedContent: [],
+  });
+  
+  // Set thumbnail from first file only
+  const firstFile = files[0];
+  const fileName = firstFile.name.toLowerCase();
+  const isPdf = firstFile.type.includes('pdf') || fileName.endsWith('.pdf');
+  const isImage = firstFile.type.startsWith('image/') || ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.heic', '.heif'].some(ext => fileName.endsWith(ext));
+  
+  // Generate thumbnail for first file only
+  if (isImage) {
+    try {
+      // For image files, create direct object URL
+      const thumbnailUrl = URL.createObjectURL(firstFile);
+      console.log("Created image thumbnail URL for multi-file upload:", thumbnailUrl);
+      setSourceThumbnailUrl(thumbnailUrl);
+    } catch (err) {
+      console.error("Error creating image thumbnail:", err);
+    }
+  } else if (isPdf) {
+    // For PDFs, set a placeholder thumbnail
+    console.log("Using PDF placeholder thumbnail");
+    setSourceThumbnailUrl('/pdf-placeholder.png');
+  }
+  
+  // Process files sequentially
+  const combinedContent: string[] = [];
+  let currentPageCount = 0;
+  
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const fileName = file.name.toLowerCase();
+    
+    // Update progress
+    updateProgress(
+      Math.round((i / files.length) * 100),
+      `Processing file ${i+1} of ${files.length}: ${file.name}`
+    );
+    
+    setMultiFileUpload(prev => ({
+      ...prev,
+      currentFile: i
+    }));
+    
+    // Process text files directly
+    if (file.type.startsWith('text/') || fileName.endsWith('.txt')) {
+      try {
+        const text = await file.text();
+        combinedContent.push(text);
+        continue; // Skip to next file
+      } catch (err) {
+        console.error(`Error reading text file ${file.name}:`, err);
+        // Continue with API method
+      }
+    }
+    
+    // Process with API for non-text files
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('useAIVision', useAIVision.toString());
+      formData.append('visionModel', visionModel);
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Server error processing file ${i+1}: ${file.name}`);
+      }
+      
+      const data = await response.json();
+      
+      // Add page count
+      if (data.pageCount) {
+        currentPageCount += data.pageCount;
+      }
+      
+      // Add content
+      if (data.content) {
+        combinedContent.push(data.content);
+      }
+      
+    } catch (err) {
+      console.error(`Error processing file ${file.name}:`, err);
+      setError(`Error processing file ${i+1}: ${file.name}. Combining available content.`);
+      // Continue with next file
+    }
+  }
+  
+  // Combine all content with page break markers
+  const finalContent = combinedContent.join('\n\n--- Page Break ---\n\n');
+  
+  // Update the store with combined content
+  setSourceContent(finalContent);
+  setSourceFile(files[0]); // Store the first file as reference
+  setSourceType(files[0].type.includes('pdf') ? 'pdf' : 'text');
+  
+  // Update local state
+  setTextInput(finalContent);
+  if (onTextChange) onTextChange(finalContent);
+  
+  // Extract metadata from combined content
+  if (finalContent) {
+    await extractMetadata(finalContent);
+  }
+  
+  // Reset multi-file state
+  setMultiFileUpload({
+    inProgress: false,
+    totalFiles: 0,
+    currentFile: 0,
+    combinedContent: [],
+  });
+  
+  // Auto-switch to text tab after processing
+  handleTabChange('text');
+  
+  // Create enhanced metadata
+  const metadata = {
+    author: extractedMetadata?.author || files[0].name.split('.')[0],
+    date: extractedMetadata?.date || 'Unknown date',
+    researchGoals: extractedMetadata?.researchGoals || '',
+    title: extractedMetadata?.title || `${files.length} Combined Files`,
+    ...extractedMetadata
   };
   
+  // Save to library
+  if (!sourceExists(finalContent)) {
+    addSource({
+      content: finalContent,
+      metadata: metadata,
+      type: 'text',
+      tags: extractedMetadata?.tags || [],
+      category: 'Multi-File Documents'
+    });
+  }
+  
+  // Finish
+  updateProgress(100, `${files.length} files processed successfully`);
+  setIsProcessing(false);
+  setUploadingFile(false);
+  progressTimeoutRef.current = setTimeout(() => setShowProgressUI(false), 2000);
+};
+  
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => { 
-    e.preventDefault(); 
-    e.currentTarget.classList.remove('border-amber-500', 'bg-amber-50/50'); 
-    if (e.dataTransfer.files?.[0]) processFile(e.dataTransfer.files[0]); 
-  };
+  e.preventDefault(); 
+  e.currentTarget.classList.remove('border-amber-500', 'bg-amber-50/50'); 
+  
+  if (e.dataTransfer.files.length > 0) {
+    const files = Array.from(e.dataTransfer.files);
+    
+    // Limit to 5 files
+    if (files.length > 5) {
+      setError("Maximum 5 files can be uploaded at once.");
+      return;
+    }
+    
+    if (files.length === 1) {
+      // Single file upload - use existing flow
+      processFile(files[0]);
+    } else {
+      // Multiple file upload
+      processMultipleFiles(files);
+    }
+  }
+};
   
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => { 
     e.preventDefault(); 
@@ -595,34 +806,45 @@ const handleTabChange = (tab: string) => {
       )}
 
       {/* Progress UI */}
-    {/* Progress UI */}
-{showProgressUI && (
-  <div className="absolute inset-0 z-10 bg-black/10  rounded-xl flex items-center justify-center">
-    <UploadProgress 
-      show={showProgressUI}
-      progress={uploadProgress}
-      currentMessage={uploadStage}
-      messages={progressMessages}
-    />
-  </div>
-)}
+
+      {showProgressUI && (
+        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-40">
+          <UploadProgress 
+            show={showProgressUI}
+            progress={uploadProgress}
+            currentMessage={uploadStage}
+            messages={progressMessages}
+          />
+        </div>
+      )}
+
 
       {/* Tab Content */}
       <div className={`${isProcessing ? 'opacity-60 pointer-events-none' : ''} transition-opacity duration-300 relative`}>
         {localActiveTab === 'text' && (
           
           // --- Text Input Tab ---
-          <div className="rounded-xl overflow-hidden border border-slate-200">
-            <textarea
-              className="w-full min-h-[22rem] p-5 border-none focus:ring-0 focus:outline-none resize-none text-slate-700 placeholder-slate-400 transition-colors"
-              placeholder="Paste or type your primary source text here, or drag and drop a PDF..."
+      <div className={`rounded-lg border-2 transition-colors duration-300 
+  ${isDarkMode 
+    ? 'bg-indigo-950 border-indigo-700' 
+    : 'bg-white border-slate-200'
+  }
+`}>
+          <textarea
+            className={`w-full min-h-[24rem] p-5 shadow-inner text-2xl border-none rounded-lg focus:ring-amber-300 focus:border-amber-300 resize-none transition-colors transition-all duration-300
+              ${isDarkMode 
+                ? 'bg-slate-800/80 text-white placeholder-slate-400 focus:ring-indigo-400 focus:border-indigo-400 hover:shadow-[0_0_8px_3px_rgba(99,102,241,0.6)]' 
+                : 'bg-white text-slate-700 placeholder-slate-400'
+              }
+            `}
+              placeholder="To get started, paste the text of a primary source into this box. Or drag and drop up to five PDF or JPEG files."
               value={textInput}
               onChange={handleTextChange}
               onPaste={handleTextPaste}
               onDragOver={handleTextAreaDragOver}
               disabled={isProcessing}
               aria-label="Source Text Input"
-              style={{ fontSize: '16px', lineHeight: '1.6' }}
+              style={{ fontSize: '18px', lineHeight: '1.6' }}
             />
           </div>
         )}
@@ -634,13 +856,13 @@ const handleTabChange = (tab: string) => {
           {/* Drop Zone */}
 <div
   className={`
-    border-2 border-dashed rounded-lg p-6 text-center 
+    border-2 border-dashed rounded-lg p-5 text-center 
     transition-all duration-200 ease-in-out 
     ${isProcessing
       ? 'bg-slate-100 border-slate-300 cursor-wait' 
       : 'border-slate-300 hover:border-amber-500 hover:bg-amber-50/60 cursor-pointer'
     } 
-    min-h-[20rem] flex flex-col items-center justify-center relative
+    min-h-[21rem] flex flex-col items-center justify-center relative
   `}
   onDragOver={isProcessing ? undefined : handleDragOver}
   onDragLeave={isProcessing ? undefined : handleDragLeave}
@@ -663,24 +885,26 @@ const handleTabChange = (tab: string) => {
       <svg className="w-10 h-10 mx-auto text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
       </svg>
-      <p className="text-slate-700 font-medium mb-1">Drag & drop your file</p>
-      <p className="text-xs text-slate-500">or click to browse • PDF, Image, Text (Max 25MB)</p>
+     <p className="text-slate-700 font-medium mb-1">Drag & drop your files</p>
+<p className="text-xs text-slate-500">or click to browse • PDF, Image, Text (Max 25MB)</p>
+<p className="text-xs text-amber-600 mt-2">Upload up to 5 files that will be combined into one source</p>
     </>
   )}
   {/* Hidden file input */}
-  <input
-    type="file"
-    className="hidden"
-    ref={fileInputRef}
-    onChange={handleFileSelect}
-    accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.bmp,.txt"
-    disabled={uploadingFile || isProcessing}
-    aria-label="File Upload Input"
-  />
+ <input
+  type="file"
+  className="hidden"
+  ref={fileInputRef}
+  onChange={handleFileSelect}
+  accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.bmp,.heic,.heif,.txt"
+  disabled={uploadingFile || isProcessing}
+  multiple // Add this to enable multi-file uploads
+  aria-label="File Upload Input"
+/>
 </div>
 
             {/* AI Vision Toggle */}
-            <div className={`flex items-center bg-indigo-50 p-1 px-4 rounded-md border border-indigo-100 mt-2 ${isProcessing ? 'opacity-50' : ''}`}>
+            <div className={`flex items-center bg-indigo-50 p-1 px-4 rounded-md border border-indigo-100 mt-1 ${isProcessing ? 'opacity-50' : ''}`}>
               <label className={`flex items-center ${isProcessing ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                 <div className="relative">
                   <input
@@ -832,6 +1056,18 @@ const handleTabChange = (tab: string) => {
       Add Research Draft
     </button>
   </div>
+
+  {multiFileUpload.inProgress && (
+  <div className="mt-3 flex items-center text-amber-700 text-sm animate-pulse">
+    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    <span>
+      Processing file {multiFileUpload.currentFile + 1} of {multiFileUpload.totalFiles}...
+    </span>
+  </div>
+)}
 
   {/* Add Research Draft Modal (placeholder) */}
   {showResearchDraftModal && (

@@ -18,12 +18,20 @@ import os from 'os';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Anthropic } from '@anthropic-ai/sdk';
 import sharp from 'sharp'; 
+import Tesseract from 'tesseract.js';
+import { createClient } from '@supabase/supabase-js';  
+
 
 // Configure API clients
 const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
+
+const sb = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 // Constants for processing limits and thresholds
 const MIN_TEXT_LENGTH = 500;
@@ -44,6 +52,16 @@ export const config = {
     responseLimit: false,
   },
 };
+
+/** Converts a data‑URL (“data:image/png;base64,…”) to {buf, mime, ext} */
+function dataUrlToBuffer(dataUrl: string) {
+  const [, meta, base64] = dataUrl.match(/^data:(.+);base64,(.*)$/)!;
+  const buf  = Buffer.from(base64, 'base64');
+  const mime = meta;
+  const ext  = mime.split('/')[1] ?? 'png';
+  return { buf, mime, ext };
+}
+
 
 export default async function handler(
   req: NextApiRequest,
@@ -150,7 +168,38 @@ export default async function handler(
     
     // Try to generate thumbnail
     thumbnailUrl = await generateThumbnail(fileBuffer, mimeType);
-    
+    // ────────────────────────────────────────────────────────────────────────────
+// Persist the thumbnail in Supabase Storage if we got a data‑URL back
+// (Skip when generateThumbnail() already produced a remote URL or null)
+// ────────────────────────────────────────────────────────────────────────────
+if (thumbnailUrl?.startsWith('data:')) {
+  try {
+    const { buf, mime, ext } = dataUrlToBuffer(thumbnailUrl);
+
+    // unique-ish file name, grouped in a “thumbnails/” folder
+    const fileName = `thumbnails/${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}.${ext}`;
+
+    const { error } = await sb.storage
+      .from('source-thumbnails')                // ← bucket created earlier
+      .upload(fileName, buf, { contentType: mime });
+
+    if (error) throw error;
+
+    // replace the data‑URL with a public URL that *persists*
+    const { data } = sb.storage
+      .from('source-thumbnails')
+      .getPublicUrl(fileName);
+
+    thumbnailUrl = data.publicUrl;
+    console.log('Thumbnail stored at', thumbnailUrl);
+  } catch (err) {
+    console.warn('Could not upload thumbnail:', err);
+    // leave thumbnailUrl as‑is (it’ll still work for this session)
+  }
+}
+
     // Process based on file type
     if (mimeType.includes('pdf') || fileExtension === '.pdf') {
       console.log('Processing as PDF');
@@ -200,6 +249,7 @@ export default async function handler(
         }
         
         let hasExtractedText = false;
+
         
         // Try pdftotext (part of poppler-utils)
         try {
@@ -229,78 +279,111 @@ export default async function handler(
           console.warn('pdftotext extraction failed:', pdftotextErr);
         }
         
-        // If command-line tool didn't work, try optimized pdf-parse
         if (!hasExtractedText) {
-          console.log('Command-line tools unavailable or failed, trying optimized pdf-parse...');
-          
-          if (fileSize > 5 * 1024 * 1024 && !res.writableEnded) {
-            res.write(JSON.stringify({
-              status: 'processing',
-              message: 'Trying alternative PDF extraction...',
-              progress: 30
-            }));
+  console.log('Command‑line tools failed, trying local OCR with Tesseract 6…');
+
+  const ocrText = await (async () => {
+    // ➊ We still need Poppler to rasterise the 1st PDF page ➜ PNG
+    const poppler = await checkPoppler();
+    if (!poppler.available) return '';
+
+    const pdfPath  = path.join(tempDir, 'ocr.pdf');
+    const pngBase  = path.join(tempDir, 'page');
+    const pngPath  = `${pngBase}.png`;
+
+    fs.writeFileSync(pdfPath, fileBuffer);
+    await exec(`${poppler.command} -png -singlefile -r 300 "${pdfPath}" "${pngBase}"`);
+    if (!fs.existsSync(pngPath)) return '';
+
+    // ➋ Dynamic import keeps Next.js (CommonJS) happy with ESM‑only tesseract.js v6
+    const { default: Tesseract } = await import('tesseract.js');
+    const { data } = await Tesseract.recognize(
+      pngPath,
+      'eng',
+      {
+        logger: m =>
+          process.env.NODE_ENV === 'development' && console.log('[tesseract]', m)
+      }
+    );
+
+    // cleanup
+    try { fs.unlinkSync(pdfPath); fs.unlinkSync(pngPath); } catch {/* ignore */}
+
+    return (data.text || '').trim();
+  })();
+
+  if (ocrText.length) {
+    content          = ocrText;
+    processingMethod = 'tesseract-ocr-pdf';
+    hasExtractedText = true;
+    console.log(`Tesseract extracted ${ocrText.length} characters`);
+  } else {
+    console.log('Tesseract OCR produced no text');
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Layer 3 – Optimised pdf‑parse (runs only if we STILL have no text)
+ * ------------------------------------------------------------------ */
+if (!hasExtractedText) {
+  console.log('OCR failed, falling back to optimised pdf‑parse…');
+
+  if (fileSize > 5 * 1024 * 1024 && !res.writableEnded) {
+    res.write(JSON.stringify({
+      status: 'processing',
+      message: 'Trying alternative PDF extraction…',
+      progress: 30
+    }));
+  }
+
+  try {
+    const renderOptions = {
+      normalizeWhitespace: true,
+      disableCombineTextItems: false
+    };
+
+    const data = await pdfParse(fileBuffer, {
+      pagerender(pageData: any) {
+        return pageData.getTextContent(renderOptions).then((tc: any) => {
+          /* identical layout‑preservation code … */
+          let lastY: number | undefined, text = '';
+          const items = tc.items as any[];
+
+          items.sort((a, b) =>
+            a.transform[5] !== b.transform[5]
+              ? b.transform[5] - a.transform[5]
+              : a.transform[4] - b.transform[4]
+          );
+
+          for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (lastY !== undefined && Math.abs(lastY - item.transform[5]) > 5) {
+              text += '\n';
+            } else if (i > 0 && items[i - 1].str.slice(-1) !== ' ' && item.str[0] !== ' ') {
+              text += ' ';
+            }
+            text += item.str;
+            lastY = item.transform[5];
           }
-          
-          try {
-            // Define a custom page renderer to improve text extraction
-            const renderOptions = {
-              normalizeWhitespace: true,
-              disableCombineTextItems: false
-            };
-            
-            const data = await pdfParse(fileBuffer, {
-              // Custom page renderer that attempts to preserve layout
-              pagerender: function(pageData: any) {
-                return pageData.getTextContent(renderOptions)
-                  .then(function(textContent: any) {
-                    let lastY: number | undefined, text = '';
-                    const items = textContent.items;
-                    
-                    // Sort by y position then x to maintain reading order
-                    items.sort(function(a: any, b: any) {
-                      if (a.transform[5] !== b.transform[5]) {
-                        return b.transform[5] - a.transform[5]; // Sort by y position (reversed)
-                      }
-                      return a.transform[4] - b.transform[4]; // Then by x position
-                    });
-                    
-                    // Process text with better layout preservation
-                    for (let i = 0; i < items.length; i++) {
-                      const item = items[i];
-                      
-                      // Start a new line if y position changes significantly
-                      if (lastY !== undefined && Math.abs(lastY - item.transform[5]) > 5) {
-                        text += '\n';
-                      } else if (i > 0 && items[i-1].str.slice(-1) !== ' ' && item.str[0] !== ' ') {
-                        // Add space between words on same line if needed
-                        text += ' ';
-                      }
-                      
-                      text += item.str;
-                      lastY = item.transform[5];
-                    }
-                    
-                    return text;
-                  });
-              }
-            });
-            
-            // Process the result to clean up common PDF extraction issues
-            const extractedText = data.text.replace(/\s+/g, ' ') // Normalize spaces
-                                         .replace(/(\n\s*){3,}/g, '\n\n') // Reduce excessive line breaks
-                                         .trim();
-            
-            content = extractedText;
-            processingMethod = 'optimized-pdf-parse';
-            hasExtractedText = true;
-            
-            console.log(`Optimized pdf-parse extracted ${content.length} characters`);
-          } catch (pdfParseErr) {
-            console.warn('Optimized pdf-parse extraction failed:', pdfParseErr);
-          }
-        }
-        
-        // If we've extracted some text but not enough, or if AI Vision was explicitly requested
+          return text;
+        });
+      }
+    });
+
+    const extractedText = data.text
+      .replace(/\s+/g, ' ')
+      .replace(/(\n\s*){3,}/g, '\n\n')
+      .trim();
+
+    content          = extractedText;
+    processingMethod = 'optimized-pdf-parse';
+    hasExtractedText = true;
+
+    console.log(`Optimised pdf‑parse extracted ${content.length} characters`);
+  } catch (pdfParseErr) {
+    console.warn('Optimised pdf‑parse extraction failed:', pdfParseErr);
+  }
+}
         if ((hasExtractedText && content.length < MIN_TEXT_LENGTH) || useAIVision) {
           if (hasExtractedText && content.length < MIN_TEXT_LENGTH) {
             console.log(`Direct extraction yielded insufficient results (${content.length} chars < ${MIN_TEXT_LENGTH} required)`);
@@ -688,6 +771,38 @@ export default async function handler(
   }
 }
 
+async function extractPdfWithTesseract(
+  pdfBuffer: Buffer,
+  workDir: string
+): Promise<string> {
+  // we still need Poppler to rasterise the first page → PNG
+  const poppler = await checkPoppler();
+  if (!poppler.available) return '';
+
+  const pdfPath  = path.join(workDir, 'ocr-input.pdf');
+  const pngBase  = path.join(workDir, 'page');
+  const pngPath  = `${pngBase}.png`;
+
+  fs.writeFileSync(pdfPath, pdfBuffer);
+  await exec(`${poppler.command} -png -singlefile -r 300 "${pdfPath}" "${pngBase}"`);
+  if (!fs.existsSync(pngPath)) return '';
+
+  /* ── Tesseract.js v6 ───────────────────────────────────────────────────── */
+  const { data } = await Tesseract.recognize(
+    pngPath,
+    'eng',
+    {
+      logger: m =>
+        process.env.NODE_ENV === 'development' && console.log('[tesseract]', m)
+    }
+  );
+
+  // cleanup
+  try { fs.unlinkSync(pdfPath); fs.unlinkSync(pngPath); } catch {}
+
+  return (data.text || '').trim();
+}
+
 // Generate PDF thumbnail as base64 URL
 async function generateThumbnail(buffer: Buffer, mimeType: string): Promise<string | null> {
   try {
@@ -752,6 +867,8 @@ async function generateHEICThumbnail(buffer: Buffer): Promise<string | null> {
     return null;
   }
 }
+
+
 
 // Check if Poppler is installed and get the command
 async function checkPoppler(): Promise<{ available: boolean; command: string }> {

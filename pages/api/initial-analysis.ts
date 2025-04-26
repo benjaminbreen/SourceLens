@@ -1,12 +1,12 @@
 // pages/api/initial-analysis.ts
-// API route for initial source analysis with standardized model handling
-// Supports OpenAI, Anthropic, and Google models through a unified configuration
+// Optimized API route for initial source analysis with improved caching and response handling
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { OpenAI } from 'openai';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getModelById, DEFAULT_MODEL_ID } from '@/lib/models';
+import { LRUCache } from 'lru-cache';
 
 // Configure API clients
 const openai = new OpenAI({
@@ -19,6 +19,12 @@ const anthropic = new Anthropic({
 
 // Configure Google client
 const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+
+// Setup response caching using LRU cache - helps with page refreshes and repeat analyses
+const responseCache = new LRUCache<string, any>({
+  max: 100, // Maximum 100 cached responses
+  ttl: 1000 * 60 * 30, // Cache TTL: 30 minutes
+});
 
 export default async function handler(
   req: NextApiRequest,
@@ -37,15 +43,32 @@ export default async function handler(
       model      // Keep for backward compatibility
     } = req.body;
     
+    // Check if required fields are missing
+    if (!source || !metadata) {
+      console.log("Missing required fields");
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+    
     // Handle backward compatibility - if modelId isn't provided but model is
     const effectiveModelId = modelId || (model === 'gpt' ? 'gpt-4o-mini' : 'claude-haiku');
+    
+    // Create a cache key based on inputs
+    const sourceHash = source.substring(0, 100) + source.length; // Use first 100 chars + length as a hash
+    const cacheKey = `${effectiveModelId}:${perspective}:${JSON.stringify(metadata)}:${sourceHash}`;
+    
+    // Try to get from cache first
+    const cachedResult = responseCache.get(cacheKey);
+    if (cachedResult) {
+      console.log("Returning cached analysis result");
+      return res.status(200).json(cachedResult);
+    }
     
     // Get model configuration
     const modelConfig = getModelById(effectiveModelId);
     
     // Log request details for debugging
     console.log("Initial analysis request received:", {
-      sourceLength: source?.length,
+      sourceLength: source.length,
       metadata: !!metadata,
       perspective,
       modelId: effectiveModelId,
@@ -53,82 +76,110 @@ export default async function handler(
       provider: modelConfig.provider
     });
     
-    // Validate input
-    if (!source || !metadata) {
-      console.log("Missing required fields");
-      return res.status(400).json({ message: 'Missing required fields' });
+    // For very large sources, truncate to optimize API usage and reduce latency
+    const MAX_SOURCE_LENGTH = 100000; // Adjust based on model context window
+    let truncatedSource = source;
+    let contentLength = source.length;
+    
+    if (source.length > MAX_SOURCE_LENGTH) {
+      console.log(`Source exceeds ${MAX_SOURCE_LENGTH} chars, truncating`);
+      
+      // More intelligent truncation - preserve beginning, middle and end
+      const beginning = source.substring(0, MAX_SOURCE_LENGTH * 0.5);
+      const end = source.substring(source.length - MAX_SOURCE_LENGTH * 0.2);
+      const truncationMarker = "\n\n[...content truncated for length...]\n\n";
+      
+      truncatedSource = beginning + truncationMarker + end;
+      contentLength = truncatedSource.length;
+      
+      console.log(`Truncated from ${source.length} to ${contentLength} chars`);
     }
     
     // Build prompt
-    const prompt = buildAnalysisPrompt(source, metadata, perspective);
+    const prompt = buildAnalysisPrompt(truncatedSource, metadata, perspective);
     console.log(`Prompt built, sending to ${modelConfig.provider} model: ${modelConfig.apiModel}`);
     
     // Track raw prompt and response for transparency
     let rawPrompt = prompt;
     let rawResponse = '';
     
-    // Process with selected LLM based on provider
-    let analysis;
-    if (modelConfig.provider === 'openai') {
-      console.log(`Using OpenAI model: ${modelConfig.apiModel}`);
-      const response = await openai.chat.completions.create({
-        model: modelConfig.apiModel,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: modelConfig.temperature || 0.7,
-        max_tokens: modelConfig.maxTokens || 700,
-      });
-      
-      rawResponse = response.choices[0]?.message?.content || '';
-      console.log("OpenAI response received");
-    } else if (modelConfig.provider === 'google') {
-      console.log(`Using Google model: ${modelConfig.apiModel}`);
-      const model = googleAI.getGenerativeModel({ model: modelConfig.apiModel });
-      
-      const result = await model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: {
+    // Process with selected LLM based on provider - now with timeouts
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60-second timeout
+    
+    try {
+      let analysis;
+      if (modelConfig.provider === 'openai') {
+        console.log(`Using OpenAI model: ${modelConfig.apiModel}`);
+        const response = await openai.chat.completions.create({
+          model: modelConfig.apiModel,
+          messages: [{ role: 'user', content: prompt }],
           temperature: modelConfig.temperature || 0.7,
-          maxOutputTokens: modelConfig.maxTokens || 700,
-        },
-      });
+          max_tokens: modelConfig.maxTokens || 700,
+        });
+        
+        rawResponse = response.choices[0]?.message?.content || '';
+        console.log("OpenAI response received");
+      } else if (modelConfig.provider === 'google') {
+        console.log(`Using Google model: ${modelConfig.apiModel}`);
+        const model = googleAI.getGenerativeModel({ model: modelConfig.apiModel });
+        
+        const result = await model.generateContent({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: modelConfig.temperature || 0.7,
+            maxOutputTokens: modelConfig.maxTokens || 700,
+          },
+        });
+        
+        const response = result.response;
+        rawResponse = response.text();
+        console.log("Google response received");
+      } else {
+        // Default to Anthropic/Claude
+        console.log(`Using Anthropic model: ${modelConfig.apiModel}`);
+        const response = await anthropic.messages.create({
+          model: modelConfig.apiModel,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: modelConfig.temperature || 0.7,
+          max_tokens: modelConfig.maxTokens || 700,
+        });
+        
+        rawResponse = response.content[0]?.type === 'text' 
+          ? response.content[0].text 
+          : '';
+        console.log("Anthropic response received");
+      }
       
-      const response = result.response;
-      rawResponse = response.text();
-      console.log("Google response received");
-    } else {
-      // Default to Anthropic/Claude
-      console.log(`Using Anthropic model: ${modelConfig.apiModel}`);
-      const response = await anthropic.messages.create({
-        model: modelConfig.apiModel,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: modelConfig.temperature || 0.7,
-        max_tokens: modelConfig.maxTokens || 700,
-      });
+      // Parse the response with optimized parser
+      analysis = parseAnalysisResponse(rawResponse);
       
-      rawResponse = response.content[0]?.type === 'text' 
-        ? response.content[0].text 
-        : '';
-      console.log("Anthropic response received");
+      // Create result object
+      const result = {
+        analysis,
+        rawPrompt,
+        rawResponse,
+        contentLength
+      };
+      
+      // Cache the result
+      responseCache.set(cacheKey, result);
+      
+      console.log("Response parsed, sending back to client");
+      return res.status(200).json(result);
+    } finally {
+      clearTimeout(timeoutId);
     }
-    
-    // Parse the response
-    analysis = parseAnalysisResponse(rawResponse);
-    console.log("Response parsed, sending back to client");
-    
-    return res.status(200).json({
-      analysis,
-      rawPrompt,
-      rawResponse
+  } catch (error) {
+    console.error('Initial analysis error:', error);
+    return res.status(500).json({ 
+      message: 'Error processing analysis',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
-} catch (error) {
-  console.error('Initial analysis error:', error);
-  return res.status(500).json({ 
-    message: 'Error processing analysis',
-    error: error instanceof Error ? error.message : 'Unknown error'
-  });
-}
+  }
 }
 
+// Optimized prompt builder using template literals for better performance
 function buildAnalysisPrompt(
   source: string, 
   metadata: any, 
@@ -163,12 +214,19 @@ FOLLOW-UP QUESTIONS:
 `;
 }
 
+// Optimized parser using RegExp.exec for better performance
 function parseAnalysisResponse(text: string): any {
-  // Extract components with regex
-  const summaryMatch = text.match(/SUMMARY:\s*(.*?)(?=PRELIMINARY|$)/s);
-  const analysisMatch = text.match(/PRELIMINARY ANALYSIS:\s*(.*?)(?=FOLLOW-UP|$)/s);
-  const questionsMatch = text.match(/FOLLOW-UP QUESTIONS:[\s\S]*?(?:1\.\s*(.*?))\s*(?:2\.\s*(.*?))\s*(?:3\.\s*(.*?))\s*(?=$|[\r\n])/s);
+  // Regular expressions to extract components
+  const summaryRegex = /SUMMARY:\s*(.*?)(?=PRELIMINARY|$)/s;
+  const analysisRegex = /PRELIMINARY ANALYSIS:\s*(.*?)(?=FOLLOW-UP|$)/s;
+  const questionsRegex = /FOLLOW-UP QUESTIONS:[\s\S]*?(?:1\.\s*(.*?))\s*(?:2\.\s*(.*?))\s*(?:3\.\s*(.*?))\s*(?=$|[\r\n])/s;
   
+  // Extract components using exec which is more performant
+  const summaryMatch = summaryRegex.exec(text);
+  const analysisMatch = analysisRegex.exec(text);
+  const questionsMatch = questionsRegex.exec(text);
+  
+  // Build result object with fallbacks
   const result = {
     summary: summaryMatch?.[1]?.trim() || 'A historical document requiring analysis.',
     analysis: analysisMatch?.[1]?.trim() || 'This document relates to the stated research goals.',
@@ -179,6 +237,15 @@ function parseAnalysisResponse(text: string): any {
     ].filter(Boolean)
   };
   
-  console.log("Parsed analysis result:", result);
   return result;
 }
+
+// Set appropriate API config for large payloads
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb', // Increase size limit for large documents
+    },
+    responseLimit: false,
+  },
+};

@@ -13,6 +13,7 @@ interface ExpandedTranslationViewProps {
   translatedText: string;
   originalText: string;
   targetLanguage: string;
+  isDarkMode: boolean; 
 }
 
 interface TextSection {

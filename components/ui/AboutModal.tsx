@@ -10,9 +10,10 @@ import Image from 'next/image';
 interface AboutModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isDarkMode: boolean;
 }
 
-export default function AboutModal({ isOpen, onClose }: AboutModalProps) {
+export default function AboutModal({ isOpen, onClose, isDarkMode }: AboutModalProps) {
   const [activeTab, setActiveTab] = useState(0);
   const [indicatorStyle, setIndicatorStyle] = useState({});
   const [isClosing, setIsClosing] = useState(false);

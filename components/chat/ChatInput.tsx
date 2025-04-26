@@ -141,13 +141,13 @@ export default function ChatInput() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col">
       {isCardDropped ? (
-        <div className="mb-2 px-3 py-2 bg-amber-900/30 border border-amber-700/50 rounded-sm">
+        <div className="absolute mt-1 ml-1 px-3 py-1 bg-amber-100/90 border border-amber-400/50 rounded-sm">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className="text-xs font-bold text-amber-400 mb-1">
-                Creative strategy card enabled
+              <p className="text-xs font-medium text-amber-800 mb-1">
+                Creative strategy card enabled. Click submit to see.
               </p>
-              <p className="text-xs text-amber-300">{cardText}</p>
+            
             </div>
             <button 
               type="button"
@@ -155,7 +155,7 @@ export default function ChatInput() {
                 setIsCardDropped(false);
                 setCardText('');
               }}
-              className="text-amber-400 hover:text-amber-300 transition-colors"
+              className="text-amber-600 hover:text-amber-800 transition-colors ml-1"
               aria-label="Remove card"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

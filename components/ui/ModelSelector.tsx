@@ -11,9 +11,10 @@ import { useAppStore } from '@/lib/store';
 interface ModelSelectorProps {
   compact?: boolean; // Show compact version with fewer details
   className?: string; // Additional CSS classes
+   darkMode?: boolean; // Add dark mode support
 }
 
-export default function ModelSelector({ compact = false, className = '' }: ModelSelectorProps) {
+export default function ModelSelector({ compact = false, className = '', darkMode = false }: ModelSelectorProps) {
   const { llmModel, setLLMModel } = useAppStore();
 
   // Group models by provider
@@ -31,70 +32,50 @@ export default function ModelSelector({ compact = false, className = '' }: Model
   const selectedModelDescription =
     models.find((m) => m.id === llmModel)?.description || 'Select a model';
 
-  return (
-    <div className={`space-y-1 ${className}`}>
-      {/* Label shown only if not in compact mode */}
-      {!compact && (
-        <label className="block text-sm font-medium text-slate-700">
-          LLM Model
-        </label>
-      )}
-
-      {/* Dropdown container for better styling */}
-      <div className="relative">
-        <select
-          value={llmModel}
-          onChange={handleModelChange}
-          aria-label="Select LLM model"
-          className="
-            w-full appearance-none rounded-md border border-slate-300 bg-white 
-            py-2 px-3 text-sm text-slate-700 shadow-sm transition-colors
-            focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500
-            hover:cursor-pointer
-          "
-        >
-          <optgroup label="Anthropic">
-            {anthropicModels.map((model) => (
-              <option key={model.id} value={model.id}>
-                {model.name}
-              </option>
-            ))}
-          </optgroup>
-
-          <optgroup label="OpenAI">
-            {openaiModels.map((model) => (
-              <option key={model.id} value={model.id}>
-                {model.name}
-              </option>
-            ))}
-          </optgroup>
-
-          <optgroup label="Google">
-            {googleModels.map((model) => (
-              <option key={model.id} value={model.id}>
-                {model.name}
-              </option>
-            ))}
-          </optgroup>
-        </select>
-
-        {/* Custom down-arrow icon (SVG) in the right side of the select */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </div>
-
-      {/* Selected model description (hidden if compact) */}
+   return (
+    <div className={`${className}`}>
+      {!compact && <h3 className={`font-medium mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-900'} transition-colors duration-200`}>LLM Model</h3>}
+      
+      <select
+        value={llmModel}
+        onChange={handleModelChange}
+        className={`w-full p-2 rounded focus:ring-2 transition-colors duration-200 ${
+          darkMode 
+            ? 'border-slate-700 bg-slate-800/30 text-slate-300 focus:border-indigo-500 focus:ring-indigo-500/20' 
+            : 'border-slate-200 focus:border-amber-700 focus:ring-amber-700/20 text-slate-700'
+        } border`}
+        aria-label="Select LLM model"
+      >
+        <optgroup label="Anthropic" className={darkMode ? 'bg-slate-800 text-slate-300' : ''}>
+          {anthropicModels.map(model => (
+            <option key={model.id} value={model.id} className={darkMode ? 'bg-slate-800' : ''}>
+              {model.name}
+            </option>
+          ))}
+        </optgroup>
+        
+        <optgroup label="OpenAI" className={darkMode ? 'bg-slate-800 text-slate-300' : ''}>
+          {openaiModels.map(model => (
+            <option key={model.id} value={model.id} className={darkMode ? 'bg-slate-800' : ''}>
+              {model.name}
+            </option>
+          ))}
+        </optgroup>
+        
+        <optgroup label="Google" className={darkMode ? 'bg-slate-800 text-slate-300' : ''}>
+          {googleModels.map(model => (
+            <option key={model.id} value={model.id} className={darkMode ? 'bg-slate-800' : ''}>
+              {model.name}
+            </option>
+          ))}
+        </optgroup>
+      </select>
+      
       {!compact && llmModel && (
-        <p className="mt-1 text-xs text-slate-500">{selectedModelDescription}</p>
+        <p className={`mt-1 text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'} transition-colors duration-200`}>
+          {/* Safely handle the case where the model might not be found */}
+          {models.find(m => m.id === llmModel)?.description || "Select a model"}
+        </p>
       )}
     </div>
   );

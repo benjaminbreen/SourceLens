@@ -243,7 +243,7 @@ export default function StrategyDeck({ className = '' }: StrategyDeckProps) {
         disabled={isAnimating}
       >
         <div className="relative group">
-          <span className=" font-bold bg-white/20 px-2 py-2 rounded-full backdrop-blur-sm">
+          <span className=" font-bold bg-white/15 px-2 py-2 mr-1 rounded-full backdrop-blur-sm">
             🃏
           </span>
           
@@ -347,21 +347,7 @@ export default function StrategyDeck({ className = '' }: StrategyDeckProps) {
         </div>
       )}
       
-      {/* Global CSS for custom animations */}
-      <style jsx global>{`
-        .modal-open {
-          overflow: hidden;
-        }
-        
-        @keyframes disappear {
-          0% { transform: translateY(0) rotate(0) scale(1); opacity: 1; }
-          100% { transform: translateY(20px) rotate(90deg) scale(0); opacity: 0; }
-        }
-        
-        .card-disappear {
-          animation: disappear 0.6s ease-in forwards;
-        }
-      `}</style>
+    
     </div>
   );
 }

@@ -10,6 +10,8 @@ import { useAppStore } from '@/lib/store';
 import { useLibrary } from '@/lib/libraryContext';
 import CleanupText from '../text/CleanupText';
 import SummarizeText from '../text/SummarizeText';
+import DraftContext from '../drafts/DraftContext';
+import DraftSelectionModal from '../drafts/DraftSelectionModal';
 
 interface DocumentActionsProps {
   onAction?: (action: string) => void;
@@ -34,6 +36,7 @@ export default function DocumentActions({
   const [showCleanup, setShowCleanup] = useState(false);
   const [showSummarize, setShowSummarize] = useState(false);
   const [showAnimation, setShowAnimation] = useState(true);
+  const [showDraftModal, setShowDraftModal] = useState(false);
   const [fontSize, setFontSize] = useState(currentFontSize);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error' | 'exists'>('idle');
   const menuRef = useRef<HTMLDivElement>(null);
@@ -206,13 +209,26 @@ export default function DocumentActions({
           {/* Save to Library Button - NEW */}
           <button
             onClick={handleSaveToLibrary}
-            className="flex items-center w-full px-4 py-2.5 text-left text-sm text-emerald-700 hover:bg-emerald-50 border-b border-slate-100"
+            className="flex items-center font-medium w-full px-4 py-2.5 text-left text-sm text-emerald-700 hover:bg-emerald-50 border-b border-slate-100"
           >
             <svg className="w-4 h-4 mr-3 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             Save to Library
           </button>
+
+
+            {/* Add Research Context Button (using the updated component) */}
+          <button
+            onClick={() => setShowDraftModal(true)}
+            className="flex items-center w-full px-4 py-2.5 text-left text-sm text-emerald-700 hover:bg-emerald-50 border-b border-slate-100"
+          >
+            <svg className="w-4 h-4 mr-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Upload a Draft
+          </button>
+
           
           <button
             onClick={handleCleanupClick}
@@ -306,6 +322,13 @@ export default function DocumentActions({
           onClose={() => setShowCleanup(false)} 
         />
       )}
+
+      {showDraftModal && (
+  <DraftSelectionModal
+    isOpen={true}
+    onClose={() => setShowDraftModal(false)}
+  />
+)}
 
       {/* Summarize Modal */}
       {showSummarize && (

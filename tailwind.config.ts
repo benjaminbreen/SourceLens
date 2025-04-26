@@ -7,7 +7,7 @@ const config: Config = {
     './pages/**/*.{js,ts,jsx,tsx}',
   ],
    
-
+  darkMode: 'class', // Add this line
   theme: {
     extend: {
       fontFamily: {
@@ -110,9 +110,8 @@ const config: Config = {
     },
   },
    plugins: [
- 
     require('@tailwindcss/typography'),
-    require('tailwindcss-animate') // Add this if not already present
+    require('tailwindcss-animate') 
   ],
 };
 

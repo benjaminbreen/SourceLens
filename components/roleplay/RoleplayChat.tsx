@@ -13,6 +13,11 @@ import SourceDetailsPanel from '../analysis/SourceDetailsPanel';
 import { getPrioritizedImagePaths } from '../ui/LocationBackgroundUtils';
 import remarkGfm from 'remark-gfm';
 
+interface RoleplayChatProps {
+  darkMode?: boolean;
+}
+
+
 // Avatar component with proper fallbacks
 const Avatar = ({ 
   src, 
@@ -54,7 +59,7 @@ const Avatar = ({
   );
 };
 
-export default function RoleplayChat() {
+export default function RoleplayChat({ darkMode }: RoleplayChatProps) {
   // App state from store
   const { 
     metadata,
@@ -275,7 +280,7 @@ const handleSendMessage = async (e?: React.FormEvent) => {
         metadata: metadata,
         message: userMessage,
         model: llmModel,
-        conversation: conversation.slice(-6), // Last 6 messages for context
+        conversation: conversation.slice(-10), // Last 6 messages for context
         simulationStyle,
         responseLength: ['concise', 'balanced', 'detailed'][responseLength],
         emotionalRange,

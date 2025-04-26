@@ -45,15 +45,44 @@ interface DemoButtonsProps {
   setShowDemoOptions: (show: boolean) => void;
   buttonRef?: RefObject<HTMLButtonElement>;
   dropdownRef?: RefObject<HTMLDivElement>;
+  isDarkMode?: boolean;
 }
 
 // --- Enhanced Detail Panel Component ---
-const DetailPanel = ({ demo }: { demo: DemoTextItem | null }) => {
+const DetailPanel = ({ demo, isDarkMode = false }: { demo: DemoTextItem | null, isDarkMode?: boolean }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  // Animation effect when demo changes
+  useEffect(() => {
+    setIsVisible(false);
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 10);
+    return () => clearTimeout(timer);
+  }, [demo]);
+  
   if (!demo) {
     return (
-      <div className="relative  overflow-hidden mt-2 rounded-xl shadow-lg bg-white border border-slate-200 transition-all duration-300">
-        <div className="p-6 py-5  text-center">
-          <p className="text-slate-400 text-xl font-serif italic">
+      <div className={`relative overflow-hidden rounded-xl ${
+        isDarkMode 
+          ? 'bg-slate-800/80 border-slate-700 shadow-slate-900/40' 
+          : 'bg-white border-slate-300 shadow-lg'
+        } border transition-all duration-300 min-h-[200px]`}
+      >
+        <div className={`${
+          isDarkMode 
+            ? 'bg-gradient-to-b from-slate-800/30 to-slate-800/80' 
+            : 'bg-gradient-to-b from-slate-50/30 to-slate-100/80'
+          } absolute inset-0 transition-colors duration-300`}
+        >
+          {/* Inset Shadow Effect */}
+          <div className="absolute inset-0 shadow-[inset_0_1px_8px_rgba(0,0,0,0.25)] pointer-events-none"></div>
+        </div>
+        <div className="p-6 py-5 mt-10 text-center relative z-10">
+          <p className={`${
+            isDarkMode ? 'text-slate-500' : 'text-slate-400'
+            } text-2xl font-serif italic tracking-wide transition-colors duration-300`}
+          >
             Select a source to view its details
           </p>
         </div>
@@ -103,16 +132,37 @@ const DetailPanel = ({ demo }: { demo: DemoTextItem | null }) => {
   const thumbnailPath = getThumbnailPath();
   
   return (
-    <div className="relative overflow-hidden mt-2 rounded-xl shadow-lg bg-stone-100 border border-slate-300 transition-all duration-300 min-h-[200px]">
-      <div className="relative z-10 p-6 py-5 flex gap-6">
+    <div className={`relative overflow-hidden rounded-xl ${
+      isDarkMode 
+        ? 'bg-slate-800/80 border-slate-700 shadow-slate-900/40' 
+        : 'bg-white border-slate-200/80 shadow-lg'
+      } border transition-all duration-300 min-h-[200px]`}
+    >
+      <div className={`${
+        isDarkMode 
+          ? 'bg-gradient-to-b from-slate-800/10 to-slate-800/40' 
+          : 'bg-gradient-to-b from-stone-50/10 to-stone-100/40'
+        } absolute inset-0 transition-colors duration-300`}
+      >
+        {/* Inset Shadow Effect */}
+        <div className="absolute inset-0 shadow-[inset_0_1px_8px_rgba(0,0,0,0.15)] pointer-events-none"></div>
+      </div>
+      <div className={`relative z-10 p-6 py-5 flex gap-6 transition-opacity duration-300 ${
+        isVisible ? 'opacity-100' : 'opacity-0'
+      }`}>
         {/* Left: Thumbnail */}
         <div className="shrink-0">
-          <div className="w-32 h-40 overflow-hidden rounded-md bg-slate-100 shadow-md border border-slate-200 relative">
+          <div className={`w-32 h-40 overflow-hidden rounded-md ${
+            isDarkMode 
+              ? 'bg-slate-700 border-slate-600' 
+              : 'bg-slate-100 border-slate-200'
+            } shadow-md border relative transition-colors duration-300`}
+          >
             <Image 
               src={thumbnailPath}
               alt={demo.title}
               fill
-              className="object-cover"
+              className={`object-cover ${isDarkMode ? 'opacity-90' : 'opacity-100'} transition-opacity duration-300`}
               onError={(e) => {
                 e.currentTarget.src = '/placeholder.jpg';
               }}
@@ -122,39 +172,87 @@ const DetailPanel = ({ demo }: { demo: DemoTextItem | null }) => {
         
         {/* Right: Content */}
         <div className="flex-1 mr-10">
-          <h3 className="font-serif text-xl font-medium text-slate-800 mb-1.5">{demo.title}</h3>
+          <h3 className={`font-serif text-xl font-medium ${
+            isDarkMode ? 'text-slate-100' : 'text-slate-800'
+            } mb-1.5 transition-colors duration-300`}
+          >
+            {demo.title}
+          </h3>
           
           {/* Metadata Grid */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 mr-20 mb-3">
             {demo.metadata.date && (
               <div className="flex items-baseline gap-2">
-                <span className="text-xs uppercase tracking-wide text-slate-500 font-medium">Date</span>
-                <span className="text-sm text-slate-700">{demo.metadata.date}</span>
+                <span className={`text-xs uppercase tracking-wide ${
+                  isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                  } font-medium transition-colors duration-300`}
+                >
+                  Date
+                </span>
+                <span className={`text-sm ${
+                  isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                  } transition-colors duration-300`}
+                >
+                  {demo.metadata.date}
+                </span>
               </div>
             )}
             {demo.metadata.author && (
               <div className="flex items-baseline gap-2">
-                <span className="text-xs uppercase tracking-wide text-slate-500 font-medium">Author</span>
-                <span className="text-sm text-slate-700">{demo.metadata.author}</span>
+                <span className={`text-xs uppercase tracking-wide ${
+                  isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                  } font-medium transition-colors duration-300`}
+                >
+                  Author
+                </span>
+                <span className={`text-sm ${
+                  isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                  } transition-colors duration-300`}
+                >
+                  {demo.metadata.author}
+                </span>
               </div>
             )}
             {demo.metadata.documentType && (
               <div className="flex items-baseline gap-2">
-                <span className="text-xs uppercase tracking-wide text-slate-500 font-medium">Type</span>
-                <span className="text-sm text-slate-700">{demo.metadata.documentType}</span>
+                <span className={`text-xs uppercase tracking-wide ${
+                  isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                  } font-medium transition-colors duration-300`}
+                >
+                  Type
+                </span>
+                <span className={`text-sm ${
+                  isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                  } transition-colors duration-300`}
+                >
+                  {demo.metadata.documentType}
+                </span>
               </div>
             )}
             {demo.metadata.placeOfPublication && (
               <div className="flex items-baseline gap-2">
-                <span className="text-xs uppercase tracking-wide text-slate-500 font-medium">Origin</span>
-                <span className="text-sm text-slate-700">{demo.metadata.placeOfPublication}</span>
+                <span className={`text-xs uppercase tracking-wide ${
+                  isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                  } font-medium transition-colors duration-300`}
+                >
+                  Origin
+                </span>
+                <span className={`text-sm ${
+                  isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                  } transition-colors duration-300`}
+                >
+                  {demo.metadata.placeOfPublication}
+                </span>
               </div>
             )}
           </div>
           
           {/* Summary */}
           {demo.metadata.summary && (
-            <p className=" text-slate-600 mb-3 line-clamp-2 font-serif italic ">
+            <p className={`${
+              isDarkMode ? 'text-slate-400' : 'text-slate-600'
+              } mb-3 line-clamp-2 font-serif italic transition-colors duration-300`}
+            >
               {demo.metadata.summary}
             </p>
           )}
@@ -163,12 +261,24 @@ const DetailPanel = ({ demo }: { demo: DemoTextItem | null }) => {
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {tags.slice(0, 4).map((tag, idx) => (
-                <span key={idx} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs border border-slate-200">
+                <span 
+                  key={idx} 
+                  className={`px-2 py-0.5 ${
+                    isDarkMode 
+                      ? 'bg-slate-700 text-slate-300 border-slate-600' 
+                      : 'bg-slate-100 text-slate-600 border-slate-200'
+                    } rounded-full text-xs border transition-colors duration-300`}
+                >
                   {tag}
                 </span>
               ))}
               {tags.length > 4 && 
-                <span className="text-xs text-slate-400 self-center">+{tags.length - 4} more</span>
+                <span className={`text-xs ${
+                  isDarkMode ? 'text-slate-500' : 'text-slate-400'
+                  } self-center transition-colors duration-300`}
+                >
+                  +{tags.length - 4} more
+                </span>
               }
             </div>
           )}
@@ -177,22 +287,36 @@ const DetailPanel = ({ demo }: { demo: DemoTextItem | null }) => {
     </div>
   );
 };
+
 // --- Quick Start Component ---
 const QuickStartSection = ({ 
   handleQuickDemo, 
   handleManhattanNarrative, 
   handleHighlightDemo, 
-  handleQuickStartClick 
+  handleQuickStartClick,
+  isDarkMode = false 
 }: { 
   handleQuickDemo: (index: number, panel: ActivePanelType) => void;
   handleManhattanNarrative: () => void;
   handleHighlightDemo: (index: number, query: string) => void;
   handleQuickStartClick: (action: () => void) => void;
+  isDarkMode?: boolean;
 }) => {
   return (
-    <div className="bg-gradient-to-r from-slate-50 to-white rounded-lg p-5 border border-slate-200/80 mt-4">
-      <h5 className="text-base font-serif font-medium text-slate-800 mb-3 flex items-center gap-2">
-        <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className={`${
+      isDarkMode 
+        ? 'bg-gradient-to-r from-slate-800 to-slate-900 border-slate-700' 
+        : 'bg-gradient-to-r from-slate-50 to-white border-slate-200/80'
+      } rounded-lg p-5 border mt-4 transition-colors duration-300`}
+    >
+      <h5 className={`text-base font-serif font-medium ${
+        isDarkMode ? 'text-slate-200' : 'text-slate-800'
+        } mb-3 flex items-center gap-2 transition-colors duration-300`}
+      >
+        <svg className={`w-4 h-4 ${
+          isDarkMode ? 'text-amber-500' : 'text-amber-600'
+          } transition-colors duration-300`} fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
         Quick Features
@@ -202,53 +326,117 @@ const QuickStartSection = ({
         {/* Enhanced Quick Start Buttons */}
         <button 
           onClick={() => handleQuickStartClick(() => handleQuickDemo(0, 'roleplay'))}
-          className="text-left bg-white hover:bg-indigo-50 text-sm font-medium text-slate-700 hover:text-indigo-700 rounded-md border border-slate-200 hover:border-indigo-200 p-3 transition-all duration-150 shadow-sm hover:shadow flex items-center gap-3"
+          className={`text-left ${
+            isDarkMode 
+              ? 'bg-slate-800 hover:bg-indigo-900/60 text-slate-300 hover:text-indigo-300 border-slate-700 hover:border-indigo-700' 
+              : 'bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border-slate-200 hover:border-indigo-200'
+            } text-sm font-medium rounded-md border p-3 transition-all duration-150 ${
+              isDarkMode ? 'shadow-none hover:shadow-lg shadow-slate-900/30' : 'shadow-sm hover:shadow'
+            } flex items-center gap-3`}
         >
-          <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+          <div className={`w-10 h-10 rounded-full ${
+            isDarkMode 
+              ? 'bg-indigo-900/50 border-indigo-800/70' 
+              : 'bg-indigo-50 border-indigo-100'
+            } border flex items-center justify-center shrink-0 transition-colors duration-300`}
+          >
             <span className="text-lg">💬</span>
           </div>
           <div>
             <span className="block font-medium">Simulate: Ancient Complaint</span>
-            <span className="text-xs text-slate-500">Roleplay with a Sumerian merchant</span>
+            <span className={`text-xs ${
+              isDarkMode ? 'text-slate-400' : 'text-slate-500'
+              } transition-colors duration-300`}
+            >
+              Roleplay with a Sumerian merchant
+            </span>
           </div>
         </button>
         
         <button 
           onClick={() => handleQuickStartClick(handleManhattanNarrative)}
-          className="text-left bg-white hover:bg-indigo-50 text-sm font-medium text-slate-700 hover:text-indigo-700 rounded-md border border-slate-200 hover:border-indigo-200 p-3 transition-all duration-150 shadow-sm hover:shadow flex items-center gap-3"
+          className={`text-left ${
+            isDarkMode 
+              ? 'bg-slate-800 hover:bg-indigo-900/60 text-slate-300 hover:text-indigo-300 border-slate-700 hover:border-indigo-700' 
+              : 'bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border-slate-200 hover:border-indigo-200'
+            } text-sm font-medium rounded-md border p-3 transition-all duration-150 ${
+              isDarkMode ? 'shadow-none hover:shadow-lg shadow-slate-900/30' : 'shadow-sm hover:shadow'
+            } flex items-center gap-3`}
         >
-          <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+          <div className={`w-10 h-10 rounded-full ${
+            isDarkMode 
+              ? 'bg-indigo-900/50 border-indigo-800/70' 
+              : 'bg-indigo-50 border-indigo-100'
+            } border flex items-center justify-center shrink-0 transition-colors duration-300`}
+          >
             <span className="text-lg">🏙️</span>
           </div>
           <div>
             <span className="block font-medium">Alternate Perspective</span>
-            <span className="text-xs text-slate-500">Manhattan Island narrates its history</span>
+            <span className={`text-xs ${
+              isDarkMode ? 'text-slate-400' : 'text-slate-500'
+              } transition-colors duration-300`}
+            >
+              Manhattan Island narrates its history
+            </span>
           </div>
         </button>
         
         <button 
           onClick={() => handleQuickStartClick(() => handleQuickDemo(8, 'roleplay'))}
-          className="text-left bg-white hover:bg-indigo-50 text-sm font-medium text-slate-700 hover:text-indigo-700 rounded-md border border-slate-200 hover:border-indigo-200 p-3 transition-all duration-150 shadow-sm hover:shadow flex items-center gap-3"
+          className={`text-left ${
+            isDarkMode 
+              ? 'bg-slate-800 hover:bg-indigo-900/60 text-slate-300 hover:text-indigo-300 border-slate-700 hover:border-indigo-700' 
+              : 'bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border-slate-200 hover:border-indigo-200'
+            } text-sm font-medium rounded-md border p-3 transition-all duration-150 ${
+              isDarkMode ? 'shadow-none hover:shadow-lg shadow-slate-900/30' : 'shadow-sm hover:shadow'
+            } flex items-center gap-3`}
         >
-          <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+          <div className={`w-10 h-10 rounded-full ${
+            isDarkMode 
+              ? 'bg-indigo-900/50 border-indigo-800/70' 
+              : 'bg-indigo-50 border-indigo-100'
+            } border flex items-center justify-center shrink-0 transition-colors duration-300`}
+          >
             <span className="text-lg">🧪</span>
           </div>
           <div>
             <span className="block font-medium">Historical Interview</span>
-            <span className="text-xs text-slate-500">Discuss cocaine with Sigmund Freud</span>
+            <span className={`text-xs ${
+              isDarkMode ? 'text-slate-400' : 'text-slate-500'
+              } transition-colors duration-300`}
+            >
+              Discuss cocaine with Sigmund Freud
+            </span>
           </div>
         </button>
         
         <button 
           onClick={() => handleQuickStartClick(() => handleHighlightDemo(4, 'highlight ALL names for materia medica in this text that appear to be of Sub-Saharan origin'))}
-          className="text-left bg-white hover:bg-indigo-50 text-sm font-medium text-slate-700 hover:text-indigo-700 rounded-md border border-slate-200 hover:border-indigo-200 p-3 transition-all duration-150 shadow-sm hover:shadow flex items-center gap-3"
+          className={`text-left ${
+            isDarkMode 
+              ? 'bg-slate-800 hover:bg-indigo-900/60 text-slate-300 hover:text-indigo-300 border-slate-700 hover:border-indigo-700' 
+              : 'bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border-slate-200 hover:border-indigo-200'
+            } text-sm font-medium rounded-md border p-3 transition-all duration-150 ${
+              isDarkMode ? 'shadow-none hover:shadow-lg shadow-slate-900/30' : 'shadow-sm hover:shadow'
+            } flex items-center gap-3`}
         >
-          <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+          <div className={`w-10 h-10 rounded-full ${
+            isDarkMode 
+              ? 'bg-indigo-900/50 border-indigo-800/70' 
+              : 'bg-indigo-50 border-indigo-100'
+            } border flex items-center justify-center shrink-0 transition-colors duration-300`}
+          >
             <span className="text-lg">✨</span>
           </div>
           <div>
             <span className="block font-medium">Interactive Highlight</span>
-            <span className="text-xs text-slate-500">Find African terms in a colonial text</span>
+            <span className={`text-xs ${
+              isDarkMode ? 'text-slate-400' : 'text-slate-500'
+              } transition-colors duration-300`}
+            >
+              Find African terms in a colonial text
+            </span>
           </div>
         </button>
       </div>
@@ -260,11 +448,13 @@ const QuickStartSection = ({
 const FilterBar = ({ 
   demoTexts,
   filterBy,
-  setFilterBy
+  setFilterBy,
+  isDarkMode = false
 }: {
   demoTexts: DemoTextItem[];
   filterBy: { genre: string; era: string };
   setFilterBy: (filters: { genre: string; era: string }) => void;
+  isDarkMode?: boolean;
 }) => {
   // Extract unique genres
   const genres = Array.from(new Set(
@@ -289,7 +479,11 @@ const FilterBar = ({
         <select
           value={filterBy.genre}
           onChange={(e) => setFilterBy({ ...filterBy, genre: e.target.value })}
-          className="appearance-none pl-3 pr-8 py-1 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-amber-400"
+          className={`appearance-none pl-3 pr-8 py-1 text-sm font-medium ${
+            isDarkMode 
+              ? 'text-slate-300 bg-slate-800 border-slate-700 focus:ring-amber-500 focus:border-amber-500' 
+              : 'text-slate-700 bg-white border-slate-200 focus:ring-amber-400 focus:border-amber-400'
+            } border rounded-md shadow-sm focus:outline-none focus:ring-1 transition-colors duration-300`}
         >
           <option value="">All Genres</option>
           {genres.map((genre, idx) => (
@@ -298,7 +492,10 @@ const FilterBar = ({
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+        <div className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 ${
+          isDarkMode ? 'text-slate-500' : 'text-slate-400'
+          } transition-colors duration-300`}
+        >
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
@@ -309,7 +506,11 @@ const FilterBar = ({
         <select
           value={filterBy.era}
           onChange={(e) => setFilterBy({ ...filterBy, era: e.target.value })}
-          className="appearance-none pl-3 pr-8 py-1 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-amber-400"
+          className={`appearance-none pl-3 pr-8 py-1 text-sm font-medium ${
+            isDarkMode 
+              ? 'text-slate-300 bg-slate-800 border-slate-700 focus:ring-amber-500 focus:border-amber-500' 
+              : 'text-slate-700 bg-white border-slate-200 focus:ring-amber-400 focus:border-amber-400'
+            } border rounded-md shadow-sm focus:outline-none focus:ring-1 transition-colors duration-300`}
         >
           {eras.map((era, idx) => (
             <option key={idx} value={era.value}>
@@ -317,7 +518,10 @@ const FilterBar = ({
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+        <div className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 ${
+          isDarkMode ? 'text-slate-500' : 'text-slate-400'
+          } transition-colors duration-300`}
+        >
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
@@ -339,6 +543,7 @@ export default function DemoButtons({
   setShowDemoOptions,
   buttonRef,
   dropdownRef,
+  isDarkMode = false
 }: DemoButtonsProps) {
   const [animateButton, setAnimateButton] = useState(false);
   const [selectedDetailDemo, setSelectedDetailDemo] = useState<number | null>(null);
@@ -392,12 +597,7 @@ export default function DemoButtons({
     setCurrentPage(0); // Reset to first page when filtering
   }, [filterBy, demoTexts]);
   
-  // Trigger button animation effect after delay
-  useEffect(() => {
-    const timer = setTimeout(() => setAnimateButton(true), 2500);
-    return () => clearTimeout(timer);
-  }, []);
-  
+
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -479,57 +679,49 @@ export default function DemoButtons({
   };
 
   const imagesToPreload = [
-  // Demo background images
-  '/demos/nanni.jpg',
-  '/demos/freud.jpg',
-  '/demos/mead.jpg',
-  '/demos/woolf.jpg',
-  '/demos/mun.jpg',
-  '/demos/isla.jpg',
-  '/demos/heckewelder.jpg',
-  '/demos/semedo.jpg',
-  '/demos/lincoln.jpg',
-  '/demos/demons.jpg',
-  '/demos/james.jpg',
-  
-  // Demo thumbnails
-  '/demo-thumbnails/nannitablet.jpg',
-  '/demo-thumbnails/coca.jpg',
-  '/demo-thumbnails/meadnotes.jpg',
-  '/demo-thumbnails/woolfletter.jpg',
-  '/demo-thumbnails/munbook.jpg',
-  '/demo-thumbnails/inquisition.jpg',
-  '/demo-thumbnails/manhattan.jpg',
-  '/demo-thumbnails/nitrous.jpg',
-  '/demo-thumbnails/memorial.jpg',
-  '/demo-thumbnails/gettysburg.jpg',
-  '/demo-thumbnails/pelbartus.jpg',
-];
-
+    // Demo thumbnails
+    '/demo-thumbnails/nannitablet.jpg',
+    '/demo-thumbnails/coca.jpg',
+    '/demo-thumbnails/meadnotes.jpg',
+    '/demo-thumbnails/woolfletter.jpg',
+    '/demo-thumbnails/munbook.jpg',
+    '/demo-thumbnails/inquisition.jpg',
+    '/demo-thumbnails/manhattan.jpg',
+    '/demo-thumbnails/nitrous.jpg',
+    '/demo-thumbnails/memorial.jpg',
+    '/demo-thumbnails/gettysburg.jpg',
+    '/demo-thumbnails/pelbartus.jpg',
+  ];
 
   return (
-    <>
-        {/* Preload all images */}
+  <>
+    {/* Preload all images */}
     <ImagePreloader imagePaths={imagesToPreload} />
-    
-      {/* Trigger Button with Subtle Pulse Animation */}
-      <button
-        ref={buttonRef}
-        onClick={toggleDemoOptions}
-        className={`relative z-1 text-md text-amber-800 bg-amber-100/80 hover:bg-amber-200/90 hover:text-amber-900 border-2 border-amber-300 hover:border-amber-400 font-semibold flex items-center gap-1.5 px-4 py-3 rounded-full transition-all duration-300 shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-1 ${animateButton ? 'pulse-ring' : ''}`}
-        aria-expanded={showDemoOptions}
-        aria-controls="demo-modal-content"
-      >
-        <svg className="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-        <span>See how it works</span>
-      </button>
+  
+    {/* Demo Button with improved hover effects */}
+    <button
+      ref={buttonRef}
+      onClick={toggleDemoOptions}
+      className={`relative z-1 text-md hover:scale-105 transform ${
+        isDarkMode 
+          ? 'text-indigo-100 bg-indigo-900/90 hover:bg-indigo-800/90 hover:text-indigo-100 border-indigo-700 hover:border-indigo-600' 
+          : 'text-indigo-800 bg-indigo-50 hover:bg-indigo-50/50 hover:text-indigo-700 border-indigo-300 hover:border-indigo-400'
+        } border-2 font-semibold flex items-center gap-1.5 px-4 py-3 rounded-full transition-all duration-300 ${
+          isDarkMode ? 'shadow-lg shadow-black/20' : 'shadow-md hover:shadow-lg shadow-indigo-200/50 hover:shadow-indigo-200'
+        }`}
+      aria-expanded={showDemoOptions}
+      aria-controls="demo-modal-content"
+    >
+      <svg className={`w-5 h-5 ${isDarkMode ? 'text-indigo-200' : 'text-indigo-700'} transition-colors duration-300`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+      <span>See how it works</span>
+    </button>
 
       {/* Modal Overlay with Improved Animation */}
       {showDemoOptions && (
         <div
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[2000] p-4 animate-modal-fade-in"
+          className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in transition-colors duration-300"
           onClick={() => setShowDemoOptions(false)}
           role="dialog"
           aria-modal="true"
@@ -539,14 +731,24 @@ export default function DemoButtons({
           <div
             ref={dropdownRef}
             id="demo-modal-content"
-            className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[82vh] flex flex-col overflow-hidden border border-slate-200/70 animate-modal-slide-in"
+            className={`${
+              isDarkMode 
+                ? 'bg-slate-900 border-slate-700 shadow-slate-900/80' 
+                : 'bg-white border-slate-200/70 shadow-2xl'
+              } rounded-xl shadow-2xl w-full max-w-5xl max-h-[82vh] flex flex-col overflow-hidden border animate-in fade-in transition-colors duration-300`}
             onClick={e => e.stopPropagation()}
           >
             {/* Header with Filter Options */}
-            <div className="flex items-center justify-between p-3 border-b border-slate-200 shrink-0 bg-gradient-to-r from-white to-slate-50">
+            <div className={`flex items-center justify-between p-3 border-b ${
+              isDarkMode ? 'border-slate-700 bg-gradient-to-r from-slate-900 to-slate-700' : 'border-slate-200 bg-gradient-to-r from-white to-slate-100'
+              } transition-colors duration-300`}
+            >
               <div className="flex items-center gap-3">
-                <h4 id="demo-modal-title" className="text-2xl font-serif font-bold text-slate-800 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <h4 id="demo-modal-title" className={`text-2xl font-serif font-bold ${
+                  isDarkMode ? 'text-slate-100' : 'text-slate-800'
+                  } flex items-center gap-2 transition-colors duration-300`}
+                >
+                  <svg className={`w-5 h-5 ${isDarkMode ? 'text-amber-500' : 'text-amber-600'} transition-colors duration-300`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                   <span>Demonstration sources</span>
@@ -558,11 +760,16 @@ export default function DemoButtons({
                   demoTexts={demoTexts}
                   filterBy={filterBy}
                   setFilterBy={setFilterBy}
+                  isDarkMode={isDarkMode}
                 />
                 
                 <button 
                   onClick={() => setShowDemoOptions(false)} 
-                  className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
+                  className={`${
+                    isDarkMode 
+                      ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-800' 
+                      : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                    } p-1.5 rounded-full transition-colors duration-300`}
                   aria-label="Close examples"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -571,115 +778,40 @@ export default function DemoButtons({
                 </button>
               </div>
             </div>
-          {/* Fixed-Height Detail Panel Area with Background Image */}
-<div className="relative bg-white bg-stone-100 px-20 py-6 border-b border-slate-300 shadow-inner h-[320px] flex items-center justify-center">
-  
-  {/* Background behind detail panel*/}
-  {selectedDetailDemo !== null && (
-    <div className="absolute inset-0 z-0">
-      <div className="absolute inset-0 bg-gradient-to-t from-stone-300/80 via-slate-500/20 to-slate-400/30 z-10"></div>
-    </div>
-  )}
-  
-  {/* Inset Shadow Effect */}
-  <div className="absolute inset-0 shadow-[inset_0_2px_10px_rgba(0,0,0,0.15)] pointer-events-none z-20"></div>
-  
-  {/* Content Panel */}
-  <div className="w-full relative shadow-md rounded-xl z-10 ">
-    <DetailPanel demo={selectedDetailDemo !== null ? filteredDemoTexts[selectedDetailDemo] : null} />
-    
-    {/* Background Image in right side of panel */}
-    {selectedDetailDemo !== null && (() => {
-      const demo = filteredDemoTexts[selectedDetailDemo];
-      if (!demo) return null;
-      
-      // Map to correct image based on title/content keywords
-      let imagePath = '';
-      
-      if (demo.title.toLowerCase().includes('sumerian') || 
-          demo.title.toLowerCase().includes('ea-nāṣir') ||
-          demo.title.toLowerCase().includes('complaint')) {
-        imagePath = '/demos/nanni.jpg';
-      }
-      else if (demo.title.toLowerCase().includes('freud') || 
-               demo.title.toLowerCase().includes('coca') ||
-               demo.title.toLowerCase().includes('cocaine')) {
-        imagePath = '/demos/freud.jpg';
-      }
-      else if (demo.title.toLowerCase().includes('mead') || 
-               demo.title.toLowerCase().includes('samoa')) {
-        imagePath = '/demos/mead.jpg';
-      }
-      else if (demo.title.toLowerCase().includes('woolf') || 
-               demo.title.toLowerCase().includes('letter') ||
-               demo.metadata?.author?.toLowerCase().includes('woolf')) {
-        imagePath = '/demos/woolf.jpg';
-      }
-      else if (demo.title.toLowerCase().includes('mun') || 
-               demo.title.toLowerCase().includes('economics') ||
-               demo.metadata?.author?.toLowerCase().includes('mun')) {
-        imagePath = '/demos/mun.jpg';
-      }
-      else if (demo.title.toLowerCase().includes('peyote') || 
-               demo.title.toLowerCase().includes('inquisition')) {
-        imagePath = '/demos/isla.jpg';
-      }
-      else if (demo.title.toLowerCase().includes('manhattan') || 
-               demo.title.toLowerCase().includes('delaware') ||
-               demo.title.toLowerCase().includes('lenape') ||
-               demo.metadata?.author?.toLowerCase().includes('heckewelder')) {
-        imagePath = '/demos/heckewelder.jpg';
-      }
-      else if (demo.title.toLowerCase().includes('drug guide') || 
-               demo.title.toLowerCase().includes('semedo') ||
-               demo.title.toLowerCase().includes('18th century drug')) {
-        imagePath = '/demos/semedo.jpg';
-      }
-      else if (demo.title.toLowerCase().includes('gettysburg') || 
-               demo.title.toLowerCase().includes('lincoln') ||
-               demo.metadata?.author?.toLowerCase().includes('lincoln')) {
-        imagePath = '/demos/lincoln.jpg';
-      }
-      else if (demo.title.toLowerCase().includes('demons') || 
-               demo.title.toLowerCase().includes('pelbartus')) {
-        imagePath = '/demos/demons.jpg';
-      }
-      else if (demo.title.toLowerCase().includes('james') || 
-               demo.title.toLowerCase().includes('nitrous') ||
-               demo.metadata?.author?.toLowerCase().includes('james')) {
-        imagePath = '/demos/james.jpg';
-      }
-      else {
-        return null;
-      }
-      
-      return (
-        <div className="absolute saturate-90  rounded-xl top-2.5 bottom-0.5 right-0 w-3/5 z-5 overflow-hidden transition-opacity duration-500">
-          <div className="absolute inset-0  bg-gradient-to-r from-stone-100 to-transparent z-6"></div>
-          <Image 
-            src={imagePath}
-            alt=""
-            fill
-            className="object-cover object-center opacity-40 transition-opacity  duration-700"
-            style={{ objectPosition: '10% center' }}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        </div>
-      );
-    })()}
-  </div>
-</div>
+
+            {/* Detail Panel Area with Skeuomorphic Design */}
+            <div className={`relative ${
+              isDarkMode 
+                ? 'bg-slate-800 border-b border-slate-700' 
+                : 'bg-stone-200 border-b border-slate-300'
+              } px-20 py-6 shadow-inner h-[320px] flex items-center justify-center transition-colors duration-300`}
+            >
+              {/* Inset Shadow Effect */}
+              <div className="absolute inset-0 shadow-[inset_0_3px_10px_rgba(0,0,0,0.3)] pointer-events-none z-20"></div>
+              
+              {/* Content Panel with Animation */}
+              <div className="w-full relative z-10">
+                <DetailPanel demo={selectedDetailDemo !== null ? filteredDemoTexts[selectedDetailDemo] : null} isDarkMode={isDarkMode} />
+              </div>
+            </div>
 
             {/* Scrollable Content Area */}
-            <div className="flex-1 border-t-1 border-stone-400/80 overflow-y-auto px-8 py-4 demo-panel">
+            <div className={`flex-1 ${
+              isDarkMode ? 'border-t-1 border-slate-700' : 'border-t-1 border-stone-400/80'
+              } overflow-y-auto px-8 py-4 demo-panel ${
+                isDarkMode ? 'bg-slate-900' : 'bg-white'
+              } transition-colors duration-300`}
+            >
               {/* Demo Item Grid with Improved Navigation */}
               <div className="relative px-3">
                 {/* Paging Navigation - Previous Button with Better Spacing */}
                 {currentPage > 0 && (
                   <button 
-                    className="absolute right-5 top-1/2 -translate-y-1/2 -ml-8 w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-md border border-slate-200 text-slate-600 hover:text-amber-600 hover:border-amber-400 transition-all z-10"
+                    className={`absolute right-5 top-1/2 -translate-y-1/2 -ml-8 w-10 h-10 flex items-center justify-center rounded-full ${
+                      isDarkMode 
+                        ? 'bg-slate-800 shadow-lg border-slate-700 text-slate-400 hover:text-amber-400 hover:border-indigo-700' 
+                        : 'bg-white shadow-md border-slate-200 text-slate-600 hover:text-amber-600 hover:border-amber-400'
+                      } border transition-all z-10`}
                     onClick={(e) => { 
                       e.stopPropagation();
                       prevPage();
@@ -695,7 +827,10 @@ export default function DemoButtons({
                 {/* Grid of demo items */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 min-h-[400px]">
                   {filteredDemoTexts.length === 0 ? (
-                    <div className="col-span-2 text-center py-10 text-slate-500">
+                    <div className={`col-span-2 text-center py-10 ${
+                      isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                      } transition-colors duration-300`}
+                    >
                       No sources match your filter criteria
                     </div>
                   ) : (
@@ -712,33 +847,57 @@ export default function DemoButtons({
                         >
                           <button
                             onClick={() => handleDemoClick(globalIndex)}
-                            className={`flex items-center rounded-lg border bg-white transition-all duration-300 w-full text-left overflow-hidden h-[70px] ${
-                              selectedDemo === globalIndex 
-                                ? 'ring-2 ring-amber-400 border-amber-300 shadow-md' 
-                                : 'border-slate-200 shadow-sm hover:shadow hover:border-amber-400'
-                            }`}
+                            className={`flex items-center rounded-lg border ${
+                              isDarkMode 
+                                ? selectedDemo === globalIndex 
+                                  ? 'ring-2 ring-indigo-500 border-amber-700 bg-slate-800 shadow-lg' 
+                                  : 'border-slate-700 bg-slate-800 shadow-sm hover:shadow hover:border-amber-700'
+                                : selectedDemo === globalIndex 
+                                  ? 'ring-2 ring-amber-400 border-amber-300 bg-white shadow-md' 
+                                  : 'border-slate-200 bg-white shadow-sm hover:shadow hover:border-amber-400'
+                              } transition-all duration-300 w-full text-left overflow-hidden h-[70px]`}
                             aria-label={`Load demo: ${demo.title}`}
                           >
                             <div className="flex items-center w-full">
-                            {/* Emoji container instead of image thumbnails */}
-<div className="flex items-center justify-center min-w-18 h-18 rounded-lg bg-slate-50 text-2xl transition-all duration-300 group-hover:bg-amber-200/70 group-hover:text-amber-600 overflow-hidden border-r border-slate-100"> 
-  <span className="transition-all duration-300 group-hover:scale-130">
-    {demo.emoji}
-  </span>
-</div>
+                              {/* Emoji container */}
+                              <div className={`flex items-center justify-center min-w-18 h-18 rounded-lg ${
+                                isDarkMode 
+                                  ? 'bg-slate-700 text-2xl group-hover:bg-amber-900/60 group-hover:text-amber-300' 
+                                  : 'bg-slate-50 text-2xl group-hover:bg-amber-200/70 group-hover:text-amber-600'
+                                } transition-all duration-300 border-r ${
+                                  isDarkMode ? 'border-slate-700' : 'border-slate-100'
+                                } overflow-hidden`}
+                              > 
+                                <span className="transition-all duration-300 group-hover:scale-130">
+                                  {demo.emoji}
+                                </span>
+                              </div>
                               
                               {/* Text Content */}
                               <div className="px-3 py-2 text min-w-0 flex-1">
-                                <span className="block font-medium leading-tight text-slate-800 group-hover:text-amber-800 transition-colors text-sm truncate font-sans">
+                                <span className={`block font-medium leading-tight ${
+                                  isDarkMode 
+                                    ? 'text-slate-200 group-hover:text-amber-300' 
+                                    : 'text-slate-800 group-hover:text-amber-800'
+                                  } transition-colors text-sm truncate font-sans`}
+                                >
                                   {demo.title}
                                 </span>
-                                <p className="text-xs text-slate-500 mt-0.5 line-clamp-2 group-hover:text-slate-600">
+                                <p className={`text-xs ${
+                                  isDarkMode 
+                                    ? 'text-slate-400 group-hover:text-slate-300' 
+                                    : 'text-slate-500 group-hover:text-slate-600'
+                                  } mt-0.5 line-clamp-2 transition-colors`}
+                                >
                                   {demo.description}
-                                  </p>
+                                </p>
                               </div>
                               
                               {/* Arrow Icon */}
-                              <div className="mr-3 text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <div className={`mr-3 ${
+                                isDarkMode ? 'text-amber-500' : 'text-amber-400'
+                                } opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                              >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                                 </svg>
@@ -754,7 +913,11 @@ export default function DemoButtons({
                 {/* Paging Navigation - Next Button with Better Spacing */}
                 {currentPage < totalPages - 1 && (
                   <button 
-                    className="absolute right-0 top-1/2 -translate-y-1/2 -mr-7 w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-md border border-slate-200 text-slate-600 hover:text-amber-600 hover:border-amber-300 transition-all z-10"
+                    className={`absolute right-0 top-1/2 -translate-y-1/2 -mr-7 w-8 h-8 flex items-center justify-center rounded-full ${
+                      isDarkMode 
+                        ? 'bg-slate-800 shadow-lg border-slate-700 text-slate-400 hover:text-amber-400 hover:border-amber-700' 
+                        : 'bg-white shadow-md border-slate-200 text-slate-600 hover:text-amber-600 hover:border-amber-300'
+                      } border transition-all z-10`}
                     onClick={(e) => { 
                       e.stopPropagation();
                       nextPage();
@@ -774,8 +937,10 @@ export default function DemoButtons({
                       <button
                         key={i}
                         className={`w-2 h-2 rounded-full transition-all ${
-                          i === currentPage ? 'bg-amber-500 w-6' : 'bg-slate-300 hover:bg-slate-400'
-                        }`}
+                          i === currentPage 
+                            ? isDarkMode ? 'bg-amber-500 w-6' : 'bg-amber-500 w-6' 
+                            : isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-300 hover:bg-slate-400'
+                          }`}
                         onClick={(e) => {
                           e.stopPropagation();
                           setCurrentPage(i);
@@ -794,13 +959,25 @@ export default function DemoButtons({
                 handleManhattanNarrative={handleManhattanNarrative}
                 handleHighlightDemo={handleHighlightDemo}
                 handleQuickStartClick={handleQuickStartClick}
+                isDarkMode={isDarkMode}
               />
             </div>
             
             {/* Footer with Instruction Text - Centered and Styled Better */}
-            <div className="bg-gradient-to-r from-slate-100 to-slate-50 px-6 py-3 border-t border-slate-300 text-center">
-              <p className="text-xs font-sans text-emerald-700 font-medium">
-                <svg className="w-4 h-4 text-emerald-500 inline-block mr-1.5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className={`${
+              isDarkMode 
+                ? 'bg-gradient-to-r from-slate-800 to-slate-900 border-t border-slate-700' 
+                : 'bg-gradient-to-r from-slate-100 to-slate-50 border-t border-slate-300'
+              } px-6 py-3 text-center transition-colors duration-300`}
+            >
+              <p className={`text-xs font-sans ${
+                isDarkMode ? 'text-emerald-400 font-medium' : 'text-emerald-700 font-medium'
+                } transition-colors duration-300`}
+              >
+                <svg className={`w-4 h-4 ${
+                  isDarkMode ? 'text-emerald-400' : 'text-emerald-500'
+                  } inline-block mr-1.5 mb-0.5 transition-colors duration-300`} fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Click any source to begin exploring it from different perspectives
@@ -812,4 +989,3 @@ export default function DemoButtons({
     </>
   );
 }
-

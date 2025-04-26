@@ -10,7 +10,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getModelById } from '@/lib/models';
 
 // Set default model to Gemini Flash for extraction tasks
-const DEFAULT_EXTRACTION_MODEL = 'gemini-flash';
+const DEFAULT_EXTRACTION_MODEL = 'gemini-flash-lite';
 
 // Configure API clients
 const openai = new OpenAI({
@@ -25,10 +25,10 @@ const anthropic = new Anthropic({
 const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
 // Maximum character size before chunking (approximately 400k tokens)
-const MAX_FULL_CONTENT_SIZE = 400000;
+const MAX_FULL_CONTENT_SIZE = 500000;
 
 // Maximum response token length for extraction
-const MAX_TOKENS = 30000;
+const MAX_TOKENS = 31000;
 
 // Helper to get appropriate token limit based on model
 function getMaxTokensForModel(model: any): number {

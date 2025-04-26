@@ -113,7 +113,7 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-0 z-50000 overflow-y-auto">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -170,27 +170,7 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
                       Appearance
                     </h3>
                     
-                    {/* Dark mode toggle */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <label className="font-medium text-slate-800">Dark Mode</label>
-                        <p className="text-sm text-slate-500">Switch between light and dark theme</p>
-                      </div>
-                      <div className="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full bg-slate-200">
-                        <label
-                          className={`absolute left-0 top-0 w-6 h-6 rounded-full transition-transform duration-200 ease-in-out transform ${
-                            isDarkMode ? 'translate-x-6 bg-indigo-600' : 'translate-x-0 bg-white'
-                          } shadow-md cursor-pointer`}
-                        >
-                          <input
-                            type="checkbox"
-                            className="sr-only"
-                            checked={isDarkMode}
-                            onChange={toggleDarkMode}
-                          />
-                        </label>
-                      </div>
-                    </div>
+                    
                     
                     {/* Font size */}
                     <div className="mb-4">

@@ -19,7 +19,12 @@ interface Section {
   fullText: string;
 }
 
-export default function SummarizeText({ onClose }: SummarizeTextProps) {
+interface SummarizeTextProps {
+  onClose: () => void;
+  darkMode?: boolean;
+}
+
+export default function SummarizeText({ onClose, darkMode }: SummarizeTextProps) {
   const { 
     sourceContent, 
     metadata,
@@ -126,7 +131,7 @@ export default function SummarizeText({ onClose }: SummarizeTextProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full h-[85vh] mx-4 flex flex-col animate-in slide-in-from-bottom-10 duration-300">
+     <div className={`${darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-800'} rounded-xl shadow-xl max-w-4xl w-full h-[85vh] mx-4 flex flex-col animate-in slide-in-from-bottom-10 duration-300`}>
         <div className="flex justify-between items-center p-6 border-b border-slate-200">
           <h3 className="text-xl font-medium text-slate-800">Document Summary</h3>
           <button 

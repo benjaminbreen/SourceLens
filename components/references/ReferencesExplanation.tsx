@@ -5,7 +5,11 @@
 
 import React from 'react';
 
-export default function ReferencesExplanation() {
+interface ReferencesExplanationProps {
+  darkMode?: boolean;
+}
+
+export default function ReferencesExplanation({ darkMode }: ReferencesExplanationProps) {
   return (
     <div className="space-y-3">
       <div>

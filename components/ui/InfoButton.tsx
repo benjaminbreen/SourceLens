@@ -12,6 +12,7 @@ interface InfoButtonProps {
   truncatedLength?: number;
   processingData?: Record<string, any>;
   additionalInfo?: Record<string, any>;
+  darkMode?: boolean;
 }
 
 export default function InfoButton({
@@ -22,7 +23,8 @@ export default function InfoButton({
   wordCount,
   truncatedLength,
   processingData = {},
-  additionalInfo = {}
+  additionalInfo = {},
+  darkMode,
 }: InfoButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   

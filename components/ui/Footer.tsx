@@ -6,6 +6,18 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import AboutModal from '@/components/ui/AboutModal';
+import { Space_Grotesk } from 'next/font/google';
+import { useAppStore } from '@/lib/store';
+
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['300', '400', '500', '600', '700',],
+  variable: '--font-space-grotesk',
+});
+
+
 
 // Enhanced Modal Component with tabs for complex content
 const EnhancedModal = ({ 
@@ -25,6 +37,8 @@ const EnhancedModal = ({
   const [activeTab, setActiveTab] = useState(0);
   
   if (!isOpen) return null;
+
+
 
   return (
     <div 
@@ -152,12 +166,17 @@ const NewsletterForm = () => {
   );
 };
 
-export default function Footer() {
+  interface FooterProps {
+  isDarkMode: boolean;
+}
+
+export default function Footer({ isDarkMode }: FooterProps) {
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [isFAQModalOpen, setIsFAQModalOpen] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const currentYear = new Date().getFullYear();
+  
 
   return (
     <>
@@ -190,11 +209,11 @@ export default function Footer() {
               <Image 
                 src="/sourcelenslogo.png" 
                 alt="SourceLens Logo" 
-                width={50} 
-                height={50} 
+                width={80} 
+                height={80} 
                 className="rounded-full border border-indigo-400/30 shadow-lg shadow-indigo-500/10" 
               />
-              <h2 className="ml-3 text-2xl font-bold text-white">SourceLens</h2>
+              <h2 className={`ml-3 text-3xl ${spaceGrotesk.className} text-2xl tracking-tighter font-bold text-white`}>SourceLens</h2>
             </div>
             
             <div className="space-y-4">
@@ -224,7 +243,7 @@ export default function Footer() {
           </div>
           
           {/* Links Section */}
-          <div className="md:col-span-3 text-center md:text-left">
+          <div className="md:col-span-3 text-center mt-7 md:text-left">
             <h3 className="text-white text-lg font-bold mb-4 border-b border-slate-700/50 pb-2">Navigation</h3>
             <div className="space-y-2.5">
               <Link href="/" className="block text-slate-300 hover:text-white text-sm transition-colors">
@@ -252,7 +271,7 @@ export default function Footer() {
           </div>
           
           {/* More Info Section */}
-          <div className="md:col-span-2 text-center md:text-left">
+          <div className="md:col-span-2 text-center mt-7 md:text-left">
             <h3 className="text-white text-xl font-bold mb-4 border-b border-slate-700/50 pb-2">More info</h3>
             <div className="space-y-2.5">
               <button 
@@ -273,7 +292,7 @@ export default function Footer() {
           </div>
           
           {/* Newsletter & Contact */}
-          <div className="md:col-span-2 text-center md:text-left">
+          <div className="md:col-span-2 text-center mt-7 md:text-left">
             <h3 className="text-white text-lg font-bold mb-4 border-b border-slate-700/50 pb-2">Stay Updated</h3>
             <NewsletterForm />
             
@@ -640,7 +659,8 @@ export default function Footer() {
 
       <AboutModal 
         isOpen={showAboutModal} 
-        onClose={() => setShowAboutModal(false)} 
+        onClose={() => setShowAboutModal(false)}
+        isDarkMode={isDarkMode} 
       />
            
     </>

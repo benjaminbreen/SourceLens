@@ -1,17 +1,17 @@
 // components/library/SavedSourcesPanel.tsx
-// Database-style panel for managing library sources with compact, high-density display
+// Database-style panel for managing library sources with Supabase integration
 // Features quick source loading, metadata editing, document preview, and advanced filtering
 
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAppStore } from '@/lib/store';
-import { Metadata } from '@/lib/store';
+import { useAppStore, Metadata, Note } from '@/lib/store';  // Added Note to imports
+import { useLibraryStorage } from '@/lib/libraryStorageProvider';
+import { useAuth } from '@/lib/auth/authContext';
 import DocumentPortraitModal from '../ui/DocumentPortraitModal';
-
-// Local storage key for saved sources
-const SAVED_SOURCES_KEY = 'sourceLens_savedSources';
+import Image from 'next/image';
+import NotesSection from '../notes/NotesSection';
 
 // Interface for saved source
 interface SavedSource {
@@ -24,9 +24,10 @@ interface SavedSource {
   tags?: string[];
   category?: string;
   thumbnailUrl?: string;
+  userId?: string;
 }
 
-export default function SavedSourcesPanel() {
+export default function SavedSourcesPanel({ darkMode }: { darkMode: boolean }) {
   const router = useRouter();
   const { 
     setSourceContent, 
@@ -34,17 +35,22 @@ export default function SavedSourcesPanel() {
     setLoading, 
     setActivePanel, 
     setSourceType,
-    setSourceThumbnailUrl
+    setSourceThumbnailUrl,
+    setActiveNote,
   } = useAppStore();
   
+  const { user } = useAuth();
+  const { getItems, updateItem, deleteItem, saveItem, isPersistent, isLoading: storageLoading } = useLibraryStorage();
+  
   const [sources, setSources] = useState<SavedSource[]>([]);
+  const [sourceNotes, setSourceNotes] = useState<Record<string, Note[]>>({});
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'dateAdded' | 'lastAccessed' | 'name'>('dateAdded');
   const [displayMode, setDisplayMode] = useState<'grid' | 'table'>('grid');
-  const [darkMode, setDarkMode] = useState(false);
+
 
   // State for document portrait modal
   const [portraitModalOpen, setPortraitModalOpen] = useState(false);
@@ -61,15 +67,16 @@ export default function SavedSourcesPanel() {
     tags: ''
   });
   
-  // Load saved sources from localStorage on mount
+  // Load saved sources from storage provider on mount
   useEffect(() => {
-    const loadSavedSources = () => {
+    const loadSavedSources = async () => {
       try {
-        const savedSourcesJson = localStorage.getItem(SAVED_SOURCES_KEY);
-        if (savedSourcesJson) {
-          const savedSourceData = JSON.parse(savedSourcesJson);
-          setSources(savedSourceData);
-        }
+        setIsLoading(true);
+        const savedSourcesData = await getItems<SavedSource>('sources');
+        setSources(savedSourcesData);
+        
+        // Also load all notes to map them to sources
+        loadAllNotes();
       } catch (error) {
         console.error('Error loading saved sources:', error);
       } finally {
@@ -77,8 +84,51 @@ export default function SavedSourcesPanel() {
       }
     };
 
-    loadSavedSources();
-  }, []);
+    if (!storageLoading) {
+      loadSavedSources();
+    }
+  }, [getItems, storageLoading]);
+
+  // Load all notes and organize them by sourceId
+  const loadAllNotes = async () => {
+    try {
+      const allNotes = await getItems<Note>('notes');
+      
+      // Create a map of sourceId -> notes array
+      const notesMap: Record<string, Note[]> = {};
+      
+      allNotes.forEach(note => {
+        if (note.sourceId) {
+          if (!notesMap[note.sourceId]) {
+            notesMap[note.sourceId] = [];
+          }
+          notesMap[note.sourceId].push(note);
+        }
+        
+        // Also try to match by metadata if sourceId doesn't match directly
+        if (note.sourceMetadata?.title && note.sourceMetadata?.author) {
+          sources.forEach(source => {
+            if (
+              source.metadata?.title === note.sourceMetadata.title &&
+              source.metadata?.author === note.sourceMetadata.author
+            ) {
+              if (!notesMap[source.id]) {
+                notesMap[source.id] = [];
+              }
+              // Only add if not already added
+              if (!notesMap[source.id].some(n => n.id === note.id)) {
+                notesMap[source.id].push(note);
+              }
+            }
+          });
+        }
+      });
+      
+      setSourceNotes(notesMap);
+    } catch (error) {
+      console.error('Error loading notes:', error);
+    }
+  };
 
   // Get all unique categories
   const categories = useMemo(() => 
@@ -101,7 +151,7 @@ export default function SavedSourcesPanel() {
         (source.metadata?.date || '').toLowerCase().includes(searchLower) ||
         (source.metadata?.title || '').toLowerCase().includes(searchLower) ||
         (source.content && source.content.substring(0, 500).toLowerCase().includes(searchLower)) ||
-        (source.tags && source.tags.some(tag => tag.toLowerCase().includes(searchLower)))
+        (Array.isArray(source.tags) && source.tags.some(tag => tag.toLowerCase().includes(searchLower)))
       );
     }
     
@@ -128,29 +178,63 @@ export default function SavedSourcesPanel() {
   );
 
   // Load source into the analysis page
-  const handleLoadSource = (source: SavedSource) => {
+  const handleLoadSource = async (source: SavedSource) => {
     setLoading(true);
     
-    // Update the source's last accessed time
-    const updatedSource = { ...source, lastAccessed: Date.now() };
-    const updatedSources = sources.map(s => 
-      s.id === source.id ? updatedSource : s
-    );
-    setSources(updatedSources);
-    localStorage.setItem(SAVED_SOURCES_KEY, JSON.stringify(updatedSources));
-    
-    // Set the source content and metadata in the app store
-    setSourceContent(source.content);
-    setMetadata(source.metadata);
-    setSourceType(source.type);
-    // Set thumbnail URL if available
-    if (source.thumbnailUrl) {
-      setSourceThumbnailUrl(source.thumbnailUrl);
+    try {
+      // Update the source's last accessed time
+      const updatedSource = { ...source, lastAccessed: Date.now() };
+      
+      // Update in storage
+      await updateItem<SavedSource>('sources', source.id, { lastAccessed: Date.now() });
+      
+      // Update local state
+      setSources(prev => prev.map(s => s.id === source.id ? updatedSource : s));
+      
+      // Set the source content and metadata in the app store
+      setSourceContent(source.content);
+      setMetadata(source.metadata);
+      setSourceType(source.type);
+      
+      // Set thumbnail URL if available
+      if (source.thumbnailUrl) {
+        setSourceThumbnailUrl(source.thumbnailUrl);
+      }
+      
+      // Find associated notes and set the first one as active if it exists
+      try {
+        const sourceNotesArray = sourceNotes[source.id] || [];
+        if (sourceNotesArray.length > 0) {
+          // Set the first note as active
+          setActiveNote(sourceNotesArray[0]);
+        } else {
+          // Clear any active note
+          setActiveNote(null);
+        }
+      } catch (error) {
+        console.error('Error loading notes for source:', error);
+        setActiveNote(null);
+      }
+      
+      setActivePanel('analysis');
+      
+      // Navigate to the analysis page
+      router.push('/analysis');
+    } catch (error) {
+      console.error('Error updating source access time:', error);
+      
+      // Continue with navigation even if the update fails
+      setSourceContent(source.content);
+      setMetadata(source.metadata);
+      setSourceType(source.type);
+      if (source.thumbnailUrl) {
+        setSourceThumbnailUrl(source.thumbnailUrl);
+      }
+      setActivePanel('analysis');
+      router.push('/analysis');
+    } finally {
+      setLoading(false);
     }
-    setActivePanel('analysis');
-    
-    // Navigate to the analysis page
-    router.push('/analysis');
   };
 
   // Handle opening the portrait modal
@@ -187,85 +271,114 @@ export default function SavedSourcesPanel() {
   };
 
   // Save edited source metadata
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!currentEditSource) return;
     
-    // Process tags (convert comma-separated string to array)
-    const processTags = (): string[] => {
-      if (!editForm.tags) return [];
-      return editForm.tags.split(',').map(tag => tag.trim()).filter(Boolean);
-    };
-    
-    // Create updated source with new metadata
-    const updatedSource = {
-      ...currentEditSource,
-      metadata: {
-        ...currentEditSource.metadata,
-        author: editForm.author,
-        date: editForm.date,
-        title: editForm.title,
-      },
-      category: editForm.category,
-      tags: processTags()
-    };
-    
-    // Update sources list
-    const updatedSources = sources.map(s => 
-      s.id === currentEditSource.id ? updatedSource : s
-    );
-    
-    setSources(updatedSources);
-    localStorage.setItem(SAVED_SOURCES_KEY, JSON.stringify(updatedSources));
-    
-    // Close modal
-    setEditModalOpen(false);
-    setCurrentEditSource(null);
+    try {
+      // Process tags (convert comma-separated string to array)
+      const processTags = (): string[] => {
+        if (!editForm.tags) return [];
+        return editForm.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+      };
+      
+      // Create updated source metadata
+      const updates = {
+        metadata: {
+          ...currentEditSource.metadata,
+          author: editForm.author,
+          date: editForm.date,
+          title: editForm.title,
+        },
+        category: editForm.category,
+        tags: processTags()
+      };
+      
+      // Update in storage
+      await updateItem<SavedSource>('sources', currentEditSource.id, updates);
+      
+      // Update local state
+      setSources(prev => prev.map(s => 
+        s.id === currentEditSource.id 
+          ? { ...s, ...updates, metadata: { ...s.metadata, ...updates.metadata } }
+          : s
+      ));
+      
+      // Close modal
+      setEditModalOpen(false);
+      setCurrentEditSource(null);
+    } catch (error) {
+      console.error('Error updating source metadata:', error);
+      alert('Failed to update source. Please try again.');
+    }
   };
 
   // Delete a saved source
-  const handleDelete = (id: string, e?: React.MouseEvent) => {
+  const handleDelete = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     
-    const updatedSources = sources.filter(source => source.id !== id);
-    setSources(updatedSources);
-    localStorage.setItem(SAVED_SOURCES_KEY, JSON.stringify(updatedSources));
-    
-    // Clear selection if deleted source was selected
-    if (selectedSources.includes(id)) {
-      setSelectedSources(prev => prev.filter(sourceId => sourceId !== id));
-    }
-    
-    // Close edit modal if deleted source was being edited
-    if (currentEditSource?.id === id) {
-      setEditModalOpen(false);
-      setCurrentEditSource(null);
+    try {
+      // Delete from storage
+      await deleteItem('sources', id);
+      
+      // Update local state
+      setSources(prev => prev.filter(source => source.id !== id));
+      
+      // Clear selection if deleted source was selected
+      if (selectedSources.includes(id)) {
+        setSelectedSources(prev => prev.filter(sourceId => sourceId !== id));
+      }
+      
+      // Close edit modal if deleted source was being edited
+      if (currentEditSource?.id === id) {
+        setEditModalOpen(false);
+        setCurrentEditSource(null);
+      }
+    } catch (error) {
+      console.error('Error deleting source:', error);
+      alert('Failed to delete source. Please try again.');
     }
   };
 
   // Handle bulk deletion
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedSources.length === 0) return;
     
-    const updatedSources = sources.filter(source => !selectedSources.includes(source.id));
-    setSources(updatedSources);
-    localStorage.setItem(SAVED_SOURCES_KEY, JSON.stringify(updatedSources));
-    setSelectedSources([]);
+    try {
+      // Delete each selected source
+      for (const id of selectedSources) {
+        await deleteItem('sources', id);
+      }
+      
+      // Update local state
+      setSources(prev => prev.filter(source => !selectedSources.includes(source.id)));
+      setSelectedSources([]);
+    } catch (error) {
+      console.error('Error deleting multiple sources:', error);
+      alert('Failed to delete some sources. Please try again.');
+    }
   };
 
   // Toggle source selection
-const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEvent<HTMLInputElement>) => {
-  e.stopPropagation();
-  setSelectedSources(prev => 
-    prev.includes(id) 
-      ? prev.filter(sourceId => sourceId !== id) 
-      : [...prev, id]
-  );
-};
-
-  // Toggle dark/light mode
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
+  const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    setSelectedSources(prev => 
+      prev.includes(id) 
+        ? prev.filter(sourceId => sourceId !== id) 
+        : [...prev, id]
+    );
   };
+
+  // Check if source has notes
+  const hasNotes = (sourceId: string): boolean => {
+    return !!sourceNotes[sourceId] && sourceNotes[sourceId].length > 0;
+  };
+
+  // Get number of notes for source
+  const getNotesCount = (sourceId: string): number => {
+    return sourceNotes[sourceId]?.length || 0;
+  };
+
+
 
   // Get icon for source type
   const getSourceTypeIcon = (type: string) => {
@@ -292,6 +405,25 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
     }
   };
 
+  // Get notes icon with indicator
+  const getNotesIcon = (sourceId: string) => {
+    const count = getNotesCount(sourceId);
+    return (
+      <div className="relative">
+        <svg className={`w-4 h-4 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+        {count > 0 && (
+          <div className={`absolute -top-1.5 -right-1.5 h-3.5 w-3.5 rounded-full flex items-center justify-center ${
+            darkMode ? 'bg-indigo-700 text-indigo-200' : 'bg-indigo-600 text-white'
+          } text-[0.6rem] font-bold`}>
+            {count}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Format date for display
   const formatDate = (date: number): string => {
     return new Date(date).toLocaleDateString(undefined, { 
@@ -311,7 +443,7 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
   // Empty state when no sources
   if (sources.length === 0 && !isLoading) {
     return (
-      <div className="bg-white shadow-sm rounded-lg border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-lg  border-slate-200 overflow-hidden">
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
           <svg className="w-16 h-16 text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -343,17 +475,22 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
   // Main panel display
   return (
     <>
-      <div className={`${darkMode ? 'bg-slate-900' : 'bg-white'} rounded-lg shadow-sm ${darkMode ? '' : 'border border-slate-200'} overflow-hidden`}>
+      <div className={`${darkMode ? 'bg-slate-900' : 'bg-white'} rounded-lg ${darkMode ? '' : ' border-slate-200'} overflow-hidden`}>
         {/* Header with controls */}
         <div className={`p-3 ${darkMode ? 'bg-slate-800 border-b border-slate-700' : 'bg-white border-b border-slate-200'}`}>
           <div className="flex flex-wrap justify-between items-center gap-3">
-            <h2 className={`text-lg ${darkMode ? 'font-mono text-slate-200' : 'font-medium text-slate-800'} flex items-center`}>
+            <h2 className={`text-lg font-mono ${darkMode ? 'font-mono text-slate-200' : 'font-medium text-slate-800'} flex items-center`}>
               <svg className={`w-5 h-5 mr-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
               <span className="mr-2">Sources</span>
               <span className={`text-xs ${darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'} px-2 py-0.5 rounded`}>
                 {sources.length}
+              </span>
+              
+              {/* Display storage type */}
+              <span className={`ml-2 text-xs ${darkMode ? 'bg-indigo-800 text-indigo-200' : 'bg-indigo-100 text-indigo-800'} px-2 py-0.5 rounded-full`}>
+                {isPersistent ? 'Cloud Storage' : 'Local Storage'}
               </span>
             </h2>
             
@@ -444,26 +581,7 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
                 </button>
               </div>
               
-              {/* Dark mode toggle */}
-              <button
-                onClick={toggleDarkMode}
-                className={`p-1.5 rounded ${
-                  darkMode 
-                    ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
-                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-                }`}
-                title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-              >
-                {darkMode ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 12.728l-.707-.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                )}
-              </button>
+            
               
               {/* Upload new button */}
               <button
@@ -478,7 +596,7 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
             </div>
           </div>
           
-          {/* Toolbar */}
+        {/* Toolbar */}
           <div className={`flex justify-between items-center mt-2 text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
             <div className="flex items-center gap-2">
               {/* Bulk actions */}
@@ -534,6 +652,7 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
                   <th className="py-2 px-3 font-medium">Source</th>
                   <th className="py-2 px-3 font-medium hidden md:table-cell">Content Preview</th>
                   <th className="py-2 px-3 font-medium hidden lg:table-cell">Tags</th>
+                  <th className="py-2 px-3 font-medium">Notes</th>
                   <th className="py-2 px-3 font-medium">Status</th>
                   <th className="py-2 px-3 font-medium">Actions</th>
                 </tr>
@@ -541,7 +660,7 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
               <tbody className={`divide-y ${darkMode ? 'divide-slate-700/50' : 'divide-slate-200'}`}>
                 {sortedSources.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className={`py-8 text-center ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <td colSpan={8} className={`py-8 text-center ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                       No matching sources found. Try adjusting your search.
                     </td>
                   </tr>
@@ -556,7 +675,17 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
                       } hover:${darkMode ? 'bg-slate-700/50' : 'bg-slate-100/70'} transition-colors cursor-pointer group`}
                       onClick={() => handleOpenPortraitModal(source)}
                     >
-                     <td className="py-2 px-3 whitespace-nowrap">
+                      <td className="py-2 px-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedSources.includes(source.id)}
+                          onChange={(e) => toggleSourceSelection(source.id, e)}
+                          className={`h-3 w-3 rounded ${
+                            darkMode ? 'border-slate-600 text-indigo-500 focus:ring-indigo-400' : 'border-slate-300 text-indigo-600 focus:ring-indigo-500'
+                          }`}
+                        />
+                      </td>
+                      <td className="py-2 px-3 whitespace-nowrap">
                         <div className="flex items-center">
                           <span className="mr-1.5">
                             {getSourceTypeIcon(source.type)}
@@ -588,7 +717,7 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
                       </td>
                       <td className="py-2 px-3 hidden lg:table-cell">
                         <div className="flex flex-wrap gap-1">
-                          {source.tags && source.tags.length > 0 ? 
+                          {Array.isArray(source.tags) && source.tags.length > 0 ? 
                             source.tags.slice(0, 3).map((tag, idx) => (
                               <span 
                                 key={idx}
@@ -602,8 +731,26 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
                               <span className={darkMode ? 'text-slate-500' : 'text-slate-400'}>—</span>
                             )
                           }
-                          {source.tags && source.tags.length > 3 && (
+                          {Array.isArray(source.tags) && source.tags.length > 3 && (
                             <span className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>+{source.tags.length - 3}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-2 px-3 text-center">
+                        <div className="flex items-center justify-center">
+                          {getNotesCount(source.id) > 0 ? (
+                            <div className={`flex items-center px-2 py-0.5 rounded text-xs ${
+                              darkMode ? 'bg-indigo-900/30 text-indigo-300' : 'bg-indigo-100 text-indigo-700'
+                            }`}>
+                              <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              <span>{getNotesCount(source.id)}</span>
+                            </div>
+                          ) : (
+                            <span className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                              —
+                            </span>
                           )}
                         </div>
                       </td>
@@ -687,7 +834,7 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
                     darkMode 
                       ? 'bg-slate-800 border border-slate-700 hover:bg-slate-700/80' 
                       : 'bg-white border border-slate-200 hover:bg-slate-50'
-                  } rounded-md overflow-hidden transition-colors cursor-pointer group`}
+                  } rounded-md overflow-hidden transition-colors cursor-pointer group shadow-sm`}
                   onClick={() => handleOpenPortraitModal(source)}
                 >
                   {/* Card header with checkbox and type */}
@@ -725,6 +872,18 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
                   
                   {/* Card content */}
                   <div className="p-2">
+                    {/* Thumbnail if available */}
+                    {source.thumbnailUrl && (
+                      <div className="w-full h-24 mb-2 relative rounded overflow-hidden">
+                        <Image 
+                          src={source.thumbnailUrl}
+                          alt={source.metadata?.title || "Document thumbnail"}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+
                     <h3 className={`font-medium ${darkMode ? 'text-slate-200' : 'text-slate-800'} mb-1 truncate`}>
                       {source.metadata?.title || source.metadata?.author || 'Untitled Source'}
                     </h3>
@@ -738,7 +897,7 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
                     </p>
                     
                     {/* Tags */}
-                    {source.tags && source.tags.length > 0 && (
+                    {Array.isArray(source.tags) && source.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-2">
                         {source.tags.slice(0, 2).map((tag, idx) => (
                           <span 
@@ -755,7 +914,26 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
                         )}
                       </div>
                     )}
+                    
+                    {/* Notes indicator */}
+                    {getNotesCount(source.id) > 0 && (
+                      <div className={`inline-flex items-center px-2 py-0.5 mb-2 rounded text-xs ${
+                        darkMode ? 'bg-indigo-900/30 text-indigo-300' : 'bg-indigo-100 text-indigo-700'
+                      }`}>
+                        <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        <span>{getNotesCount(source.id)} notes</span>
+                      </div>
+                    )}
                   </div>
+
+                  {/* NotesSection for this source - conditionally rendered */}
+                  {getNotesCount(source.id) > 0 && (
+                    <div className="px-2 pb-2">
+                      <NotesSection sourceId={source.id} darkMode={darkMode} />
+                    </div>
+                  )}
                   
                   {/* Card footer with actions */}
                   <div className={`flex border-t ${darkMode ? 'border-slate-700/50 divide-x divide-slate-700/50' : 'border-slate-100 divide-x divide-slate-200'}`}>
@@ -819,6 +997,14 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
           metadata={portraitModalSource.metadata}
           portraitUrl={portraitModalSource.thumbnailUrl}
           portraitEmoji={portraitModalSource.metadata?.documentEmoji || '📄'}
+          onAnalyze={() => handleLoadSource(portraitModalSource)}
+          onEdit={(e) => {
+            if (e) e.stopPropagation();
+            setPortraitModalOpen(false);
+            handleOpenEditModal(portraitModalSource, e as React.MouseEvent<Element, MouseEvent>);
+          }}
+          notesCount={getNotesCount(portraitModalSource.id)}
+          darkMode={darkMode}
         />
       )}
       
@@ -861,6 +1047,7 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
                       ? 'bg-slate-800 border border-slate-700 text-slate-200 placeholder-slate-500' 
                       : 'bg-white border border-slate-300 text-slate-800 placeholder-slate-400'
                   } rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                  placeholder="Document title"
                 />
               </div>
               
@@ -878,6 +1065,7 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
                       ? 'bg-slate-800 border border-slate-700 text-slate-200 placeholder-slate-500' 
                       : 'bg-white border border-slate-300 text-slate-800 placeholder-slate-400'
                   } rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                  placeholder="Author name"
                 />
               </div>
               
@@ -895,6 +1083,7 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
                       ? 'bg-slate-800 border border-slate-700 text-slate-200 placeholder-slate-500' 
                       : 'bg-white border border-slate-300 text-slate-800 placeholder-slate-400'
                   } rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                  placeholder="Publication date or year"
                 />
               </div>
               
@@ -912,9 +1101,9 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
                       ? 'bg-slate-800 border border-slate-700 text-slate-200 placeholder-slate-500' 
                       : 'bg-white border border-slate-300 text-slate-800 placeholder-slate-400'
                   } rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                  placeholder="e.g., Primary Source, Research Paper, etc."
                 />
               </div>
-              
               <div>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-700'} mb-1`}>
                   Tags (comma separated)
@@ -929,10 +1118,51 @@ const toggleSourceSelection = (id: string, e: React.MouseEvent | React.ChangeEve
                       ? 'bg-slate-800 border border-slate-700 text-slate-200 placeholder-slate-500' 
                       : 'bg-white border border-slate-300 text-slate-800 placeholder-slate-400'
                   } rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                  placeholder="e.g., history, revolution, primary source"
                 />
                 <p className={`mt-1 text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                   Separate tags with commas (e.g., "history, revolution, primary source")
                 </p>
+              </div>
+
+              {/* Notes information */}
+              {currentEditSource && getNotesCount(currentEditSource.id) > 0 && (
+                <div className={`p-2 rounded ${
+                  darkMode ? 'bg-indigo-900/20 border border-indigo-800/40' : 'bg-indigo-50 border border-indigo-100'
+                }`}>
+                  <div className={`flex items-center mb-1 ${
+                    darkMode ? 'text-indigo-300' : 'text-indigo-700'
+                  }`}>
+                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <span className="text-sm font-medium">Associated Notes</span>
+                  </div>
+                  <p className={`text-xs ${darkMode ? 'text-indigo-200' : 'text-indigo-600'}`}>
+                    This source has {getNotesCount(currentEditSource.id)} note{getNotesCount(currentEditSource.id) !== 1 ? 's' : ''} attached.
+                  </p>
+                </div>
+              )}
+
+              {/* Storage type indicator */}
+              <div className={`mt-2 text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'} p-2 ${
+                darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-slate-50 border border-slate-200'
+              } rounded`}>
+                {isPersistent ? (
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 mr-1.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                    </svg>
+                    <span>This source is stored in your cloud library</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 mr-1.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                    <span>This source is stored in your local browser storage</span>
+                  </div>
+                )}
               </div>
             </div>
             

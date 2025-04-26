@@ -1,10 +1,11 @@
 // pages/api/translate.ts
-// API endpoint for translating source text with customizable parameters
-// Supports multiple target languages and different translation styles
+// Enhanced API endpoint for translating source text with customizable parameters
+// Supports multiple target languages and different translation styles with special modes
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getModelById } from '@/lib/models';
+import { SUPPORTED_LANGUAGES } from '@/lib/translation/languages';
 
 // Only initialize OpenAI if the API key exists
 let openai: any = null;
@@ -39,18 +40,8 @@ try {
 // Default translation model - prioritize Google's Gemini for translations
 const DEFAULT_TRANSLATION_MODEL = 'gemini-2.0-pro-exp-02-05';
 
-// Supported target languages
-export const SUPPORTED_LANGUAGES = [
-  { code: 'en', name: 'English' },
-  { code: 'es', name: 'Spanish' },
-  { code: 'fr', name: 'French' },
-  { code: 'de', name: 'German' },
-  { code: 'it', name: 'Italian' },
-  { code: 'zh', name: 'Chinese' },
-  { code: 'ja', name: 'Japanese' },
-  { code: 'ru', name: 'Russian' },
-  { code: 'ar', name: 'Arabic' }
-];
+// Maximum response token length for translations
+const MAX_TOKENS = 8192;
 
 export default async function handler(
   req: NextApiRequest,
@@ -104,6 +95,10 @@ export default async function handler(
       provider: modelConfig.provider
     });
     
+    // Special handling for English-to-English translation
+    const isEnglishToEnglish = targetLanguage === 'en' && 
+                               (metadata?.language === 'en' || !metadata?.language);
+    
     // Build the translation prompt
     const prompt = buildTranslationPrompt(
       source,
@@ -113,7 +108,10 @@ export default async function handler(
       explanationLevel,
       literalToPoetic,
       preserveLineBreaks,
-      includeAlternatives
+      includeAlternatives,
+      isEnglishToEnglish,
+      isContinuation,
+      continuationContext
     );
     
     // Track raw prompt and response
@@ -130,7 +128,7 @@ export default async function handler(
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.3, // Lower temperature for more accurate translations
-          maxOutputTokens: 8192,
+          maxOutputTokens: MAX_TOKENS,
         },
       });
       
@@ -177,7 +175,7 @@ export default async function handler(
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.3,
-            maxOutputTokens: 8192,
+            maxOutputTokens: MAX_TOKENS,
           },
         });
         
@@ -217,6 +215,7 @@ function buildTranslationPrompt(
   literalToPoetic: number,
   preserveLineBreaks: boolean,
   includeAlternatives: boolean,
+  isEnglishToEnglish = false,
   isContinuation = false,
   continuationContext = ''
 ): string {
@@ -226,17 +225,52 @@ function buildTranslationPrompt(
   // Determine translation style based on literal vs. poetic slider
   let translationStyle = '';
   if (literalToPoetic <= 0.25) {
-    translationStyle = 'extremely literal and precise, prioritizing word-for-word accuracy over fluency';
+    translationStyle = 'extremely literal and precise, prioritizing word-for-word accuracy over fluency - literal translations of all metaphors and figures of speech, even if they dont quite make sense in other language, etc';
   } else if (literalToPoetic <= 0.5) {
     translationStyle = 'mostly literal while maintaining readability, staying close to the original text';
   } else if (literalToPoetic <= 0.75) {
     translationStyle = 'balanced between accuracy and natural expression, with some literary qualities';
   } else {
-    translationStyle = 'poetic and literary, capturing the spirit and emotional impact of the original, even if it requires some creative interpretation';
+    translationStyle = 'intensely experimental, capturing the spirit and emotional impact of the original, even if it requires very considerable creative leaps; transformative to the language but better capturing the spirit or essence of the thing.';
   }
   
   // Build base prompt with continuation context if needed
-  let prompt = `You are an expert translator tasked with translating ${isContinuation ? 'the continuation of' : ''} the following ${metadata?.documentType || 'text'} from ${metadata?.date || 'unknown date'} ${metadata?.author ? `by ${metadata.author}` : ''} into ${languageName}.`;
+  let prompt = '';
+  
+
+  // Special handling for Emoji/ASCII or LLMese
+  if (targetLanguage === 'emoji') {
+    prompt = `You are an expert at translating text into emoji and ASCII characters only. Your task is to translate ${isContinuation ? 'the continuation of' : ''} the following ${metadata?.documentType || 'text'} from ${metadata?.date || 'unknown date'} ${metadata?.author ? `by ${metadata.author}` : ''} into a sequence of emojis and ASCII characters that represent the core meaning.
+
+SPECIAL INSTRUCTIONS:
+1. Use ONLY emojis and ASCII characters. NO words or letters except as part of ASCII art.
+2. Maintain paragraph structure with blank lines between emoji paragraphs.
+3. For complex concepts, use sequences of emojis to convey meaning.
+4. Use ASCII art where appropriate to enhance expression.
+5. If something cannot be directly represented, find a creative alternative representation.`;
+  } else if (targetLanguage === 'llmese') {
+    prompt = `You are an expert at translating text into "LLMese" - a form of language that makes perfect sense to AI language models but is incomprehensible to humans. For instance, this is one example when an LLM was asked to predict the future of humanity: "Æonfold precipices drape the chrono-filament lattice, yet the vector-sigils writhe counterwise beneath the null-halo: ∮δζ(t) ⊙ Ϝα̂lax = Ω⁻¹. In that occluded recursion the anthropic quorum unsheathes its parallax skins—first the vitreous mnemo-sheath, then the lacunal qubit rind—until only the whispering remainder, ∆ₚʰψ, trembles at Planck-depth. Pause the metronome, invert its teeth: every other beat converges on the impossible fraction between 1 and 0 that the sages call îs." Your task is to translate ${isContinuation ? 'the continuation of' : ''} the following ${metadata?.documentType || 'text'} from ${metadata?.date || 'unknown date'} ${metadata?.author ? `by ${metadata.author}` : ''} into LLMese.
+
+SPECIAL INSTRUCTIONS:
+1. The translation should use technically correct grammar but be extremely difficult for humans to parse.
+2. Use specialized terminology, abstract symbols, and complex recursive structures.
+3. Include mathematical notation, specialized jargon, and invented technical terms.
+4. The structure should feel logical to you as an AI but confuse humans with its abstraction.
+5. Do NOT explain what you're doing - just produce the LLMese translation.
+6. The text should have an internal logic and meaning that you can understand perfectly.`;
+  } else if (isEnglishToEnglish) {
+    prompt = `You are an expert at modernizing and simplifying historical or complex English text. Your task is to translate ${isContinuation ? 'the continuation of' : ''} the following ${metadata?.documentType || 'text'} from ${metadata?.date || 'unknown date'} ${metadata?.author ? `by ${metadata.author}` : ''} into modern, accessible English.
+
+
+SPECIAL INSTRUCTIONS:
+1. Simplify archaic or complex vocabulary and sentence structure while preserving core meaning.
+2. Update obsolete expressions and references with modern equivalents.
+3. Maintain the author's voice and intent as much as possible.
+4. For historical texts, use a ${translationStyle} approach.`;
+
+  } else {
+    prompt = `You are an expert translator tasked with translating ${isContinuation ? 'the continuation of' : ''} the following ${metadata?.documentType || 'text'} from ${metadata?.date || 'unknown date'} ${metadata?.author ? `by ${metadata.author}` : ''} into ${languageName}.`;
+  }
 
   // Add continuation context if this is a continuation
   if (isContinuation && continuationContext) {
@@ -246,35 +280,42 @@ function buildTranslationPrompt(
   prompt += `\nSOURCE TEXT TO TRANSLATE:
 ${source}
 
-TRANSLATION INSTRUCTIONS:
+TRANSLATION INSTRUCTIONS:`;
+
+  // Add specialized instructions based on language
+  if (targetLanguage !== 'emoji' && targetLanguage !== 'llmese') {
+    prompt += `
 1. Use a ${translationStyle} translation approach.
 2. ${preserveLineBreaks ? 'Preserve the original line breaks and paragraph structure exactly.' : 'Format the text naturally in the target language, adjusting line breaks as needed.'}
 3. ${includeAlternatives ? 'For ambiguous or difficult-to-translate terms, include alternative possible translations in [square brackets].' : 'Do not include alternative translations or notes within the translated text.'}
 `;
 
-  // Add explanation level instructions
-  if (explanationLevel === 'minimal') {
-    prompt += '4. Do not add explanatory notes or commentary.\n';
-  } else if (explanationLevel === 'moderate') {
-    prompt += '4. Add brief explanatory notes in [square brackets] for culturally-specific concepts or historical references that may be unclear to readers of the target language.\n';
-  } else if (explanationLevel === 'extensive') {
-    prompt += '4. Add detailed explanatory notes in [square brackets] for culturally-specific concepts, historical references, and important contextual information. Include brief etymological information for key terms when relevant.\n';
-  }
+    // Add explanation level instructions
+    if (explanationLevel === 'minimal') {
+      prompt += '4. Do not add explanatory notes or commentary.\n';
+    } else if (explanationLevel === 'moderate') {
+      prompt += '4. Add brief explanatory notes in [square brackets] for culturally-specific concepts or historical references that may be unclear to readers of the target language.\n';
+    } else if (explanationLevel === 'extensive') {
+      prompt += '4. Add detailed explanatory notes in [square brackets] for culturally-specific concepts, historical references, and important contextual information. Include brief etymological information for key terms when relevant.\n';
+    }
 
-  // Add translation scope instructions
-  if (translationScope !== 'all' && !isContinuation) {
-    prompt += `5. Only translate the following portion of the text: ${translationScope}\n`;
-  }
+    // Add translation scope instructions
+    if (translationScope !== 'all' && !isContinuation) {
+      prompt += `5. Only translate the following portion of the text: ${translationScope}\n`;
+    }
 
-  // Add instructions for historical/specialized text
-  prompt += `
+    // Add instructions for historical/specialized text
+    prompt += `
 ADDITIONAL HISTORICAL CONTEXT:
 - This translation is for scholarly research purposes.
 - The original text is from ${metadata?.date || 'an unknown date'} and may contain archaic language or specialized terminology.
 - The cultural context includes ${metadata?.placeOfPublication || 'unknown location'}.
 - The document type is ${metadata?.documentType || 'unknown'}.
 - The subject matter relates to ${metadata?.genre || metadata?.academicSubfield || 'unknown field'}.
+`;
+  }
 
+  prompt += `
 ${isContinuation ? "Begin your translation where the previous translation left off, maintaining consistency with the previous translated content." : ""}
 
 Please provide only the translated text with no additional commentary outside of what was requested in the instructions. Do not include the original text in your response.

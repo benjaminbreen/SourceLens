@@ -12,6 +12,10 @@ import ReactMarkdown from 'react-markdown';
 // Local storage key for saved references
 const SAVED_REFERENCES_KEY = 'sourceLens_savedReferences';
 
+interface SavedReferencesPanelProps {
+  darkMode: boolean; // Accept darkMode as a required prop
+}
+
 // Interface for saved reference with additional metadata
 interface SavedReference {
   id: string;
@@ -26,7 +30,7 @@ interface SavedReference {
   sourceAuthor?: string; // Author of the source it belongs to
 }
 
-export default function SavedReferencesPanel() {
+export default function SavedReferencesPanel({ darkMode }: SavedReferencesPanelProps) {
   const router = useRouter();
   const [references, setReferences] = useState<SavedReference[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -203,14 +207,14 @@ export default function SavedReferencesPanel() {
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'book':
-        return 'bg-indigo-500';
+        return darkMode ? 'bg-indigo-600' : 'bg-indigo-500';
       case 'journal':
-        return 'bg-amber-500';
+        return darkMode ? 'bg-amber-600' : 'bg-amber-500';
       case 'website':
-        return 'bg-emerald-500';
+        return darkMode ? 'bg-emerald-600' : 'bg-emerald-500';
       case 'other':
       default:
-        return 'bg-slate-500';
+        return darkMode ? 'bg-slate-600' : 'bg-slate-500';
     }
   };
 
@@ -225,25 +229,65 @@ export default function SavedReferencesPanel() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[400px]">
-        <div className="w-10 h-10 border-t-2 border-amber-600 border-solid rounded-full animate-spin"></div>
+        <div className={`w-10 h-10 border-t-2 ${darkMode ? 'border-amber-500' : 'border-amber-600'} border-solid rounded-full animate-spin`}></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div className={`${darkMode ? 'bg-slate-800 text-slate-200' : 'bg-white text-slate-800'} rounded-lg ${darkMode ? 'border-slate-700' : 'border-slate-200'} overflow-hidden transition-colors duration-300`}>
       {/* Header with controls */}
-      <div className="p-4 bg-slate-50 border-b border-slate-200">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-          <h2 className="text-xl font-medium text-slate-800 flex items-center">
-            <svg className="w-6 h-6 mr-2 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className={`p-3 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1 gap-6">
+          <h2 className={`text-lg font-mono font-medium ${darkMode ? 'text-slate-200' : 'text-slate-800'} flex items-center`}>
+            <svg className={`w-6 h-6 mr-2 ${darkMode ? 'text-amber-500' : 'text-amber-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
             Saved References
-            <span className="ml-2 text-sm font-normal text-slate-500">
-              ({references.length})
+            <span className={`text-xs ${darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'} px-2 ml-2 py-0.5 rounded`}>
+              {references.length}
             </span>
           </h2>
+          <div className="relative flex-grow">
+            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+              <svg className={`h-5 w-5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search references..."
+              className={`pl-10 p-2 border ${darkMode ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400' : 'bg-white border-slate-300 text-slate-800 placeholder-slate-400'} rounded-md w-full focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors duration-300`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Sort dropdown */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className={`p-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent ${
+              darkMode ? 'bg-slate-700 border-slate-600 text-slate-200' : 'bg-white border-slate-300 text-slate-800'
+            } transition-colors duration-300`}
+          >
+            <option value="dateAdded">Sort by Date Added</option>
+            <option value="importance">Sort by Importance</option>
+            <option value="type">Sort by Type</option>
+          </select>
+            
+          {/* Group dropdown */}
+          <select
+            value={groupBy}
+            onChange={(e) => setGroupBy(e.target.value as any)}
+            className={`p-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent ${
+              darkMode ? 'bg-slate-700 border-slate-600 text-slate-200' : 'bg-white border-slate-300 text-slate-800'
+            } transition-colors duration-300`}
+          >
+            <option value="none">No Grouping</option>
+            <option value="source">Group by Source</option>
+            <option value="type">Group by Type</option>
+          </select>
           
           <div className="flex items-center space-x-2">
             <button
@@ -257,52 +301,10 @@ export default function SavedReferencesPanel() {
             </button>
           </div>
         </div>
-        
-        {/* Search and filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-grow">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Search references..."
-              className="pl-10 p-2 border border-slate-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex flex-wrap sm:flex-nowrap gap-2">
-            {/* Sort dropdown */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="p-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
-            >
-              <option value="dateAdded">Sort by Date Added</option>
-              <option value="importance">Sort by Importance</option>
-              <option value="type">Sort by Type</option>
-            </select>
-            
-            {/* Group dropdown */}
-            <select
-              value={groupBy}
-              onChange={(e) => setGroupBy(e.target.value as any)}
-              className="p-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
-            >
-              <option value="none">No Grouping</option>
-              <option value="source">Group by Source</option>
-              <option value="type">Group by Type</option>
-            </select>
-          </div>
-        </div>
       </div>
-      
+  
       {/* Action toolbar */}
-      <div className="border-b border-slate-200 p-2 bg-white">
+      <div className={`border-b p-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} transition-colors duration-300`}>
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <button
@@ -310,8 +312,12 @@ export default function SavedReferencesPanel() {
               disabled={selectedReferences.length === 0}
               className={`p-1.5 rounded-md text-sm flex items-center gap-1 ${
                 selectedReferences.length > 0
-                  ? 'text-red-600 hover:bg-red-50'
-                  : 'text-slate-400 cursor-not-allowed'
+                  ? darkMode 
+                    ? 'text-red-400 hover:bg-red-900/30' 
+                    : 'text-red-600 hover:bg-red-50'
+                  : darkMode 
+                    ? 'text-slate-500 cursor-not-allowed' 
+                    : 'text-slate-400 cursor-not-allowed'
               }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -325,8 +331,12 @@ export default function SavedReferencesPanel() {
               disabled={references.length === 0}
               className={`p-1.5 rounded-md text-sm flex items-center gap-1 ${
                 references.length > 0
-                  ? 'text-indigo-600 hover:bg-indigo-50'
-                  : 'text-slate-400 cursor-not-allowed'
+                  ? darkMode 
+                    ? 'text-indigo-400 hover:bg-indigo-900/30' 
+                    : 'text-indigo-600 hover:bg-indigo-50'
+                  : darkMode 
+                    ? 'text-slate-500 cursor-not-allowed' 
+                    : 'text-slate-400 cursor-not-allowed'
               }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -336,7 +346,7 @@ export default function SavedReferencesPanel() {
             </button>
           </div>
           
-          <div className="text-xs text-slate-500">
+          <div className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
             {selectedReferences.length > 0 
               ? `${selectedReferences.length} selected` 
               : references.length > 0 
@@ -349,18 +359,18 @@ export default function SavedReferencesPanel() {
       {/* References list */}
       <div className="overflow-y-auto max-h-[calc(100vh-350px)]">
         {copyMessage && (
-          <div className="fixed top-16 right-4 bg-slate-800 text-white px-4 py-2 rounded-md shadow-lg z-50 animate-fade-in-out">
+          <div className="fixed top-16 right-4 bg-slate-800 text-white px-4 py-1 rounded-md shadow-lg z-50 animate-fade-in-out">
             {copyMessage}
           </div>
         )}
         
         {references.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-            <svg className="w-16 h-16 text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className={`flex flex-col items-center justify-center py-10 px-4 text-center ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+            <svg className={`w-16 h-16 ${darkMode ? 'text-slate-600' : 'text-slate-300'} mb-4`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
-            <h3 className="text-lg font-medium text-slate-700 mb-1">No saved references yet</h3>
-            <p className="text-slate-500 max-w-md">
+            <h3 className={`text-lg font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'} mb-1`}>No saved references yet</h3>
+            <p className={`${darkMode ? 'text-slate-400' : 'text-slate-500'} max-w-md`}>
               Save references from the References panel while analyzing sources to build your library.
             </p>
             <button
@@ -371,21 +381,21 @@ export default function SavedReferencesPanel() {
             </button>
           </div>
         ) : filteredReferences.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-            <svg className="w-12 h-12 text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className={`flex flex-col items-center justify-center py-16 px-4 text-center ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+            <svg className={`w-12 h-12 ${darkMode ? 'text-slate-600' : 'text-slate-300'} mb-2`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <h3 className="text-lg font-medium text-slate-700">No matching references</h3>
-            <p className="text-slate-500">Try adjusting your search criteria</p>
+            <h3 className={`text-lg font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>No matching references</h3>
+            <p className={`${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Try adjusting your search criteria</p>
           </div>
         ) : (
-          <div className="p-4">
+          <div className={`p-4 ${darkMode ? 'bg-slate-800' : 'bg-white'} transition-colors duration-300`}>
             {Object.entries(groupedReferences()).map(([groupName, groupRefs]) => (
               <div key={groupName} className="mb-6 last:mb-0">
                 {groupBy !== 'none' && (
-                  <h3 className="text-md font-medium text-slate-700 mb-3 flex items-center">
+                  <h3 className={`text-md font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'} mb-3 flex items-center`}>
                     {groupName}
-                    <span className="ml-2 text-sm font-normal text-slate-500">
+                    <span className={`ml-2 text-sm font-normal ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                       ({groupRefs.length})
                     </span>
                   </h3>
@@ -395,13 +405,17 @@ export default function SavedReferencesPanel() {
                   {groupRefs.map((reference) => (
                     <div 
                       key={reference.id}
-                      className={`bg-white rounded-lg border transition-colors ${
+                      className={`${darkMode ? 'bg-slate-800' : 'bg-white'} rounded-lg border transition-colors duration-300 ${
                         selectedReferences.includes(reference.id) 
-                          ? 'border-amber-400 bg-amber-50/50' 
-                          : 'border-slate-200 hover:border-amber-200'
+                          ? darkMode 
+                            ? 'border-amber-500 bg-amber-900/20' 
+                            : 'border-amber-400 bg-amber-50/50' 
+                          : darkMode 
+                            ? 'border-slate-700 hover:border-amber-500/50' 
+                            : 'border-slate-100 hover:border-amber-200'
                       }`}
                     >
-                      <div className="p-3">
+                      <div className="p-1.5">
                         <div className="flex items-start">
                           {/* Checkbox for selection */}
                           <div className="mr-3 pt-1">
@@ -409,7 +423,7 @@ export default function SavedReferencesPanel() {
                               type="checkbox"
                               checked={selectedReferences.includes(reference.id)}
                               onChange={() => toggleReferenceSelection(reference.id)}
-                              className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                              className={`h-4 w-4 rounded ${darkMode ? 'border-slate-600 text-amber-500 focus:ring-amber-400' : 'border-slate-300 text-amber-600 focus:ring-amber-500'}`}
                             />
                           </div>
                           
@@ -426,13 +440,13 @@ export default function SavedReferencesPanel() {
                             className="flex-1 cursor-pointer"
                             onClick={() => setExpandedId(expandedId === reference.id ? null : reference.id)}
                           >
-                            <div className="text-sm text-slate-800 prose prose-sm max-w-none">
+                            <div className={`text-sm ${darkMode ? 'text-slate-200' : 'text-slate-800'} prose prose-sm max-w-none ${darkMode ? 'prose-invert' : ''}`}>
                               <ReactMarkdown>{processCitation(reference.citation)}</ReactMarkdown>
                             </div>
                             
                             {/* Source info if available */}
                             {reference.sourceName && (
-                              <div className="text-xs text-slate-500 mt-1">
+                              <div className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'} mt-1`}>
                                 From: {reference.sourceName}
                                 {reference.sourceAuthor && <> by {reference.sourceAuthor}</>}
                               </div>
@@ -443,7 +457,7 @@ export default function SavedReferencesPanel() {
                           <div className="flex items-center ml-2 space-x-1">
                             <button
                               onClick={() => copyToClipboard(reference.citation)}
-                              className="p-1 text-amber-600 hover:text-amber-800 rounded hover:bg-amber-50"
+                              className={`p-1 rounded ${darkMode ? 'text-amber-400 hover:text-amber-300 hover:bg-amber-900/30' : 'text-amber-600 hover:text-amber-800 hover:bg-amber-50'}`}
                               title="Copy citation"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -455,7 +469,7 @@ export default function SavedReferencesPanel() {
                               href={reference.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1 text-indigo-600 hover:text-indigo-800 rounded hover:bg-indigo-50"
+                              className={`p-1 rounded ${darkMode ? 'text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/30' : 'text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50'}`}
                               title="Open reference source"
                               onClick={(e) => e.stopPropagation()}
                             >
@@ -469,7 +483,7 @@ export default function SavedReferencesPanel() {
                                 e.stopPropagation();
                                 handleDelete(reference.id);
                               }}
-                              className="p-1 text-red-500 hover:text-red-700 rounded hover:bg-red-50"
+                              className={`p-1 rounded ${darkMode ? 'text-red-400 hover:text-red-300 hover:bg-red-900/30' : 'text-red-500 hover:text-red-700 hover:bg-red-50'}`}
                               title="Delete reference"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -481,25 +495,29 @@ export default function SavedReferencesPanel() {
                         
                         {/* Expanded details */}
                         {expandedId === reference.id && (
-                          <div className="mt-3 pl-10 border-t border-slate-100 pt-3">
+                          <div className={`mt-3 pl-10 border-t pt-3 ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
                             {/* Relevance section */}
                             <div className="mb-3">
-                              <h4 className="text-xs font-medium text-slate-500 mb-1">RELEVANCE:</h4>
-                              <p className="text-sm text-slate-700">{reference.relevance}</p>
+                              <h4 className={`text-xs font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'} mb-1`}>RELEVANCE:</h4>
+                              <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{reference.relevance}</p>
                             </div>
                             
                             {/* Source quote section */}
                             {reference.sourceQuote && (
                               <div>
-                                <h4 className="text-xs font-medium text-slate-500 mb-1">SOURCE EXCERPT:</h4>
-                                <blockquote className="text-sm italic border-l-4 border-amber-300 pl-3 py-1 bg-amber-50/50">
+                                <h4 className={`text-xs font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'} mb-1`}>SOURCE EXCERPT:</h4>
+                                <blockquote className={`text-sm italic border-l-4 pl-3 py-1 ${
+                                  darkMode
+                                    ? 'border-amber-500 bg-amber-900/20 text-slate-300'
+                                    : 'border-amber-300 bg-amber-50/50 text-slate-700'
+                                }`}>
                                   "{reference.sourceQuote}"
                                 </blockquote>
                               </div>
                             )}
                             
                             {/* Date added info */}
-                            <div className="mt-3 text-xs text-slate-400">
+                            <div className={`mt-3 text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                               Added {new Date(reference.dateAdded).toLocaleDateString()}
                             </div>
                           </div>
@@ -514,10 +532,12 @@ export default function SavedReferencesPanel() {
         )}
       </div>
       
+   
+      
       {/* Empty state footer */}
       {references.length === 0 && (
-        <div className="p-4 bg-slate-50 border-t border-slate-200 text-center">
-          <p className="text-sm text-slate-500">
+        <div className={`p-4 ${darkMode ? 'bg-slate-700 border-t border-slate-600' : 'bg-slate-50 border-t border-slate-200'} text-center transition-colors duration-300`}>
+          <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
             You can save references while analyzing sources. Look for the "Save to Library" button in the References panel.
           </p>
         </div>

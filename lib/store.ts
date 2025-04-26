@@ -4,9 +4,33 @@
 
 import { create } from 'zustand';
 import { DEFAULT_MODEL_ID } from './models';
-import { SavedDraft } from './libraryContext';
+import { SavedDraft, Note } from './libraryContext';
+export type { Note, SavedDraft, SavedReference, SavedAnalysis, SavedSource } from './libraryContext';
 
 
+export interface GraphNode {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  color: string;
+  size: number;
+  type: string;
+  emoji: string;
+  [key: string]: any; // To allow extra properties like `metadata`, `year`, etc.
+}
+
+export interface SimplifiedNote {
+  id: string;
+  content: string;
+  sourceId: string;
+  lastModified: number;
+}
+
+export interface NodeNote {
+  nodeId: string;
+  note: string;
+}
 
 export interface Metadata {
   date: string;
@@ -19,7 +43,7 @@ export interface Metadata {
   birthplace?: string;
   characterStatus?: string;
   title?: string;
-   summary?: string;
+  summary?: string;
   documentEmoji?: string;
   placeOfPublication?: string;
   genre?: string;
@@ -27,7 +51,7 @@ export interface Metadata {
   academicSubfield?: string;
   tags?: string[] | string;
   fullCitation?: string;
-thumbnailUrl?: string | null;
+  thumbnailUrl?: string | null;
 }
 
 export interface TranslationOptions {
@@ -39,9 +63,6 @@ export interface TranslationOptions {
   includeAlternatives: boolean;
   fontSize: number;
 }
-
-
-
 
 export interface SpecialLensRequest {
   lensType: 'voice' | 'place' | 'provenance' | null;
@@ -87,9 +108,14 @@ export interface Reference {
 }
 
 
-
-
 export interface AppState {
+  // Notes state
+  activeNote: Note | null;
+    isNotePanelVisible: boolean;
+    setActiveNote: (note: Note | null) => void;
+    setNotePanelVisible: (visible: boolean) => void;
+    toggleNotePanel: () => void;
+
   // Source and metadata
   sourceContent: string;
   sourceFile: File | null;
@@ -97,59 +123,48 @@ export interface AppState {
   metadata: Metadata | null;
   perspective: string;
   referencesModel: string;
-   sourceThumbnailUrl: string | null;
+  sourceThumbnailUrl: string | null;
 
-// translations
-   translatedText: string;
-translationOptions: {
-  targetLanguage: string;
-  translationScope: string;
-  explanationLevel: string;
-  literalToPoetic: number;
-  preserveLineBreaks: boolean;
-  includeAlternatives: boolean;
-  fontSize: number;
-};
+  // translations
+  translatedText: string;
+  translationOptions: TranslationOptions;
+  setTranslatedText: (text: string) => void;
+  setTranslationOptions: (options: TranslationOptions) => void;
 
-setTranslatedText: (text: string) => void;
-setTranslationOptions: (options: TranslationOptions) => void;
-
-     // Draft context
+  // Draft context
   activeDraft: SavedDraft | null;
   setActiveDraft: (draft: SavedDraft | null) => void;
 
   //text segment color coding
-   highlightedSegments: HighlightedSegment[];
+  highlightedSegments: HighlightedSegment[];
   highlightQuery: string;
   isHighlightMode: boolean;
 
-specialLensRequest: SpecialLensRequest | null;
+  specialLensRequest: SpecialLensRequest | null;
+  setSpecialLensRequest: (request: SpecialLensRequest | null) => void;
 
-setSpecialLensRequest: (request: SpecialLensRequest | null) => void;
+  // dark mode
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
 
-// dark mode
-isDarkMode: boolean;
-toggleDarkMode: () => void;
-
-// summaries
-
-summarySections: {
-  id: string;
-  title: string;
-  summary: string;
-  fullText: string;
-}[];
-summaryOverall: string;
-setSummarySections: (sections: {
-  id: string;
-  title: string;
-  summary: string;
-  fullText: string;
-}[]) => void;
-setSummaryOverall: (summary: string) => void;
+  // summaries
+  summarySections: {
+    id: string;
+    title: string;
+    summary: string;
+    fullText: string;
+  }[];
+  summaryOverall: string;
+  setSummarySections: (sections: {
+    id: string;
+    title: string;
+    summary: string;
+    fullText: string;
+  }[]) => void;
+  setSummaryOverall: (summary: string) => void;
   
   // Analysis results
-    detailedAnalysisLoaded: boolean;
+  detailedAnalysisLoaded: boolean;
   initialAnalysis: AnalysisResult | null;
   detailedAnalysis: string | null;
   counterNarrative: string | null;
@@ -162,11 +177,11 @@ setSummaryOverall: (summary: string) => void;
 
   // data extraction
   extractInfoConfig: ExtractInfoConfig | null;
-setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
+  setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
   
   // UI state
   isLoading: boolean;
- activePanel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info' | 'highlight' | 'translate';
+  activePanel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info' | 'highlight' | 'translate' | 'connections';
   showMetadataModal: boolean;
   rawPrompt: string | null;
   rawResponse: string | null;
@@ -178,35 +193,33 @@ setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
   
   // Actions
   setSourceContent: (content: string) => void;
-   setSourceFile: (file: File | null) => void;
-   setSourceType: (type: 'text' | 'pdf' | 'image' | 'audio' | null) => void;
-   setMetadata: (metadata: Metadata) => void;
-   setPerspective: (perspective: string) => void;
-   setInitialAnalysis: (analysis: AnalysisResult | null) => void;
-   setDetailedAnalysis: (analysis: string | null) => void;
-   setCounterNarrative: (narrative: string | null) => void;
-   setRoleplayMode: (active: boolean) => void;
-   setRoleplayContext: (context: any | null) => void;
-   addMessage: (message: Omit<ConversationMessage, 'timestamp'>) => void;
-   clearConversation: () => void;
-   setLoading: (loading: boolean) => void;
-   setActivePanel: (panel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info' | 'highlight' | 'translate') => void;
-   setShowMetadataModal: (show: boolean) => void;
-   setRawPrompt: (prompt: string | null) => void;
-   setRawResponse: (response: string | null) => void;
-   setLLMModel: (model: string) => void;
-   resetState: () => void;
-   setReferencesModel: (model: string) => void;
-   setDetailedAnalysisLoaded: (loaded: boolean) => void;
-   resetDetailedAnalysisLoaded: () => void;
-    setHighlightedSegments: (segments: HighlightedSegment[]) => void;
+  setSourceFile: (file: File | null) => void;
+  setSourceType: (type: 'text' | 'pdf' | 'image' | 'audio' | null) => void;
+  setMetadata: (metadata: Metadata) => void;
+  setPerspective: (perspective: string) => void;
+  setInitialAnalysis: (analysis: AnalysisResult | null) => void;
+  setDetailedAnalysis: (analysis: string | null) => void;
+  setCounterNarrative: (narrative: string | null) => void;
+  setRoleplayMode: (active: boolean) => void;
+  setRoleplayContext: (context: any | null) => void;
+  addMessage: (message: Omit<ConversationMessage, 'timestamp'>) => void;
+  clearConversation: () => void;
+  setLoading: (loading: boolean) => void;
+  setActivePanel: (panel: 'analysis' | 'detailed-analysis' | 'counter' | 'roleplay' | 'references' | 'extract-info' | 'highlight' | 'translate' | 'connections') => void;
+  setShowMetadataModal: (show: boolean) => void;
+  setRawPrompt: (prompt: string | null) => void;
+  setRawResponse: (response: string | null) => void;
+  setLLMModel: (model: string) => void;
+  resetState: () => void;
+  setReferencesModel: (model: string) => void;
+  setDetailedAnalysisLoaded: (loaded: boolean) => void;
+  resetDetailedAnalysisLoaded: () => void;
+  setHighlightedSegments: (segments: HighlightedSegment[]) => void;
   setHighlightQuery: (query: string) => void;
   setHighlightMode: (active: boolean) => void;
   clearHighlights: () => void;
-   setSourceThumbnailUrl: (url: string | null) => void;
-
- 
- }
+  setSourceThumbnailUrl: (url: string | null) => void;
+}
 
 const initialState = {
   sourceContent: '',
@@ -227,35 +240,44 @@ const initialState = {
   rawPrompt: null,
   rawResponse: null,
   llmModel: DEFAULT_MODEL_ID,
-  referencesModel: 'gemini-flash', 
+  referencesModel: 'gpt-4.1-nano', 
   detailedAnalysisLoaded: false,
-   extractInfoConfig: null,
-   processingStep: '',
-   processingData: {},
-   isDarkMode: false,
-   summarySections: [],
-summaryOverall: '',
-highlightedSegments: [],
+  extractInfoConfig: null,
+  processingStep: '',
+  processingData: {},
+  isDarkMode: false,
+  summarySections: [],
+  summaryOverall: '',
+  highlightedSegments: [],
   highlightQuery: '',
   isHighlightMode: false,
   specialLensRequest: null,
-    sourceThumbnailUrl: null,
+  sourceThumbnailUrl: null,
   activeDraft: null,
   translatedText: '',
-translationOptions: {
-  targetLanguage: 'en',
-  translationScope: 'all',
-  explanationLevel: 'minimal',
-  literalToPoetic: 0.5,
-  preserveLineBreaks: true,
-  includeAlternatives: false,
-  fontSize: 16
-},
-   
+  translationOptions: {
+    targetLanguage: 'en',
+    translationScope: 'all',
+    explanationLevel: 'minimal',
+    literalToPoetic: 0.5,
+    preserveLineBreaks: true,
+    includeAlternatives: false,
+    fontSize: 17,
+  },
+  activeNote: null,
+  isNotePanelVisible: false,
 };
 
 export const useAppStore = create<AppState>((set) => ({
   ...initialState,
+
+  setActiveNote: (note) => set({ activeNote: note }),
+  
+  toggleNotePanel: () => set((state) => ({ 
+    isNotePanelVisible: !state.isNotePanelVisible 
+  })),
+  
+  setNotePanelVisible: (visible) => set({ isNotePanelVisible: visible }),
   
   setSourceContent: (content) => set({ sourceContent: content }),
   
@@ -310,34 +332,37 @@ export const useAppStore = create<AppState>((set) => ({
   
   setExtractInfoConfig: (config) => set({ extractInfoConfig: config }),
 
-    setProcessingStep: (step) => set({ processingStep: step }),
+  setProcessingStep: (step) => set({ processingStep: step }),
   
   setProcessingData: (data) => set({ processingData: data }),
 
   setSummarySections: (sections) => set({ summarySections: sections }),
-setSummaryOverall: (summary) => set({ summaryOverall: summary }),
+  
+  setSummaryOverall: (summary) => set({ summaryOverall: summary }),
 
   toggleDarkMode: () => set(state => ({ isDarkMode: !state.isDarkMode })),
   
-   setHighlightedSegments: (segments) => set({ highlightedSegments: segments }),
+  setHighlightedSegments: (segments) => set({ highlightedSegments: segments }),
+  
   setHighlightQuery: (query) => set({ highlightQuery: query }),
   
   setHighlightMode: (active) => set({ isHighlightMode: active }),
 
   setSpecialLensRequest: (request) => set({ specialLensRequest: request }),
+  
   setSourceThumbnailUrl: (url) => set({ sourceThumbnailUrl: url }),
 
   setActiveDraft: (draft) => set({ activeDraft: draft }),
-     setTranslatedText: (text: string) => set({ translatedText: text }),
-setTranslationOptions: (options: any) => set({ translationOptions: options }),
-
   
+  setTranslatedText: (text) => set({ translatedText: text }),
+  
+  setTranslationOptions: (options) => set({ translationOptions: options }),
+
   clearHighlights: () => set({ 
     highlightedSegments: [], 
     highlightQuery: '',
     isHighlightMode: false 
   }),
 
-  
   resetState: () => set(initialState)
 }));

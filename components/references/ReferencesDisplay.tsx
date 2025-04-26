@@ -12,6 +12,10 @@ import { COMPONENT_DEFAULT_MODELS, DEFAULT_MODEL_ID } from '@/lib/models';
 import SaveToLibraryButton from '../library/SaveToLibraryButton';
 import { useRouter } from 'next/navigation';
 
+interface ReferencesDisplayProps {
+  darkMode?: boolean;
+}
+
 // Reference interface matching API return type
 interface ReferenceItem {
   citation: string;
@@ -26,7 +30,7 @@ interface ReferenceItem {
 // Available citation styles
 type CitationStyle = 'chicago' | 'apa' | 'mla';
 
-export default function ReferencesDisplay() {
+export default function ReferencesDisplay({ darkMode }: ReferencesDisplayProps) {
   const { 
     sourceContent,
     metadata,

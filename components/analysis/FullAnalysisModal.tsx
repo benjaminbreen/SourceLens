@@ -1,19 +1,60 @@
 // components/analysis/FullAnalysisModal.tsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Metadata } from '@/lib/store'; // Adjust path if needed
-import SaveToLibraryButton from '../library/SaveToLibraryButton'; // Adjust path if needed
+// Full-screen modal for detailed analysis with dark mode support
+// Provides section navigation, expandable content, and save/export features
+// Uses animation for smooth transitions between states
 
-// Define a basic structure for section styles if not imported
-// Replace with your actual import or definition if available elsewhere
-const defaultSectionStyles = {
-    context: { color: 'text-purple-1000', bg: 'bg-purple-50', iconColor: 'text-purple-600', borderColor: 'border-purple-200', hoverColor: 'hover:text-purple-600' },
-    author: { color: 'text-pink-1000', bg: 'bg-pink-50', iconColor: 'text-pink-600', borderColor: 'border-pink-200', hoverColor: 'hover:text-pink-600' },
-    themes: { color: 'text-sky-1000', bg: 'bg-sky-50', iconColor: 'text-sky-600', borderColor: 'border-sky-200', hoverColor: 'hover:text-sky-600' },
-    evidence: { color: 'text-teal-1000', bg: 'bg-teal-50', iconColor: 'text-teal-600', borderColor: 'border-teal-200', hoverColor: 'hover:text-teal-600' },
-    significance: { color: 'text-indigo-1000', bg: 'bg-indigo-50', iconColor: 'text-indigo-600', borderColor: 'border-indigo-200', hoverColor: 'hover:text-indigo-600' },
-    references: { color: 'text-blue-1000', bg: 'bg-blue-100', iconColor: 'text-blue-700', borderColor: 'border-blue-300', hoverColor: 'hover:text-blue-700' }
-};
-type SectionStyle = typeof defaultSectionStyles.context; // Type for a single style object
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Metadata } from '@/lib/store';
+import SaveToLibraryButton from '../library/SaveToLibraryButton';
+
+// Define a basic structure for section styles with dark mode variants
+const getSectionStyles = (isDarkMode: boolean) => ({
+  context: {
+    color: isDarkMode ? 'text-purple-300' : 'text-purple-1000',
+    bg: isDarkMode ? 'bg-purple-900/20' : 'bg-purple-50/50',
+    iconColor: isDarkMode ? 'text-purple-400' : 'text-purple-600',
+    borderColor: isDarkMode ? 'border-purple-800' : 'border-purple-200',
+    hoverColor: isDarkMode ? 'hover:text-purple-300' : 'hover:text-purple-600'
+  },
+  author: {
+    color: isDarkMode ? 'text-pink-300' : 'text-pink-1000',
+    bg: isDarkMode ? 'bg-pink-900/20' : 'bg-pink-50/50',
+    iconColor: isDarkMode ? 'text-pink-400' : 'text-pink-600',
+    borderColor: isDarkMode ? 'border-pink-800' : 'border-pink-200',
+    hoverColor: isDarkMode ? 'hover:text-pink-300' : 'hover:text-pink-600'
+  },
+  themes: {
+    color: isDarkMode ? 'text-sky-300' : 'text-sky-1000',
+    bg: isDarkMode ? 'bg-sky-900/20' : 'bg-sky-50/50',
+    iconColor: isDarkMode ? 'text-sky-400' : 'text-sky-600',
+    borderColor: isDarkMode ? 'border-sky-800' : 'border-sky-200',
+    hoverColor: isDarkMode ? 'hover:text-sky-300' : 'hover:text-sky-600'
+  },
+  evidence: {
+    color: isDarkMode ? 'text-teal-300' : 'text-teal-1000',
+    bg: isDarkMode ? 'bg-teal-900/20' : 'bg-teal-50/50',
+    iconColor: isDarkMode ? 'text-teal-400' : 'text-teal-600',
+    borderColor: isDarkMode ? 'border-teal-800' : 'border-teal-200',
+    hoverColor: isDarkMode ? 'hover:text-teal-300' : 'hover:text-teal-600'
+  },
+  significance: {
+    color: isDarkMode ? 'text-indigo-300' : 'text-indigo-1000',
+    bg: isDarkMode ? 'bg-indigo-900/20' : 'bg-indigo-50/50',
+    iconColor: isDarkMode ? 'text-indigo-400' : 'text-indigo-600',
+    borderColor: isDarkMode ? 'border-indigo-800' : 'border-indigo-200',
+    hoverColor: isDarkMode ? 'hover:text-indigo-300' : 'hover:text-indigo-600'
+  },
+  references: {
+    color: isDarkMode ? 'text-blue-300' : 'text-blue-900',
+    bg: isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100',
+    iconColor: isDarkMode ? 'text-blue-400' : 'text-blue-700',
+    borderColor: isDarkMode ? 'border-blue-800' : 'border-blue-300',
+    hoverColor: isDarkMode ? 'hover:text-blue-300' : 'hover:text-blue-700'
+  }
+});
+
+// Define a type for a single style object that works with or without dark mode
+type SectionStyle = ReturnType<typeof getSectionStyles>['context'];
 
 // Define structure for parsed sections
 interface ParsedSection {
@@ -26,7 +67,7 @@ interface ParsedSection {
 }
 
 // --- Helper Function to Parse Analysis ---
-const parseAnalysisContent = (analysisText: string): ParsedSection[] => {
+const parseAnalysisContent = (analysisText: string, isDarkMode: boolean): ParsedSection[] => {
   if (!analysisText) return [];
 
   const sections: ParsedSection[] = [];
@@ -45,29 +86,32 @@ const parseAnalysisContent = (analysisText: string): ParsedSection[] => {
 
   // Add potential variations of titles
   const titleMap: Record<string, string> = {
-      CONTEXT: 'Context',
-      PERSPECTIVE: 'Author Perspective',
-      THEMES: 'Key Themes',
-      EVIDENCE: 'Evidence & Rhetoric',
-      SIGNIFICANCE: 'Significance',
-      REFERENCES: 'References',
+    CONTEXT: 'Context',
+    PERSPECTIVE: 'Author Perspective',
+    THEMES: 'Key Themes',
+    EVIDENCE: 'Evidence & Rhetoric',
+    SIGNIFICANCE: 'Significance',
+    REFERENCES: 'References',
   };
 
-  const styleMap: Record<string, keyof typeof defaultSectionStyles> = {
+  const styleMap: Record<string, keyof ReturnType<typeof getSectionStyles>> = {
     CONTEXT: 'context',
     PERSPECTIVE: 'author',
     THEMES: 'themes',
     EVIDENCE: 'evidence',
     SIGNIFICANCE: 'significance',
     REFERENCES: 'references',
-  }
+  };
+
+  // Get the appropriate styles based on dark mode
+  const sectionStyles = getSectionStyles(isDarkMode);
 
   while ((match = sectionRegex.exec(analysisText)) !== null) {
     const key = match[1].toUpperCase();
     // Clean up content: remove leading/trailing whitespace and potentially repeated headers within content
     const content = match[2]
-        .replace(new RegExp(`^${key}:\\s*`, 'i'), '') // Remove repeated header at the beginning
-        .trim();
+      .replace(new RegExp(`^${key}:\\s*`, 'i'), '') // Remove repeated header at the beginning
+      .trim();
     const styleKey = styleMap[key] || 'context'; // Fallback style
 
     if (content) {
@@ -77,7 +121,7 @@ const parseAnalysisContent = (analysisText: string): ParsedSection[] => {
         content: content,
         id: `analysis-modal-${key.toLowerCase()}`, // Unique ID for modal scrolling
         icon: iconMap[key] || iconMap['CONTEXT'], // Fallback icon
-        style: defaultSectionStyles[styleKey]
+        style: sectionStyles[styleKey]
       });
     }
   }
@@ -92,6 +136,7 @@ interface FullAnalysisModalProps {
   metadata: Metadata | null;
   perspective: string | null;
   llmModel: string | null;
+  isDarkMode?: boolean; // Make it optional with default in implementation
 }
 
 const FullAnalysisModal: React.FC<FullAnalysisModalProps> = ({
@@ -101,6 +146,7 @@ const FullAnalysisModal: React.FC<FullAnalysisModalProps> = ({
   metadata,
   perspective,
   llmModel,
+  isDarkMode = false, // Default to light mode
 }) => {
   const [parsedSections, setParsedSections] = useState<ParsedSection[]>([]);
   const modalContentRef = useRef<HTMLDivElement>(null); // Ref for scrollable content
@@ -114,7 +160,7 @@ const FullAnalysisModal: React.FC<FullAnalysisModalProps> = ({
 
   useEffect(() => {
     if (isOpen && analysisContent) {
-      setParsedSections(parseAnalysisContent(analysisContent));
+      setParsedSections(parseAnalysisContent(analysisContent, isDarkMode));
       // Reset expansion state when modal opens/content changes
       setExpandingSectionKey(null);
       setExpansionInput('');
@@ -122,22 +168,29 @@ const FullAnalysisModal: React.FC<FullAnalysisModalProps> = ({
       setIsExpanding({});
       setExpansionError({});
     }
-  }, [isOpen, analysisContent]);
+  }, [isOpen, analysisContent, isDarkMode]);
+
+  // Re-parse sections when dark mode changes
+  useEffect(() => {
+    if (analysisContent) {
+      setParsedSections(parseAnalysisContent(analysisContent, isDarkMode));
+    }
+  }, [isDarkMode, analysisContent]);
 
   // --- Fast Travel Logic ---
   const handleFastTravelClick = useCallback((targetId: string) => {
     const element = document.getElementById(targetId);
     if (element && modalContentRef.current) {
-        const containerTop = modalContentRef.current.getBoundingClientRect().top;
-        const elementTop = element.getBoundingClientRect().top;
-        // Calculate offset relative to the scroll container, adding a small margin from the top
-        const scrollTop = modalContentRef.current.scrollTop;
-        const offset = elementTop - containerTop + scrollTop - 16; // 16px offset from top
+      const containerTop = modalContentRef.current.getBoundingClientRect().top;
+      const elementTop = element.getBoundingClientRect().top;
+      // Calculate offset relative to the scroll container, adding a small margin from the top
+      const scrollTop = modalContentRef.current.scrollTop;
+      const offset = elementTop - containerTop + scrollTop - 16; // 16px offset from top
 
-        modalContentRef.current.scrollTo({
-            top: offset,
-            behavior: 'smooth'
-        });
+      modalContentRef.current.scrollTo({
+        top: offset,
+        behavior: 'smooth'
+      });
     } else {
       console.warn(`Fast travel target element not found: ${targetId}`);
     }
@@ -151,43 +204,43 @@ const FullAnalysisModal: React.FC<FullAnalysisModalProps> = ({
   };
 
   const handleExpandSection = async (section: ParsedSection) => {
-     if (!expansionInput.trim()) return;
+    if (!expansionInput.trim()) return;
 
-     const key = section.key;
-     setIsExpanding(prev => ({ ...prev, [key]: true }));
-     setExpansionError(prev => ({ ...prev, [key]: null }));
+    const key = section.key;
+    setIsExpanding(prev => ({ ...prev, [key]: true }));
+    setExpansionError(prev => ({ ...prev, [key]: null }));
 
-     try {
-         const response = await fetch('/api/expand-analysis', {
-             method: 'POST',
-             headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify({
-                 sectionKey: key,
-                 sectionTitle: section.title,
-                 originalContent: section.content,
-                 userInput: expansionInput,
-                 fullAnalysis: analysisContent, // Send full context
-                 metadata: metadata // Send metadata context
-             }),
-         });
+    try {
+      const response = await fetch('/api/expand-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sectionKey: key,
+          sectionTitle: section.title,
+          originalContent: section.content,
+          userInput: expansionInput,
+          fullAnalysis: analysisContent, // Send full context
+          metadata: metadata // Send metadata context
+        }),
+      });
 
-         if (!response.ok) {
-             const errorData = await response.json();
-             throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-         }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
 
-         const data = await response.json();
-         setExpandedContent(prev => ({ ...prev, [key]: data.expandedText }));
-         setExpandingSectionKey(null); // Close input after success
-         setExpansionInput('');
+      const data = await response.json();
+      setExpandedContent(prev => ({ ...prev, [key]: data.expandedText }));
+      setExpandingSectionKey(null); // Close input after success
+      setExpansionInput('');
 
-     } catch (error) {
-         console.error("Expansion failed:", error);
-         const message = error instanceof Error ? error.message : "An unknown error occurred.";
-         setExpansionError(prev => ({ ...prev, [key]: message }));
-     } finally {
-         setIsExpanding(prev => ({ ...prev, [key]: false }));
-     }
+    } catch (error) {
+      console.error("Expansion failed:", error);
+      const message = error instanceof Error ? error.message : "An unknown error occurred.";
+      setExpansionError(prev => ({ ...prev, [key]: message }));
+    } finally {
+      setIsExpanding(prev => ({ ...prev, [key]: false }));
+    }
   };
 
   // --- Other Handlers (Save, Share) ---
@@ -208,7 +261,7 @@ const FullAnalysisModal: React.FC<FullAnalysisModalProps> = ({
   };
 
   const handleShare = () => {
-     navigator.clipboard.writeText(sourceUrl)
+    navigator.clipboard.writeText(sourceUrl)
       .then(() => {
         alert('Link copied to clipboard!'); // Consider a less intrusive notification
       })
@@ -221,186 +274,201 @@ const FullAnalysisModal: React.FC<FullAnalysisModalProps> = ({
   // --- Render Logic ---
   if (!isOpen) return null;
 
+  // Get dynamic theme styles based on dark mode
+  const themeStyles = {
+    backdrop: isDarkMode ? 'bg-black/75' : 'bg-black/60',
+    modal: isDarkMode ? 'bg-slate-900' : 'bg-white',
+    header: isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-gray-200',
+    content: isDarkMode ? 'bg-slate-800' : 'bg-gray-50',
+    headerText: isDarkMode ? 'text-white' : 'text-slate-800',
+    closeButton: isDarkMode ? 'text-slate-400 hover:text-white hover:bg-slate-700' : 'text-gray-400 hover:text-gray-700 hover:bg-slate-200',
+    fastTravelBar: isDarkMode ? 'border-slate-700 bg-slate-800/80 shadow-slate-900/50' : 'border-slate-200 bg-white shadow-sm',
+    footer: isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-gray-200',
+    textPrimary: isDarkMode ? 'text-slate-200' : 'text-slate-800',
+    textSecondary: isDarkMode ? 'text-slate-400' : 'text-slate-500',
+    input: isDarkMode ? 'bg-slate-800 border-slate-600 focus:border-indigo-500 text-slate-200' : 'bg-white border-slate-300 focus:border-indigo-500 text-slate-800',
+    buttonPrimary: isDarkMode ? 'bg-indigo-700 hover:bg-indigo-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white',
+    buttonSecondary: isDarkMode ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity duration-300 ease-out animate-fade-in">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+    <div className={`fixed inset-0 ${themeStyles.backdrop} backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity duration-300 ease-out animate-fade-in`}>
+      <div className={`${themeStyles.modal} rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden transition-colors duration-300`}>
         {/* Modal Header */}
-        <div className="flex justify-between items-center p-3 pl-5 border-b border-gray-200 bg-slate-50 flex-shrink-0">
-           {/* Title */}
-           <h3 className="text-lg font-semibold text-slate-800 truncate mr-4 flex-shrink min-w-0">{title}</h3>
+        <div className={`flex justify-between items-center p-3 pl-5 border-b ${themeStyles.header} flex-shrink-0 transition-colors duration-300`}>
+          {/* Title */}
+          <h3 className={`text-lg font-semibold ${themeStyles.headerText} truncate mr-4 flex-shrink min-w-0 transition-colors duration-300`}>{title}</h3>
 
-           {/* Fast Travel Icons (only if sections exist) */}
-           {parsedSections.length > 0 && (
-                <div className="flex items-center space-x-1 border border-slate-200 rounded-full px-2 py-0.5 bg-white shadow-sm mr-auto ml-4 flex-shrink-0">
-                    {parsedSections.map((item) => (
-                    <button
-                        key={item.key}
-                        onClick={() => handleFastTravelClick(item.id)}
-                        title={`Scroll to ${item.title}`}
-                        className={`p-1 text-slate-400 ${item.style.hoverColor || 'hover:text-slate-600'} rounded-full transition-colors`}
-                        aria-label={`Scroll to ${item.title}`}
-                    >
-                        {item.icon}
-                    </button>
-                    ))}
-                </div>
-           )}
+          {/* Fast Travel Icons (only if sections exist) */}
+          {parsedSections.length > 0 && (
+            <div className={`flex items-center space-x-1 border ${themeStyles.fastTravelBar} rounded-full px-2 py-0.5 mr-auto ml-4 flex-shrink-0 transition-colors duration-300`}>
+              {parsedSections.map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => handleFastTravelClick(item.id)}
+                  title={`Scroll to ${item.title}`}
+                  className={`p-1 text-slate-400 ${item.style.hoverColor} rounded-full transition-colors`}
+                  aria-label={`Scroll to ${item.title}`}
+                >
+                  {item.icon}
+                </button>
+              ))}
+            </div>
+          )}
 
-           {/* Close Button */}
-           <button
+          {/* Close Button */}
+          <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 text-2xl leading-none ml-4 p-1 rounded-full hover:bg-slate-200 transition-colors flex-shrink-0"
+            className={`${themeStyles.closeButton} text-2xl leading-none ml-4 p-1 rounded-full transition-colors flex-shrink-0`}
             aria-label="Close modal"
-           >
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-             </svg>
-           </button>
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         {/* Modal Content - Scrollable */}
-        <div ref={modalContentRef} className="p-6 flex-grow overflow-y-auto space-y-6 bg-gray-50"> {/* Light gray bg for content area */}
+        <div ref={modalContentRef} className={`p-6 flex-grow overflow-y-auto space-y-6 ${themeStyles.content} transition-colors duration-300`}>
           {parsedSections.length === 0 && (
-            <p className="text-center text-slate-500 py-10">Could not parse analysis content.</p>
+            <p className={`text-center ${themeStyles.textSecondary} py-10 transition-colors duration-300`}>Could not parse analysis content.</p>
           )}
           {parsedSections.map((section) => (
-            <section key={section.key} id={section.id} aria-labelledby={`${section.id}-heading`} className="scroll-mt-5"> {/* Increased scroll margin */}
-               <div className={`border ${section.style.borderColor} rounded-lg overflow-hidden shadow-md bg-white`}> {/* Added shadow and white bg */}
-                 {/* Section Header */}
-                 <h4 id={`${section.id}-heading`} className={`flex items-center p-3 ${section.style.bg} border-b ${section.style.borderColor}`}>
-                   <span className={`mr-3 ${section.style.iconColor}`}>
-                     {section.icon}
-                   </span>
-                   <span className={`text-base font-semibold ${section.style.color}`}>{section.title}</span>
-                 </h4>
-                 {/* Section Content */}
-                 <div className="prose prose-sm max-w-none p-4 text-slate-800 leading-relaxed">
-                    {/* Render simple text or handle markdown/HTML */}
-                    <div dangerouslySetInnerHTML={{ __html: section.content.replace(/\n/g, '<br />') }} />
-                 </div>
+            <section key={section.key} id={section.id} aria-labelledby={`${section.id}-heading`} className="scroll-mt-5">
+              <div className={`border ${section.style.borderColor} rounded-lg overflow-hidden shadow-md ${isDarkMode ? 'bg-slate-900' : 'bg-white'} transition-colors duration-300`}>
+                {/* Section Header */}
+                <h4 id={`${section.id}-heading`} className={`flex items-center p-3 ${section.style.bg} border-b ${section.style.borderColor} transition-colors duration-300`}>
+                  <span className={`mr-3 ${section.style.iconColor} transition-colors duration-300`}>
+                    {section.icon}
+                  </span>
+                  <span className={`text-base font-semibold ${section.style.color} transition-colors duration-300`}>{section.title}</span>
+                </h4>
+                {/* Section Content */}
+                <div className={`prose ${isDarkMode ? 'prose-invert' : ''} prose-sm max-w-none p-4 ${isDarkMode ? 'text-slate-300' : 'text-slate-800'} leading-relaxed transition-colors duration-300`}>
+                  {/* Render simple text or handle markdown/HTML */}
+                  <div dangerouslySetInnerHTML={{ __html: section.content.replace(/\n/g, '<br />') }} />
+                </div>
 
-                 {/* --- Expansion Feature UI --- */}
-                 <div className="px-4 pb-2 pt-1 mb-2 border-t border-slate-100"> {/* Lighter border */}
-                    {/* "More..." Button */}
-                    <button
-                        onClick={() => handleToggleExpandInput(section.key)}
-                        className={`text-xs font-medium flex items-center ${section.style.iconColor.replace('text-', 'text-')} opacity-80 hover:opacity-100 transition-opacity`} // Use icon color for button
-                    >
-                        {expandingSectionKey === section.key ? (
-                            <>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor"> <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /> </svg>
-                            Cancel Expansion
-                            </>
-                        ) : (
-                            <>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor"> <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /> </svg>
-                            Expand on this...
-                            </>
-                        )}
-                    </button>
-
-                    {/* Expansion Input Area (Conditional) */}
-                    {expandingSectionKey === section.key && (
-                        <div className="mt-2 space-y-2 animate-fade-in-fast">
-                            <textarea
-                                value={expansionInput}
-                                onChange={(e) => setExpansionInput(e.target.value)}
-                                placeholder={`Ask a question or specify what to expand on regarding "${section.title}"...`}
-                                className="w-full p-2 border border-slate-300 rounded-md text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                                rows={2}
-                            />
-                            <div className="flex justify-end items-center space-x-2">
-                                {isExpanding[section.key] && (
-                                     <span className="text-xs text-slate-500 flex items-center">
-                                         <svg className="animate-spin h-3 w-3 mr-1 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle> <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg>
-                                         Generating...
-                                     </span>
-                                )}
-                                {expansionError[section.key] && (
-                                    <span className="text-xs text-red-600" title={expansionError[section.key]!}>Error generating expansion.</span>
-                                )}
-                                <button
-                                    onClick={() => handleExpandSection(section)}
-                                    disabled={!expansionInput.trim() || isExpanding[section.key]}
-                                    className={`px-3 py-1 text-xs rounded-md font-medium transition-all duration-150 ${
-                                        !expansionInput.trim() || isExpanding[section.key]
-                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                        : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow'
-                                    }`}
-                                >
-                                    Expand
-                                </button>
-                            </div>
-                        </div>
+                {/* --- Expansion Feature UI --- */}
+                <div className={`px-4 pb-2 pt-1 mb-2 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100'} transition-colors duration-300`}>
+                  {/* "More..." Button */}
+                  <button
+                    onClick={() => handleToggleExpandInput(section.key)}
+                    className={`text-xs font-medium flex items-center ${section.style.iconColor} opacity-80 hover:opacity-100 transition-opacity`}
+                  >
+                    {expandingSectionKey === section.key ? (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                        Cancel Expansion
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                        </svg>
+                        Expand on this...
+                      </>
                     )}
+                  </button>
 
-                     {/* Expanded Content Area (Conditional & Animated) */}
-                     {expandedContent[section.key] && (
-                        <div className="mt-3 pt-3 border-t border-dashed border-slate-200 animate-slide-down">
-                             <p className="text-xs font-semibold text-slate-600 mb-1 uppercase tracking-wider">Expansion:</p>
-                             <div className="prose prose-sm max-w-none text-slate-700 text-sm leading-relaxed"> {/* Slightly larger text for readability */}
-                                 <div dangerouslySetInnerHTML={{ __html: expandedContent[section.key].replace(/\n/g, '<br />') }} />
-                             </div>
-                        </div>
-                     )}
-                 </div>
-               </div>
+                  {/* Expansion Input Area (Conditional) */}
+                  {expandingSectionKey === section.key && (
+                    <div className="mt-2 space-y-2 animate-fade-in-fast">
+                      <textarea
+                        value={expansionInput}
+                        onChange={(e) => setExpansionInput(e.target.value)}
+                        placeholder={`Ask a question or specify what to expand on regarding "${section.title}"...`}
+                        className={`w-full p-2 border rounded-md text-sm focus:ring-1 focus:ring-indigo-500 ${themeStyles.input} transition-colors duration-300`}
+                        rows={2}
+                      />
+                      <div className="flex justify-end items-center space-x-2">
+                        {isExpanding[section.key] && (
+                          <span className={`text-xs ${themeStyles.textSecondary} flex items-center transition-colors duration-300`}>
+                            <svg className="animate-spin h-3 w-3 mr-1 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Generating...
+                          </span>
+                        )}
+                        {expansionError[section.key] && (
+                          <span className="text-xs text-red-600 dark:text-red-400" title={expansionError[section.key]!}>Error generating expansion.</span>
+                        )}
+                        <button
+                          onClick={() => handleExpandSection(section)}
+                          disabled={!expansionInput.trim() || isExpanding[section.key]}
+                          className={`px-3 py-1 text-xs rounded-md font-medium transition-all duration-150 ${
+                            !expansionInput.trim() || isExpanding[section.key]
+                              ? isDarkMode
+                                ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                              : themeStyles.buttonPrimary
+                          }`}
+                        >
+                          Expand
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Expanded Content Area (Conditional & Animated) */}
+                  {expandedContent[section.key] && (
+                    <div className={`mt-3 pt-3 border-t border-dashed ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} animate-slide-down transition-colors duration-300`}>
+                      <p className={`text-xs font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} mb-1 uppercase tracking-wider transition-colors duration-300`}>Expansion:</p>
+                      <div className={`prose ${isDarkMode ? 'prose-invert' : ''} prose-sm max-w-none ${isDarkMode ? 'text-slate-300' : 'text-slate-700'} text-sm leading-relaxed transition-colors duration-300`}>
+                        <div dangerouslySetInnerHTML={{ __html: expandedContent[section.key].replace(/\n/g, '<br />') }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </section>
           ))}
         </div>
 
         {/* Modal Footer */}
-        <div className="flex justify-end items-center p-4 border-t border-gray-200 bg-slate-100 space-x-3 flex-shrink-0"> {/* Slightly darker footer bg */}
+        <div className={`flex justify-end items-center p-4 border-t ${themeStyles.footer} space-x-3 flex-shrink-0 transition-colors duration-300`}>
           <SaveToLibraryButton
             type="analysis"
-            data={{ // Ensure data is correctly populated
-                type: 'detailed',
-                title: `Detailed Analysis of ${metadata?.title || 'Source'}`,
-                content: analysisContent || '',
-                sourceName: metadata?.title || 'Untitled Source',
-                sourceAuthor: metadata?.author || 'Unknown',
-                sourceDate: metadata?.date || 'Unknown date',
-                perspective: perspective || 'Default',
-                model: llmModel
-             }}
-            variant="primary" // Make this stand out
+            data={{
+              type: 'detailed',
+              title: `Detailed Analysis of ${metadata?.title || 'Source'}`,
+              content: analysisContent || '',
+              sourceName: metadata?.title || 'Untitled Source',
+              sourceAuthor: metadata?.author || 'Unknown',
+              sourceDate: metadata?.date || 'Unknown date',
+              perspective: perspective || 'Default',
+              model: llmModel || undefined
+            }}
+            variant="primary"
             size="sm"
+           
           />
           <button
             onClick={handleSaveLocally}
-            className="px-3 py-1.5 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors shadow-sm hover:shadow"
+            className={`px-3 py-1.5 text-sm ${isDarkMode ? 'bg-blue-700 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-md transition-colors shadow-sm hover:shadow`}
             title={`Download as ${filename}`}
           >
             Save .txt
           </button>
           <button
             onClick={handleShare}
-            className="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-md transition-colors"
+            className={`px-3 py-1.5 text-sm ${themeStyles.buttonSecondary} rounded-md transition-colors`}
           >
             Copy Link
           </button>
           <button
             onClick={onClose}
-            className="px-3 py-1.5 text-sm bg-slate-500 hover:bg-slate-600 text-white rounded-md transition-colors"
+            className={`px-3 py-1.5 text-sm ${isDarkMode ? 'bg-slate-600 hover:bg-slate-500' : 'bg-slate-500 hover:bg-slate-600'} text-white rounded-md transition-colors`}
           >
             Close
           </button>
         </div>
       </div>
-      {/* Global CSS for animations */}
-      <style jsx global>{`
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
 
-        @keyframes fadeInFast { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in-fast { animation: fadeInFast 0.2s ease-out forwards; }
-
-        @keyframes slideDown {
-            from { opacity: 0; max-height: 0; transform: translateY(-10px); margin-top: 0; padding-top: 0; }
-            to { opacity: 1; max-height: 500px; transform: translateY(0); margin-top: 0.75rem; padding-top: 0.75rem; } /* Adjust max-height, match mt/pt */
-        }
-        .animate-slide-down { animation: slideDown 0.4s ease-out forwards; overflow: hidden;}
-      `}</style>
+    
     </div>
   );
 };

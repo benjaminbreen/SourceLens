@@ -22,8 +22,8 @@ export default function AuthStatus() {
   // Logged In State - simple username display
   if (user) {
     return (
-      <Link href="/profile" className="text-xs font-sans text-indigo-100/90 hover:text-white transition-colors">
-        <span className="text-indigo-300/80 mr-1">Welcome back, </span>
+      <Link href="/profile" className="text-sm text-slate-100/70 font-sans hover:text-indigo-400 transition-colors">
+        <span className="  mr-1"></span>
         {user.email?.split('@')[0] || user.user_metadata?.name || 'User'}
       </Link>
     );
