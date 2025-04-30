@@ -662,11 +662,17 @@ ${analysis.content}
         return isDark 
           ? `${baseClasses} bg-emerald-900/30 text-emerald-300 border-emerald-700` 
           : 'bg-emerald-100 text-emerald-800';
-      default:
-        return isDark 
-          ? `${baseClasses} bg-slate-800 text-slate-300 border-slate-700` 
-          : 'bg-slate-100 text-slate-800';
+            case 'translate':  // Add this case
+      return isDark 
+        ? `${baseClasses} bg-cyan-900/30 text-cyan-300 border-cyan-700` 
+        : 'bg-cyan-100 text-cyan-800';
+    default:
+      return isDark 
+        ? `${baseClasses} bg-slate-800 text-slate-300 border-slate-700` 
+        : 'bg-slate-100 text-slate-800';
+  
     }
+
   };
 
   // Get relevance indicator color based on score
@@ -693,6 +699,8 @@ ${analysis.content}
         return 'Initial Analysis';
       case 'extract-info':
         return 'Extracted Data';
+      case 'translate':  // Add this case
+        return 'Translation';
       default:
         return type.charAt(0).toUpperCase() + type.slice(1);
     }
@@ -752,6 +760,12 @@ ${analysis.content}
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
         );
+          case 'translate':  // Add this case
+      return (
+        <svg className={`w-4 h-4 ${darkMode ? 'text-cyan-400' : 'text-cyan-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M9.5 14.5a18.022 18.022 0 01-1.5-5" />
+        </svg>
+      );
       case 'conversation':
         return (
           <svg className={`w-4 h-4 ${darkMode ? 'text-green-400' : 'text-green-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">

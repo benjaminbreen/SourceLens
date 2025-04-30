@@ -383,13 +383,13 @@ export default function FeatureCarousel() {
           {/* Screenshot Container with animation */}
           <div className={`relative shadow-inner aspect-[16/10.2] w-full overflow-hidden ${
           isDarkMode 
-            ? 'border-slate-400 bg-gradient-to-t from-slate-250/80 to-indigo-700/20' 
-            : 'border-slate-300 bg-gradient-to-t from-slate-250/80 to-slate-200'
+            ? 'border-slate-400 bg-gradient-to-t from-slate-200/80 to-indigo-700/20' 
+            : 'border-slate-300 bg-gradient-to-t from-slate-200/80 to-slate-200'
         }`}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeFeature}
-                initial={{ opacity: 0.3 }}
+                initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0.3 }}
                 transition={{ duration: 0.3, ease: 'easeInOut' }}

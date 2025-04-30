@@ -18,6 +18,9 @@ import { useAuth } from '@/lib/auth/authContext';
 import { Space_Grotesk } from 'next/font/google';
 import { useAppStore } from '@/lib/store'; // Import for dark mode
 import AboutLogoModal from './AboutLogoModal';
+import TermsModal from './TermsModal';
+import ColophonModal from './ColophonModal';
+import PrivacyModal from './PrivacyModal';
 
 
 const spaceGrotesk = Space_Grotesk({
@@ -72,7 +75,9 @@ export default function TopNavigation({ isDarkMode, toggleDarkMode }: TopNavigat
   const megaMenuRef = useRef<HTMLDivElement>(null);
   const navRef      = useRef<HTMLDivElement>(null);
   const router = useRouter();
-
+const [showTermsModal, setShowTermsModal] = useState(false);
+const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+const [showColophonModal, setShowColophonModal] = useState(false);
 
   // State for screenshot preview
   const [previewItem, setPreviewItem] = useState<{
@@ -342,16 +347,16 @@ export default function TopNavigation({ isDarkMode, toggleDarkMode }: TopNavigat
           requiresAuth: false
         },
         {
-          id: 'tutorials',
-          title: 'Tutorials',
-          description: 'Step-by-step guides to SourceLens features',
+          id: 'documentation',
+          title: 'Documentation',
+          description: 'Full documentation of SourceLens features',
           icon: (
             <svg className="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
             </svg>
           ),
-          href: '/resources/tutorials',
-          screenshot: 'tutorials.jpg',
+          href: '/docs',
+          screenshot: 'docs.jpg',
           requiresAuth: false
         },
       ],
@@ -362,7 +367,7 @@ export default function TopNavigation({ isDarkMode, toggleDarkMode }: TopNavigat
         {
           id: 'about',
           title: 'About SourceLens',
-          description: 'Learn about our mission and philosophy',
+          description: 'The rationale behind the app',
           icon: (
             <svg className="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -375,7 +380,7 @@ export default function TopNavigation({ isDarkMode, toggleDarkMode }: TopNavigat
         {
           id: 'github',
           title: 'GitHub Repository',
-          description: 'View source code and contribute to the project',
+          description: 'View source code',
           icon: (
             <svg className="w-6 h-6 text-slate-500" fill="currentColor" viewBox="0 0 24 24">
               <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z" />
@@ -705,7 +710,7 @@ export default function TopNavigation({ isDarkMode, toggleDarkMode }: TopNavigat
           </div>
         </div>
 
-        {/* Mega Menu for Desktop - Updated version */}
+                {/* Mega Menu for Desktop - Updated version */}
         <AnimatePresence>
           {activeMenu && (
            <motion.div
@@ -723,143 +728,296 @@ export default function TopNavigation({ isDarkMode, toggleDarkMode }: TopNavigat
              ref={megaMenuRef}
            >
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <div className="grid grid-cols-12 gap-8">
-                  {/* Menu sections (8 columns wide) */}
-                  <div className="col-span-12 lg:col-span-8">
-                    <div className="grid md:grid-cols-2 gap-8">
-                      {getActiveMenuContent().map((section, index) => (
-                        <div key={index} className="space-y-5">
-                          <h3 className={`text-sm mb-3 font-semibold uppercase tracking-wider ${
-                            isDarkMode
-                              ? 'text-indigo-300'
-                              : 'text-indigo-900'
-                          }`}>
-                            {section.title}
-                          </h3>
-                          <div className="space-y-1">
-                            {section.items.map((item) => (
-                              <div key={item.id}>
-                                <div
-                                  className={`group flex items-start p-3 rounded-lg transition-colors duration-200 ${
-                                    isDarkMode
-                                      ? 'hover:bg-slate-800'
-                                      : 'hover:opacity-120 hover:bg-slate-200/60'
-                                  } ${
-                                    item.requiresAuth && !user
-                                      ? 'cursor-not-allowed opacity-60'
-                                      : 'cursor-pointer'
-                                  }`}
-                                  onMouseEnter={() => handleItemHover(item)}
-                                  onMouseLeave={() => setPreviewItem(null)}
-                                  onClick={(e) => handleItemClick(item, e)}
-                                >
-                                  <div className="flex-shrink-0">{item.icon}</div>
-                                  <div className="ml-4">
-                                    <p className={`text-base font-medium transition-colors duration-200 ${
-                                      isDarkMode
-                                        ? 'text-white group-hover:text-indigo-200'
-                                        : 'text-indigo-900 group-hover:text-indigo-700'
-                                    }`}>
-                                      {item.title}
-                                    </p>
-                                    <p className={`mt-1 text-sm transition-colors duration-200 ${
-                                      isDarkMode
-                                        ? 'text-slate-400 group-hover:text-slate-300'
-                                        : 'text-slate-600 group-hover:text-slate-700'
-                                    }`}>
-                                      {item.description}
-                                    </p>
-                                  </div>
-                                  {item.requiresAuth && !user && (
-                                    <div className="ml-auto self-center">
-                                      <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                      </svg>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Preview section (4 columns wide) */}
-                  <div className="hidden lg:block lg:col-span-4">
-                    <AnimatePresence mode="wait">
-                      {previewItem ? (
-                        <motion.div
-                          key={previewItem.id}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.1 }}
-                          className={`h-full flex flex-col ${
-                            isDarkMode
-                              ? 'bg-slate-800/50 border border-slate-700'
-                              : 'bg-stone-50/20 border border-indigo-200'
-                          } rounded-lg p-3`}
-                        >
-                          <h3 className={`text-lg font-medium mb-3 ${
-                            isDarkMode ? 'text-white' : 'text-indigo-900'
-                          }`}>
-                            {previewItem.title}
-                          </h3>
-                          
-                       
-                          
-                          <div className="relative flex-grow mt-1">
-                            <div className={`absolute inset-0 rounded-md overflow-hidden ${
-                              isDarkMode
-                                ? 'ring-1 ring-slate-600 shadow-lg'
-                                : 'ring-1 ring-indigo-200 shadow-md'
-                            }`}>
-                              <div className="relative h-full">
-                                <Image 
-                                  src={`/screenshots/${previewItem.screenshot}`}
-                                  alt={`${previewItem.title} screenshot`}
-                                  fill
-                                  className="object-cover"
-                                  priority
-                                />
-                                <div className={`absolute inset-0 ${
-                                  isDarkMode
-                                    ? 'bg-gradient-to-t from-slate-950/40 to-transparent'
-                                    : 'bg-gradient-to-t from-indigo-950/10 to-transparent'
-                                }`}></div>
+                {/* Conditional Layout based on activeMenu */}
+                {activeMenu === 'resources' ? (
+                  // --- NEW LAYOUT FOR RESOURCES (No Screenshot Preview) ---
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {/* Column 1: Learn & Explore */}
+                    <div>
+                      <h3 className={`text-sm mb-3 font-semibold uppercase tracking-wider ${
+                        isDarkMode ? 'text-indigo-300' : 'text-indigo-900'
+                      }`}>
+                        Learn & Explore
+                      </h3>
+                      <div className="space-y-1">
+                        {resourcesMenu.find(sec => sec.title === 'Learn & Explore')?.items.map((item) => (
+                          <div key={item.id}>
+                            <div
+                              className={`group flex items-start p-3 rounded-lg transition-colors duration-200 ${
+                                isDarkMode ? 'hover:bg-slate-800' : 'hover:opacity-120 hover:bg-slate-200/60'
+                              } cursor-pointer`}
+                              onClick={(e) => handleItemClick(item, e)}
+                              // No hover preview handling needed here
+                            >
+                              <div className="flex-shrink-0">{item.icon}</div>
+                              <div className="ml-4">
+                                <p className={`text-base font-medium transition-colors duration-200 ${
+                                  isDarkMode ? 'text-white group-hover:text-indigo-200' : 'text-indigo-900 group-hover:text-indigo-700'
+                                }`}>
+                                  {item.title}
+                                </p>
+                                <p className={`mt-1 text-sm transition-colors duration-200 ${
+                                  isDarkMode ? 'text-slate-400 group-hover:text-slate-300' : 'text-slate-600 group-hover:text-slate-700'
+                                }`}>
+                                  {item.description}
+                                </p>
                               </div>
                             </div>
                           </div>
-                        </motion.div>
-                      ) : (
-                        <motion.div
-                          key="default"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className={`h-full flex flex-col justify-center items-center ${
-                            isDarkMode
-                              ? 'bg-slate-800/30 border border-slate-700/50'
-                              : 'bg-indigo-50/20 border border-indigo-100/50'
-                          } rounded-lg p-6`}
-                        >
-                          <svg className={`w-12 h-12 mb-2 ${
-                            isDarkMode ? 'text-slate-600' : 'text-indigo-200'
-                          }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                          <p className={`text-sm text-center ${
-                            isDarkMode ? 'text-slate-400' : 'text-slate-500'
-                          }`}>
-                            Hover over a feature to see a preview
-                          </p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Column 2: About */}
+                    <div>
+                      <h3 className={`text-sm mb-3 font-semibold uppercase tracking-wider ${
+                        isDarkMode ? 'text-indigo-300' : 'text-indigo-900'
+                      }`}>
+                        About
+                      </h3>
+                      <div className="space-y-1">
+                        {resourcesMenu.find(sec => sec.title === 'About')?.items.map((item) => (
+                          <div key={item.id}>
+                            <div
+                              className={`group flex items-start p-3 rounded-lg transition-colors duration-200 ${
+                                isDarkMode ? 'hover:bg-slate-800' : 'hover:opacity-120 hover:bg-slate-200/60'
+                              } cursor-pointer`}
+                              onClick={(e) => handleItemClick(item, e)}
+                              // No hover preview handling needed here
+                            >
+                              <div className="flex-shrink-0">{item.icon}</div>
+                              <div className="ml-4">
+                                <p className={`text-base font-medium transition-colors duration-200 ${
+                                  isDarkMode ? 'text-white group-hover:text-indigo-200' : 'text-indigo-900 group-hover:text-indigo-700'
+                                }`}>
+                                  {item.title}
+                                </p>
+                                <p className={`mt-1 text-sm transition-colors duration-200 ${
+                                  isDarkMode ? 'text-slate-400 group-hover:text-slate-300' : 'text-slate-600 group-hover:text-slate-700'
+                                }`}>
+                                  {item.description}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Column 3: Legal & Help */}
+                    {/* Column 3: Legal & Help */}
+                    <div>
+                      <h3 className={`text-sm mb-3 font-semibold uppercase tracking-wider ${
+                        isDarkMode ? 'text-indigo-300' : 'text-indigo-900'
+                      }`}>
+                        Legal & Help
+                      </h3>
+                      <div className="space-y-1">
+                        {/* Privacy Policy Modal Button */}
+                        <div key="privacy">
+                          <button
+                            onClick={() => setShowPrivacyModal(true)}
+                            className={`group flex items-start p-3 rounded-lg transition-colors duration-200 w-full text-left ${
+                              isDarkMode ? 'hover:bg-slate-800' : 'hover:opacity-120 hover:bg-slate-200/60'
+                            } cursor-pointer`}
+                          >
+                            <div className="flex-shrink-0">
+                              <svg className="w-6 h-6 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                              </svg>
+                            </div>
+                            <div className="ml-4">
+                              <p className={`text-base font-medium transition-colors duration-200 ${
+                                isDarkMode ? 'text-white group-hover:text-indigo-200' : 'text-indigo-900 group-hover:text-indigo-700'
+                              }`}>
+                                Privacy Policy
+                              </p>
+                              <p className={`mt-1 text-sm transition-colors duration-200 ${
+                                isDarkMode ? 'text-slate-400 group-hover:text-slate-300' : 'text-slate-600 group-hover:text-slate-700'
+                              }`}>
+                                How your data is handled
+                              </p>
+                            </div>
+                          </button>
+                        </div>
+                        {/* Terms of Service Modal Button */}
+                        <div key="terms">
+                          <button
+                            onClick={() => setShowTermsModal(true)}
+                            className={`group flex items-start p-3 rounded-lg transition-colors duration-200 w-full text-left ${
+                              isDarkMode ? 'hover:bg-slate-800' : 'hover:opacity-120 hover:bg-slate-200/60'
+                            } cursor-pointer`}
+                          >
+                            <div className="flex-shrink-0">
+                              <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                            </div>
+                            <div className="ml-4">
+                              <p className={`text-base font-medium transition-colors duration-200 ${
+                                isDarkMode ? 'text-white group-hover:text-indigo-200' : 'text-indigo-900 group-hover:text-indigo-700'
+                              }`}>
+                                Terms of Service
+                              </p>
+                              <p className={`mt-1 text-sm transition-colors duration-200 ${
+                                isDarkMode ? 'text-slate-400 group-hover:text-slate-300' : 'text-slate-600 group-hover:text-slate-700'
+                              }`}>
+                                Rules for using SourceLens
+                              </p>
+                            </div>
+                          </button>
+                        </div>
+                        {/* Colophon Modal Button - Replacing FAQ */}
+                        <div key="colophon">
+                          <button
+                            onClick={() => setShowColophonModal(true)}
+                            className={`group flex items-start p-3 rounded-lg transition-colors duration-200 w-full text-left ${
+                              isDarkMode ? 'hover:bg-slate-800' : 'hover:opacity-120 hover:bg-slate-200/60'
+                            } cursor-pointer`}
+                          >
+                            <div className="flex-shrink-0">
+                              <svg className="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                              </svg>
+                            </div>
+                            <div className="ml-4">
+                              <p className={`text-base font-medium transition-colors duration-200 ${
+                                isDarkMode ? 'text-white group-hover:text-indigo-200' : 'text-indigo-900 group-hover:text-indigo-700'
+                              }`}>
+                                Colophon
+                              </p>
+                              <p className={`mt-1 text-sm transition-colors duration-200 ${
+                                isDarkMode ? 'text-slate-400 group-hover:text-slate-300' : 'text-slate-600 group-hover:text-slate-700'
+                              }`}>
+                                Technical details & credits
+                              </p>
+                            </div>
+                          </button>
+                        </div>
+                     
+                      </div>
+                    
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  // --- ORIGINAL LAYOUT FOR ANALYSIS & LIBRARY (With Screenshot Preview) ---
+                  <div className="grid grid-cols-12 gap-8">
+                    {/* Menu sections (8 columns wide) */}
+                    <div className="col-span-12 lg:col-span-8">
+                      <div className="grid md:grid-cols-2 gap-8">
+                        {getActiveMenuContent().map((section, index) => (
+                          <div key={index} className="space-y-5">
+                            <h3 className={`text-sm mb-3 font-semibold uppercase tracking-wider ${
+                              isDarkMode ? 'text-indigo-300' : 'text-indigo-900'
+                            }`}>
+                              {section.title}
+                            </h3>
+                            <div className="space-y-1">
+                              {section.items.map((item) => (
+                                <div key={item.id}>
+                                  <div
+                                    className={`group flex items-start p-3 rounded-lg transition-colors duration-200 ${
+                                      isDarkMode ? 'hover:bg-slate-800' : 'hover:opacity-120 hover:bg-slate-200/60'
+                                    } ${
+                                      item.requiresAuth && !user ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+                                    }`}
+                                    onMouseEnter={() => handleItemHover(item)}
+                                    onMouseLeave={() => setPreviewItem(null)}
+                                    onClick={(e) => handleItemClick(item, e)}
+                                  >
+                                    <div className="flex-shrink-0">{item.icon}</div>
+                                    <div className="ml-4">
+                                      <p className={`text-base font-medium transition-colors duration-200 ${
+                                        isDarkMode ? 'text-white group-hover:text-indigo-200' : 'text-indigo-900 group-hover:text-indigo-700'
+                                      }`}>
+                                        {item.title}
+                                      </p>
+                                      <p className={`mt-1 text-sm transition-colors duration-200 ${
+                                        isDarkMode ? 'text-slate-400 group-hover:text-slate-300' : 'text-slate-600 group-hover:text-slate-700'
+                                      }`}>
+                                        {item.description}
+                                      </p>
+                                    </div>
+                                    {item.requiresAuth && !user && (
+                                      <div className="ml-auto self-center">
+                                        <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Preview section (4 columns wide) */}
+                    <div className="hidden lg:block lg:col-span-4">
+                      <AnimatePresence mode="wait">
+                        {previewItem ? (
+                          <motion.div
+                            key={previewItem.id}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.1 }}
+                            className={`h-full flex flex-col ${
+                              isDarkMode ? 'bg-slate-800/50 border border-slate-700' : 'bg-stone-50/20 border border-indigo-200'
+                            } rounded-lg p-3`}
+                          >
+                            <h3 className={`text-lg font-medium mb-3 ${
+                              isDarkMode ? 'text-white' : 'text-indigo-900'
+                            }`}>
+                              {previewItem.title}
+                            </h3>
+                            <div className="relative flex-grow mt-1">
+                              <div className={`absolute inset-0 rounded-md overflow-hidden ${
+                                isDarkMode ? 'ring-1 ring-slate-600 shadow-lg' : 'ring-1 ring-indigo-200 shadow-md'
+                              }`}>
+                                <div className="relative h-full">
+                                  <Image
+                                    src={`/screenshots/${previewItem.screenshot}`}
+                                    alt={`${previewItem.title} screenshot`}
+                                    fill
+                                    className="object-cover"
+                                    priority // Keep priority if these are often shown first
+                                  />
+                                  <div className={`absolute inset-0 ${
+                                    isDarkMode ? 'bg-gradient-to-t from-slate-950/40 to-transparent' : 'bg-gradient-to-t from-indigo-950/10 to-transparent'
+                                  }`}></div>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="default"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className={`h-full flex flex-col justify-center items-center ${
+                              isDarkMode ? 'bg-slate-800/30 border border-slate-700/50' : 'bg-indigo-50/20 border border-indigo-100/50'
+                            } rounded-lg p-6`}
+                          >
+                            <svg className={`w-12 h-12 mb-2 ${
+                              isDarkMode ? 'text-slate-600' : 'text-indigo-200'
+                            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            <p className={`text-sm text-center ${
+                              isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                            }`}>
+                              Hover over a feature to see a preview
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -1297,6 +1455,30 @@ export default function TopNavigation({ isDarkMode, toggleDarkMode }: TopNavigat
         isOpen={showFAQModal}
         onClose={() => setShowFAQModal(false)}
       />
+
+      {showTermsModal && (
+  <TermsModal
+    isOpen={showTermsModal}
+    onClose={() => setShowTermsModal(false)}
+    isDarkMode={isDarkMode} 
+  />
+)}
+
+{showPrivacyModal && (
+  <PrivacyModal
+    isOpen={showPrivacyModal}
+    onClose={() => setShowPrivacyModal(false)}
+    isDarkMode={isDarkMode} 
+  />
+)}
+
+{showColophonModal && (
+  <ColophonModal
+    isOpen={showColophonModal}
+    onClose={() => setShowColophonModal(false)}
+    isDarkMode={isDarkMode} 
+  />
+)}
 
       
 <AboutLogoModal isOpen={showAboutLogoModal} onClose={() => setShowAboutLogoModal(false)} />

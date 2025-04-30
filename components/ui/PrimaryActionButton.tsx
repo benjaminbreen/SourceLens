@@ -145,7 +145,7 @@ const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({
           ${!disabled
             ? `hover:translate-y-[-2px] hover:shadow-md ${isActive ? 'animate-pulse-ring-emerald' : ''}`
             : isDarkMode 
-              ? 'bg-slate-700 cursor-not-allowed opacity-60' 
+              ? 'bg-slate-700 cursor-not-allowed opacity-50' 
               : 'bg-slate-300 cursor-not-allowed opacity-60'}
 
           ${className}

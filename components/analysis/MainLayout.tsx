@@ -85,6 +85,7 @@ export default function MainLayout() {
     setActivePanel,
     isNotePanelVisible,
     setNotePanelVisible,
+    resetState,
   } = useAppStore();
 
   // UI state
@@ -253,6 +254,8 @@ const handleNotesActivation = () => {
     // tk implement later with supabase integration
   };
 
+
+
   // Fetch connections data when needed
   useEffect(() => {
     if (activePanel === 'connections' && !connectionData && !isLoadingConnections) {
@@ -293,184 +296,178 @@ const handleNotesActivation = () => {
   return (
     <div className={`min-h-screen flex flex-col ${themeClasses.background} transition-colors duration-300`}>
       {/* Header with gradient background and sourcelensbar.jpg fade */}
-      <header className={`relative bg-gradient-to-r ${themeClasses.header} text-white shadow-lg`}>
-        {/* Background image and gradient overlay */}
-        <div className="absolute top-0 right-0 h-full w-3/4 z-0">
-          <Image 
-            src="/sourcelensbar.jpg" 
-            alt="SourceLens Header" 
-            fill 
-            priority 
-            className="object-cover opacity-80" 
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-800/90 to-indigo-900/10"></div>
+    <header className={`relative bg-gradient-to-r ${themeClasses.header} text-white shadow-lg z-500`}>
+      {/* Background image and gradient overlay */}
+      <div className="absolute top-0 right-0 h-full w-3/4 z-0">
+        <Image 
+          src="/sourcelensbar.jpg" 
+          alt="SourceLens Header" 
+          fill 
+          priority 
+          className="object-cover opacity-80 hidden sm:block" 
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-800/90 to-indigo-900/10"></div>
+      </div>
+
+      <div className="relative z-20 max-w-8xl mx-auto">
+        {/* Mobile header - single row compact layout */}
+        <div className="flex items-center justify-between p-2 sm:hidden">
+          <div className="flex items-center gap-2">
+            <HamburgerMenu />
+            <span className={`${spaceGrotesk.className} text-xl font-bold text-white`}>SourceLens</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {isLoading && (
+              <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+            )}
+            
+            <button 
+              onClick={toggleDarkMode}
+              className="p-1 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {darkMode ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </button>
+            
+            <AccountButton compact={true} />
+          </div>
+        </div>
+        
+        {/* Mobile metadata - compact version */}
+        <div className="flex justify-between items-center px-3 py-1 sm:hidden">
+          <div className="flex gap-2 items-center text-xs">
+            {metadata?.date && (
+              <span className="bg-black/20 px-2 py-0.5 rounded-full">{metadata.date}</span>
+            )}
+            
+            {metadata?.author && (
+              <span className="bg-black/20 px-2 py-0.5 rounded-full">{metadata.author}</span>
+            )}
+          </div>
+          
+          <span className="bg-indigo-600/30 px-2 py-0.5 rounded-full text-xs">Analysis</span>
         </div>
 
-        <div className="relative z-20 max-w-8xl mx-auto px-4 sm:px-6 lg:px-0 py-4 gap-2">
-          <div className="px-6 flex items-center justify-between gap-4 flex-wrap w-full">
-            {/* Far left: Hamburger menu */}
-            <div className="flex items-center gap-3">
-              <div className="pl-2 px-12">
-                <HamburgerMenu />
-              </div>
-
-              {/* Logo and title */}
-              <div className="ml-0">
-                {/* Title and path */}
-                <div className="flex flex-wrap gap-2 items-center">
-                  <Link href="/" className="group inline-block relative overflow-hidden">
-                    <h1 className={`${spaceGrotesk.className} text-2xl tracking-tighter font-bold shadow-sm text-white transition-all duration-300`}>
-                      SourceLens
-                      <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-indigo-400 via-white to-indigo-400 transform scale-x-0 origin-left transition-transform duration-300 ease-out group-hover:scale-x-100"></span>
-                    </h1>
-                  </Link>
-
-                  <span className="text-white/40">/</span>
-
-                  <div className={`${spaceGrotesk.className} text-sm font-semibold text-white/80`}>
-                    Analysis
-                  </div>
-                </div>
-
-                {/* Metadata block */}
-                <div className="flex flex-wrap gap-2 items-center mt-2 text-xs font-medium text-white/80">
-                  {metadata?.date && (
-                    <button 
-                      onClick={() => handleOpenWikipediaPanel(metadata.date)}
-                      className="text-sm font-medium bg-white/10 hover:bg-white/20 px-3 py-0.5 rounded-full transition-colors group"
-                    >
-                      {metadata.date}
-                      <span className="block max-w-0 group-hover:max-w-full transition-all duration-300 h-0.5 bg-indigo-400/60"></span>
-                    </button>
-                  )}
-
-                  {metadata?.date && metadata?.author && (
-                    <span className="text-white/40">•</span>
-                  )}
-
-                  {metadata?.author && (
-                    <button
-                      onClick={() => handleOpenWikipediaPanel(metadata.author)}
-                      className="text-sm font-medium bg-white/10 hover:bg-white/20 px-3 py-0.5 rounded-full transition-colors group"
-                    >
-                      {metadata.author}
-                      <span className="block max-w-0 group-hover:max-w-full transition-all duration-300 h-0.5 bg-indigo-400/60"></span>
-                    </button>
-                  )}
-                </div>
-              </div>
+        {/* Desktop header - original layout preserved */}
+        <div className="hidden sm:flex px-6 py-4 gap-2 flex-wrap w-full items-center justify-between">
+          {/* Far left: Hamburger menu */}
+          <div className="flex items-center gap-3">
+            <div className="pl-2 px-12">
+              <HamburgerMenu />
             </div>
 
-            {/* Right side: Animated loading */}
-            <div className="flex px-0 ml-38 opacity-50"></div>
-
-            <div className="flex items-center gap-3 ml-auto">
-              {isLoading && (
-                <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm py-1.5 px-3 rounded-full shadow-sm">
-                  <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-                  <span className="text-xs font-medium text-white/90">Processing...</span>
-                </div>
-              )}
-              
-              <nav className="hidden md:flex items-center space-x-2 text-sm font-medium">
-                <Link
-                  href="/"
-                  className="px-3 py-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-md flex items-center transition-colors"
-                >
-                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
-                  Home
+            {/* Logo and title */}
+            <div className="ml-0">
+              {/* Title and path */}
+              <div className="flex flex-wrap gap-2 items-center">
+                <Link href="/" className="group inline-block relative overflow-hidden">
+                  <h1 className={`${spaceGrotesk.className} text-2xl tracking-tighter font-bold shadow-sm text-white transition-all duration-300`}>
+                    SourceLens
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-indigo-400 via-white to-indigo-400 transform scale-x-0 origin-left transition-transform duration-300 ease-out group-hover:scale-x-100"></span>
+                  </h1>
                 </Link>
 
-                {/* Library Dropdown */}
-                <div className="relative group">
-                  <Link
-                    href="/library"
-                    className="px-3 py-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-md flex items-center transition-colors"
-                  >
-                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-                    </svg>
-                    Library
-                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </Link>
-                  
-                  {/* Dropdown Menu */}
-                  <div className="absolute left-0 mt-1 w-56 bg-slate-800 rounded-lg shadow-lg border border-slate-700 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <Link 
-                      href="/library?tab=references"
-                      className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-slate-700 transition-colors"
-                    >
-                      <svg className="w-4 h-4 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Saved References
-                    </Link>
-                    <Link 
-                      href="/library?tab=analysis"
-                      className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-slate-700 transition-colors"
-                    >
-                      <svg className="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Analysis History
-                    </Link>
-                    <Link 
-                      href="/library?tab=sources"
-                      className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-slate-700 transition-colors"
-                    >
-                      <svg className="w-4 h-4 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                      </svg>
-                      Saved Sources
-                    </Link>
-                    <Link 
-                      href="/library?tab=notes"
-                      className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-slate-700 transition-colors"
-                    >
-                      <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      Research Notes
-                    </Link>
-                    <Link 
-                      href="/library?tab=drafts"
-                      className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-slate-700 transition-colors"
-                    >
-                      <svg className="w-4 h-4 mr-2 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      Research Drafts
-                    </Link>
-                  </div>
-                </div>
+                <span className="text-white/40">/</span>
 
-                <button
-                  onClick={() => setShowAboutModal(true)}
-                  className="px-3 py-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-md flex items-center transition-colors"
-                >
-                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  About
-                </button>
-              </nav>
-              <div className="flex px-0 flex-col justify-center ml-3">
-                <StrategyDeck />
+                <div className={`${spaceGrotesk.className} text-sm font-semibold text-white/80`}>
+                  Analysis
+                </div>
               </div>
 
-              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm py-1.5 px-3 rounded-full shadow-sm justify-center ml-4">
-                <AccountButton />
+              {/* Metadata block */}
+              <div className="flex flex-wrap gap-2 items-center mt-2 text-xs font-medium text-white/80">
+                {metadata?.date && (
+                  <button 
+                    onClick={() => handleOpenWikipediaPanel(metadata.date)}
+                    className="text-sm font-medium bg-white/10 hover:bg-white/20 px-3 py-0.5 rounded-full transition-colors group"
+                  >
+                    {metadata.date}
+                    <span className="block max-w-0 group-hover:max-w-full transition-all duration-300 h-0.5 bg-indigo-400/60"></span>
+                  </button>
+                )}
+
+                {metadata?.date && metadata?.author && (
+                  <span className="text-white/40">•</span>
+                )}
+
+                {metadata?.author && (
+                  <button
+                    onClick={() => handleOpenWikipediaPanel(metadata.author)}
+                    className="text-sm font-medium bg-white/10 hover:bg-white/20 px-3 py-0.5 rounded-full transition-colors group"
+                  >
+                    {metadata.author}
+                    <span className="block max-w-0 group-hover:max-w-full transition-all duration-300 h-0.5 bg-indigo-400/60"></span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
-        </div>
-      </header>
 
-      <div className={`h-1 ${themeClasses.gradient} opacity-100 transition-colors duration-300`}></div>
+          {/* Right side: Animated loading */}
+          <div className="flex px-0 ml-38 opacity-50"></div>
+
+          <div className="flex items-center gap-3 ml-auto">
+            {isLoading && (
+              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm py-1.5 px-3 rounded-full shadow-sm">
+                <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                <span className="text-xs font-medium text-white/90">Processing...</span>
+              </div>
+            )}
+            
+            <nav className="hidden md:flex items-center space-x-2 text-sm font-medium">
+              <Link
+                href="/"
+                className="px-3 py-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-md flex items-center transition-colors"
+              >
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Home
+              </Link>
+
+              <Link
+                href="/library"
+                className="px-3 py-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-md flex items-center transition-colors"
+              >
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                Library
+              </Link>
+
+              <button
+                onClick={() => setShowAboutModal(true)}
+                className="px-3 py-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-md flex items-center transition-colors"
+              >
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                About
+              </button>
+            </nav>
+            <div className="flex px-0 flex-col justify-center ml-3">
+              <StrategyDeck />
+            </div>
+
+            <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm py-1.5 px-3 rounded-full shadow-sm justify-center ml-4">
+              <AccountButton />
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    {/* Decorative highlight line below header */}
+    <div className={`h-1 ${themeClasses.gradient} opacity-100 transition-colors duration-300`}></div>
 
       {/* Main content with three-panel layout */}
       <div className="flex flex-1 gap-1 overflow-hidden flex-col p-1 md:flex-row relative">
@@ -1015,7 +1012,7 @@ const handleNotesActivation = () => {
       )}
 
       {isPanelOpen && (
-        <div className="fixed inset-0 z-[10000]">
+        <div className="fixed inset-0 z-[100]">
           <AccountPanel isOpen={isPanelOpen} onClose={() => setIsPanelOpen(false)} />
         </div>
       )}

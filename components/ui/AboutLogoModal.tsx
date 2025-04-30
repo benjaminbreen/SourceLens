@@ -51,12 +51,12 @@ export default function AboutLogoModal({ isOpen, onClose, darkMode = false }: Ab
   if (!isOpen) return null;
   
   return (
-    <div className="fixed inset-0 z-[1000] overflow-auto">
+    <div className="fixed inset-0 z-100  overflow-auto">
       {/* Backdrop with blur effect */}
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200" />
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200 " />
       
       {/* Modal container */}
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-center rounded-xl justify-center p-4 z-1001">
         <div 
           ref={modalRef}
           className={`relative w-full max-w-5xl rounded-xl shadow-2xl transform transition-all animate-in zoom-in-95 duration-300 ${
@@ -64,7 +64,7 @@ export default function AboutLogoModal({ isOpen, onClose, darkMode = false }: Ab
           }`}
         >
           {/* Header */}
-          <div className={`flex items-center justify-between px-6 py-4 border-b ${
+          <div className={`flex items-center justify-between rounded-tr-xl rounded-tl-xl px-6 py-4 border-b ${
             darkMode ? 'border-slate-700 bg-indigo-950/50' : 'border-slate-200 bg-indigo-50/90'
           }`}>
             <h2 className={`text-xl font-semibold ${

@@ -407,7 +407,7 @@ export default function HamburgerMenu() {
   };
 
   return (
-    <div className="relative z-50" ref={menuRef}>
+    <div className="relative z-5000" ref={menuRef}>
       {/* Hamburger button with improved dark mode support */}
       <button 
         className={`flex items-center justify-center w-12 h-12 rounded-full ${
@@ -456,12 +456,12 @@ export default function HamburgerMenu() {
           <div 
             className={`fixed inset-0 ${
               isDarkMode ? 'bg-black/60' : 'bg-black/30'
-            }  z-40 transition-opacity duration-300 ease-in-out`}
+            }  z-4000 transition-opacity duration-300 ease-in-out`}
             onClick={() => setIsOpen(false)}
           ></div>
           
           {/* Slide-in panel container */}
-          <div className="fixed inset-y-0 top-0 left-0 max-w-[320px] w-[90vw] z-50 flex">
+          <div className="fixed inset-y-0 top-0 left-0 max-w-[320px] w-[90vw] z-5000 flex">
             {/* Actual menu panel with dark mode support */}
             <div 
               className={`flex rounded-r-xl flex-col h-full w-full ${

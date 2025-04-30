@@ -760,7 +760,7 @@ export default function NotesSidePanel({ isOpen, onClose, darkMode = false }: No
   return (
     <div 
       ref={panelRef}
-      className={`fixed right-0 top-0 bottom-0 z-50 w-full max-w-md flex flex-col ${
+      className={`fixed right-0 top-24 bottom-0 z-500 w-full max-w-md flex flex-col ${
         darkMode ? 'bg-slate-900 border-l border-slate-700' : 'bg-white border-l border-slate-200'
       } shadow-xl transition-all duration-250 ease-in-out note-animate-slide-in-right`}
     >

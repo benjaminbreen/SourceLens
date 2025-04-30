@@ -312,19 +312,24 @@ export default function TranslationPanel({ darkMode }: TranslationPanelProps) {
             Options
           </motion.button>
           
-          <SaveToLibraryButton 
-            type="analysis"
-            data={{
-              type: 'extract-info',
-              title: `Translation to ${getLanguageName(translationOptions.targetLanguage)} ${metadata?.author ? `- ${metadata.author}` : ''}`,
-              content: fullTranslation || translatedText,
-              sourceName: metadata?.title || 'Untitled Source',
-              sourceAuthor: metadata?.author || 'Unknown',
-              sourceDate: metadata?.date || 'Unknown date'
-            }}
-            variant="secondary"
-            size="sm"
-          />
+        <SaveToLibraryButton 
+          type="analysis"
+          data={{
+            type: 'translate', // Change 'extract-info' to 'translate' for proper filtering
+            title: `Translation to ${getLanguageName(translationOptions.targetLanguage)} ${metadata?.title ? `- ${metadata.title}` : ''}`,
+            content: fullTranslation || translatedText,
+            sourceName: metadata?.title || 'Untitled Source',
+            sourceAuthor: metadata?.author || 'Unknown',
+            sourceDate: metadata?.date || 'Unknown date',
+            model: llmModel, // Add model information
+            perspective: `Translation to ${getLanguageName(translationOptions.targetLanguage)}`, // Add perspective information
+            // Add any tags you want to appear in the SavedAnalysisPanel
+            tags: ['translation', translationOptions.targetLanguage]
+          }}
+          variant="secondary"
+          size="sm"
+        />
+        
         </div>
       </div>
       

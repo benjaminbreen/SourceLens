@@ -56,7 +56,7 @@ const TypewriterEffect = ({ text, isVisible }: { text: string; isVisible: boolea
     // Delay typing start by 2 seconds after component mount/text change
     const delayTimer = setTimeout(() => {
       setStartTyping(true);
-    }, 2000);
+    }, 1000);
 
     return () => clearTimeout(delayTimer);
   }, [text]);
@@ -386,7 +386,7 @@ useEffect(() => {
               className="mb-5"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: 0.2, delay: 0.2 }}
             >
               <p className="text-slate-600 text-lg mb-1">
                 SourceLens uses AI to help you{' '}
@@ -397,7 +397,7 @@ useEffect(() => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.3 }}
+                    transition={{ duration: 0.2 }}
                   >
                     {features.find(f => f.id === activeFeature)?.title.toLowerCase()}
                   </motion.span>
@@ -458,7 +458,7 @@ useEffect(() => {
             className="flex-shrink-0 lg:w-3/10 bg-slate-50 px-7 py-5 mt-4 rounded-xl border border-slate-200 shadow-sm"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
+            transition={{ duration: 0.2, delay: 0.2 }}
           >
             <div className="h-38 overflow-hidden">
               <AnimatePresence mode="wait">

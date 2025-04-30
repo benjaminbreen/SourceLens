@@ -299,7 +299,7 @@ export default function DocumentPortraitModal({
 
   return (
     <div 
-      className="fixed inset-0 z-50 overflow-y-auto animate-in slide-in-from-top duration-300"
+      className="fixed inset-0 z-5000 overflow-y-auto animate-in slide-in-from-top duration-300"
       aria-labelledby="document-portrait-modal"
       role="dialog"
       aria-modal="true"

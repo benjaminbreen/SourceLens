@@ -13,7 +13,7 @@ interface NodeDetailPanelProps {
   onExpand: (node: any) => Promise<void>;
 onSaveNote: (note: { nodeId: string; note: string }) => void;
   isLoading: boolean;
-  isDarkMode: boolean;
+  isDarkMode?: boolean;
 }
 
 export default function NodeDetailPanel({ 

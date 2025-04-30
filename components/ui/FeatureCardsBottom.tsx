@@ -1,7 +1,7 @@
 // components/ui/FeatureCardsBottom.tsx
 // Elegant Feature Cards section for the bottom of the landing page
 // With scroll-triggered animations and improved responsive design
-// Always displayed in dark mode with cosmic background
+// Updated with specific documentation section links for each feature
 
 'use client';
 
@@ -20,7 +20,8 @@ interface FeatureCardProps {
   bgColor: string;
   hoverBgColor: string;
   glowColor: string;
-  docUrl: string;
+  docUrl: string; // Main doc link
+  learnMoreText?: string; // Optional custom text for the learn more link
 }
 
 const features: FeatureCardProps[] = [
@@ -38,7 +39,7 @@ const features: FeatureCardProps[] = [
     bgColor: 'bg-indigo-950/30',
     hoverBgColor: 'hover:bg-indigo-900/40',
     glowColor: 'indigo-500',
-    docUrl: '/docs/features/basic-analysis',
+    docUrl: '/docs?slug=features/analysis-tools/basic-analysis',
   },
   {
     id: 'detailed-analysis',
@@ -54,7 +55,7 @@ const features: FeatureCardProps[] = [
     bgColor: 'bg-sky-950/30',
     hoverBgColor: 'hover:bg-sky-900/40',
     glowColor: 'sky-500',
-    docUrl: '/docs/features/detailed-analysis',
+    docUrl: '/docs?slug=features/analysis-tools/detailed-analysis#what-is-detailed-analysis',
   },
   {
     id: 'extract-info',
@@ -70,7 +71,7 @@ const features: FeatureCardProps[] = [
     bgColor: 'bg-emerald-950/30',
     hoverBgColor: 'hover:bg-emerald-900/40',
     glowColor: 'emerald',
-    docUrl: '/docs/features/extract-info',
+    docUrl: '/docs?slug=features/analysis-tools/information-extraction#extraction-types',
   },
   {
     id: 'references',
@@ -86,7 +87,7 @@ const features: FeatureCardProps[] = [
     bgColor: 'bg-rose-950/30',
     hoverBgColor: 'hover:bg-rose-900/40',
     glowColor: 'rose',
-    docUrl: '/docs/features/references',
+    docUrl: '/docs?slug=features/references-suggestions#reference-categories',
   },
   {
     id: 'counter',
@@ -102,7 +103,7 @@ const features: FeatureCardProps[] = [
     bgColor: 'bg-purple-950/30',
     hoverBgColor: 'hover:bg-purple-900/40',
     glowColor: 'purple',
-    docUrl: '/docs/features/counter-narrative',
+    docUrl: '/docs?slug=features/counter-narrative#types-of-counter-narratives',
   },
   {
     id: 'translate',
@@ -118,7 +119,8 @@ const features: FeatureCardProps[] = [
     bgColor: 'bg-cyan-950/30',
     hoverBgColor: 'hover:bg-cyan-900/40',
     glowColor: 'cyan',
-    docUrl: '/docs/features/translate',
+    docUrl: '/docs?slug=features/translation-tools', // This will need to be created
+    learnMoreText: 'Coming Soon',
   },
   {
     id: 'connections',
@@ -134,7 +136,8 @@ const features: FeatureCardProps[] = [
     bgColor: 'bg-orange-950/30',
     hoverBgColor: 'hover:bg-orange-900/40',
     glowColor: 'orange',
-    docUrl: '/docs/features/connections',
+    docUrl: '/docs?slug=advanced-usage/connection-visualization', // This will need to be created
+    learnMoreText: 'Coming Soon',
   },
   {
     id: 'highlight',
@@ -150,7 +153,7 @@ const features: FeatureCardProps[] = [
     bgColor: 'bg-yellow-950/30',
     hoverBgColor: 'hover:bg-yellow-900/40',
     glowColor: 'yellow',
-    docUrl: '/docs/features/highlight',
+    docUrl: '/docs?slug=features/text-highlighting#highlight-criteria-examples',
   },
   {
     id: 'roleplay',
@@ -166,7 +169,7 @@ const features: FeatureCardProps[] = [
     bgColor: 'bg-blue-950/30',
     hoverBgColor: 'hover:bg-blue-900/40',
     glowColor: 'blue',
-    docUrl: '/docs/features/simulation',
+    docUrl: '/docs?slug=features/simulation-mode#best-practices',
   },
 ];
 
@@ -215,7 +218,7 @@ export default function FeatureCardsBottom() {
         initial={{ opacity: 0, y: 20 }}
         animate={titleInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="text-2xl font-semibold  text-indigo-50 text-center mb-12"
+        className="text-2xl font-semibold text-indigo-50 text-center mb-12"
       >
         Complete set of features
       </motion.h2>
@@ -260,7 +263,7 @@ export default function FeatureCardsBottom() {
               
               {/* Learn More Button */}
               <div className="mt-5 text-sm flex items-center font-medium text-slate-400 group-hover:text-white transition-colors duration-500">
-                <span className="uppercase tracking-wide">Learn more</span>
+                <span className="uppercase tracking-wide">{feature.learnMoreText || 'Learn more'}</span>
                 <svg className="w-4 h-4 ml-1.5 transform group-hover:translate-x-1.5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>

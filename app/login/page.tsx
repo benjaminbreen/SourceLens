@@ -11,7 +11,7 @@ export default function LoginPage() {
       <header className="py-6 px-4 border-b border-slate-200 bg-white shadow-sm">
         <div className="container mx-auto">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-indigo-900">SourceLens</span>
+            <span className="text-2xl font-bold text-indigo-900">Log in</span>
           </Link>
         </div>
       </header>
