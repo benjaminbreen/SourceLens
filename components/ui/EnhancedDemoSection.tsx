@@ -551,7 +551,7 @@ export default function ImprovedDemoSection({
           
           {/* Right side - Typewriter effect - Fully responsive with adjustments */}
           <motion.div 
-            className="w-full md:w-auto md:flex-shrink-0 md:w-3/10 bg-slate-50 px-4 sm:px-7 py-4 sm:py-5 rounded-xl border border-slate-200 shadow-sm"
+            className="w-full md:w-auto md:flex-shrink-0 md:w-[30%] flex-shrink-0 w-full lg:[width:30%]  bg-slate-50 px-4 sm:px-7 py-4 sm:py-5 rounded-xl border border-slate-200 shadow-sm"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.2, delay: 0.2 }}
