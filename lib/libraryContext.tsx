@@ -9,6 +9,62 @@ import { v4 as uuidv4 } from 'uuid';
 import { Metadata } from '@/lib/store';
 import { useAuth } from '@/lib/auth/authContext';
 import { uploadThumbnail } from '@/lib/storage/uploadThumbnail';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { usePathname } from 'next/navigation'; // <--- Import usePathname
+
+const supabase = createClientComponentClient();
+
+export async function getSourcesList() {
+  const { data, error } = await supabase
+    .from('sources')
+    .select( // ⬅️ only columns the grid needs
+      `id,
+       metadata,
+       dateAdded,
+       lastAccessed,
+       type,
+       tags,
+       category,
+       thumbnailUrl`
+    )
+    .order('dateAdded', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+// ────────────────────────────────────────────────────────────
+//  Full source – fetch *once* per click
+// ────────────────────────────────────────────────────────────
+export async function getSourceWithContent(id: string) {
+  const { data, error } = await supabase
+    .from('sources')
+    .select(
+      `id,
+       content,
+       metadata,
+       type,
+       thumbnailUrl`
+    )
+    .eq('id', id)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// ────────────────────────────────────────────────────────────
+//  Cheap note counts (≈ 1 kB instead of the whole table)
+// ────────────────────────────────────────────────────────────
+export async function getNoteCountsBySource(): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from('notes')
+    .select('id, sourceId', { count: 'exact', head: false });
+  if (error) throw error;
+
+  const map: Record<string, number> = {};
+  data.forEach(({ sourceId }) => (map[sourceId] = (map[sourceId] ?? 0) + 1));
+  return map;
+}
 
 // Types
 export interface Note {
@@ -20,6 +76,14 @@ export interface Note {
   lastModified: number;
   tags: string[];
   userId: string;
+   images?: NoteImage[]; 
+   
+}
+
+export interface NoteImage {
+  id: string;
+  url: string;
+  filename?: string;
 }
 
 export interface SavedDraft {
@@ -72,6 +136,7 @@ export interface SavedAnalysis {
   perspective?: string;
   userId: string;
 }
+
 
 export interface SavedSource {
   id: string;
@@ -135,108 +200,120 @@ const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
 // Provider component
 export function LibraryProvider({ children }: { children: React.ReactNode }) {
   const { user, supabase, isLoading: authLoading } = useAuth();
-  
+  const pathname = usePathname(); // <--- Get the current path
+
   const [references, setReferences] = useState<SavedReference[]>([]);
   const [analyses, setAnalyses] = useState<SavedAnalysis[]>([]);
   const [sources, setSources] = useState<SavedSource[]>([]);
   const [drafts, setDrafts] = useState<SavedDraft[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Keep initial loading state
 
-  // Load data from Supabase when user changes
+  // Load data from Supabase when user changes OR path changes (away from splash)
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user || !supabase) {
         // Clear data when no user is logged in
+        console.log("No user/supabase client, clearing library data.");
         setReferences([]);
         setAnalyses([]);
         setSources([]);
         setDrafts([]);
         setNotes([]);
-        setIsLoading(false);
+        setIsLoading(false); // Set loading false here too
         return;
       }
-      
-      setIsLoading(true);
-      
+
+      // --- THE FIX: Check if we are on the splash page ---
+      const isSplashPage = pathname === '/'; // Adjust if your splash page path is different
+      if (isSplashPage) {
+          console.log("On splash page, skipping full library fetch.");
+          // We might still be "loading" auth, but not library data
+          // Set library loading to false, but overall loading might depend on authLoading
+          setIsLoading(authLoading);
+          // Ensure arrays are empty if not fetched
+          setReferences([]);
+          setAnalyses([]);
+          setSources([]);
+          setDrafts([]);
+          setNotes([]);
+          return; // <-- Exit early, DO NOT fetch data
+      }
+      // --- End of FIX ---
+
+
+      console.log("User authenticated and not on splash page, fetching library data...");
+      setIsLoading(true); // Set loading true ONLY when actually fetching
+
       try {
-        // Fetch references
-        const { data: referencesData, error: referencesError } = await supabase
-          .from('references')
-          .select('*')
-          .eq('userId', user.id);
-          
+        // Fetch references (using Promise.all for parallel fetching)
+        const referencesPromise = supabase.from('references').select('*').eq('userId', user.id);
+        // Fetch analyses
+        const analysesPromise = supabase.from('analyses').select('*').eq('userId', user.id);
+        // Fetch sources
+        const sourcesPromise = supabase.from('sources').select('*').eq('userId', user.id);
+        // Fetch notes
+        const notesPromise = supabase.from('notes').select('*').eq('userId', user.id);
+        // Fetch drafts
+        const draftsPromise = supabase.from('drafts').select('*').eq('userId', user.id);
+
+        const [
+          { data: referencesData, error: referencesError },
+          { data: analysesData, error: analysesError },
+          { data: sourcesData, error: sourcesError },
+          { data: notesData, error: notesError },
+          { data: draftsData, error: draftsError }
+        ] = await Promise.all([
+          referencesPromise,
+          analysesPromise,
+          sourcesPromise,
+          notesPromise,
+          draftsPromise
+        ]);
+
         if (referencesError) throw referencesError;
         setReferences(referencesData || []);
-        
-        // Fetch analyses
-        const { data: analysesData, error: analysesError } = await supabase
-          .from('analyses')
-          .select('*')
-          .eq('userId', user.id);
-          
+
         if (analysesError) throw analysesError;
         setAnalyses(analysesData || []);
-        
-        // Fetch sources
-        const { data: sourcesData, error: sourcesError } = await supabase
-          .from('sources')
-          .select('*')
-          .eq('userId', user.id);
-          
+
         if (sourcesError) throw sourcesError;
         setSources(sourcesData || []);
-        
-        // Fetch notes
-        try {
-          console.log('Fetching notes for user ID:', user.id);
-          const { data: notesData, error: notesError } = await supabase
-            .from('notes')
-            .select('*')
-            .eq('userId', user.id);
-          
-          if (notesError) {
+
+        if (notesError) {
             console.error('Error fetching notes:', notesError);
-            throw notesError;
-          }
-          
-          console.log('Fetched notes:', notesData?.length || 0);
-          setNotes(notesData || []);
-        } catch (notesErr) {
-          console.error('Error fetching notes:', notesErr);
-          // Continue without failing the entire fetch operation
+            setNotes([]); // Set empty array on error
+        } else {
+            console.log('Fetched notes:', notesData?.length || 0); // Log successful fetch count
+            setNotes(notesData || []);
         }
-        
-        // Fetch drafts
-        const { data: draftsData, error: draftsError } = await supabase
-          .from('drafts')
-          .select('*')
-          .eq('userId', user.id);
-          
+
         if (draftsError) throw draftsError;
         setDrafts(draftsData || []);
-        
+
       } catch (err) {
-        // Log the error with more robust error checking
         console.error('Error fetching user data:', err);
-        
-        if (err && typeof err === 'object') {
-          try {
-            console.error('Error details:', JSON.stringify(err));
-          } catch (jsonErr) {
-            console.error('Error details (non-serializable):', Object.keys(err));
-          }
-        }
+        // Optionally clear state on error or handle differently
+        setReferences([]);
+        setAnalyses([]);
+        setSources([]);
+        setDrafts([]);
+        setNotes([]);
       } finally {
         setIsLoading(false);
+        console.log("Library data fetch complete.");
       }
     };
-    
-    // Only fetch data if auth is not loading
+
+    // Fetch data if auth is complete
     if (!authLoading) {
       fetchUserData();
+    } else {
+       // If auth is still loading, set library loading true
+       setIsLoading(true);
     }
-  }, [user, supabase, authLoading]);
+    // Dependency array includes pathname to re-evaluate when navigating
+  }, [user, supabase, authLoading, pathname]);
 
   // Note functions
   const addNote = async (note: Omit<Note, 'id' | 'dateCreated' | 'userId'>): Promise<string> => {

@@ -126,14 +126,14 @@ function AnalysisPage() {
           console.log(`Found ${notes.length} notes, looking for ID: ${noteParamRef.current}`);
           
           // Try to find note by ID first with type safety
-          const matchingNote = notes.find((n: Note) => n.id === noteParamRef.current);
+         const matchingNote = notes.find((n) => n.id && n.id === noteParamRef.current);
           
           // If not found by ID, try to find by slug in the ID
-          const fallbackNote = matchingNote || notes.find((n: Note) => 
-            noteParamRef.current && 
-            n.id && 
-            n.id.includes(noteParamRef.current)
-          );
+        const fallbackNote = matchingNote || notes.find((n) => 
+          typeof n.id === 'string' &&
+          typeof noteParamRef.current === 'string' &&
+          n.id.includes(noteParamRef.current)
+        );
           
           if (fallbackNote) {
             console.log('Found note by ID:', fallbackNote.id);
@@ -156,7 +156,9 @@ function AnalysisPage() {
             }
             
             // Set active note
-            setActiveNote(fallbackNote);
+          if (fallbackNote && fallbackNote.id) {
+  setActiveNote(fallbackNote as Note);
+}
             setNotePanelVisible(true);
             setSourceType('text');
             setActivePanel('analysis');
@@ -171,14 +173,14 @@ function AnalysisPage() {
           console.log(`Found ${sources.length} sources, looking for ID: ${sourceParamRef.current}`);
           
           // Try to find source by ID first
-          const matchingSource = sources.find((s: SavedSource) => s.id === sourceParamRef.current);
+          const matchingSource = sources.find((s) => s.id === sourceParamRef.current);
           
           // If not found by ID, try to find by slug in the ID
-          const fallbackSource = matchingSource || sources.find((s: SavedSource) => 
-            sourceParamRef.current && 
-            s.id && 
-            s.id.includes(sourceParamRef.current)
-          );
+         const fallbackSource = matchingSource || sources.find((s) =>
+  sourceParamRef.current &&
+  s.id &&
+  s.id.includes(sourceParamRef.current)
+);
           
           if (fallbackSource) {
             console.log('Found source by ID:', fallbackSource.id);
@@ -200,7 +202,7 @@ function AnalysisPage() {
               setMetadata(fallbackSource.metadata);
             }
             
-            setSourceType(fallbackSource.type);
+           setSourceType(fallbackSource.type ?? 'text');
             if (fallbackSource.thumbnailUrl) {
               setSourceThumbnailUrl(fallbackSource.thumbnailUrl);
             }

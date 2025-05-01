@@ -9,35 +9,38 @@ const withMDX = require('@next/mdx')({
     ],
     providerImportSource: "@mdx-js/react",
   },
-})
+});
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  
+
   // Add pageExtensions for MDX
   pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
-  
+
   images: {
-    /*  All fixed hosts may stay in images.domains **or** in
-        remotePatterns; mixing is fine.  */
     remotePatterns: [
-      /* Supabase Storage – works for
-         …/object/public/…  and  …/object/sign/…          */
       {
         protocol: 'https',
-        // Automatically resolves to "<project-ref>.supabase.co"
         hostname: process.env.NEXT_PUBLIC_SUPABASE_URL
           ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
-          : '**.supabase.co',            // local‑dev / fallback
+          : '**.supabase.co',
         pathname: '/storage/v1/object/**',
       },
-      /* anything else you already allow */
       { protocol: 'https', hostname: 'upload.wikimedia.org' },
       { protocol: 'https', hostname: 'commons.wikimedia.org' },
     ],
   },
+
+  // 🔍 Add this for verbose logging during dev
+  webpack(config: any, { dev }: { dev: boolean }) {
+  if (dev) {
+    config.infrastructureLogging = {
+      level: 'verbose',
+    };
+    }
+    return config;
+  },
 };
 
-// Merge MDX config with Next.js config
 module.exports = withMDX(nextConfig);

@@ -74,41 +74,42 @@ export default function DocumentPortraitModal({
   useEffect(() => {
     const loadNotes = async () => {
       if (!sourceId) return;
-      
+
       try {
         setIsLoading(true);
-        const allNotes = await getItems<Note>('notes');
-        
-        // Filter notes by sourceId
+        const allNotes = await getItems<Partial<Note>>('notes'); // more accurate type
+
+        // Filter for valid notes
+        function isValidNote(note: Partial<Note>): note is Note {
+          return (
+            typeof note.id === 'string' &&
+            typeof note.content === 'string' &&
+            typeof note.sourceId === 'string' &&
+            typeof note.lastModified === 'number'
+          );
+        }
+
         const matchingNotes = allNotes.filter(note => {
-          // Direct match by ID
-          if (note.sourceId === sourceId) {
-            return true;
-          }
-          
-          // Match by metadata if available
-          if (note.sourceMetadata && actualMetadata) {
-            return (
-              note.sourceMetadata.title === actualMetadata.title && 
-              note.sourceMetadata.author === actualMetadata.author
-            );
-          }
-          
-          return false;
+          if (!note.sourceId || !note.sourceMetadata) return false;
+          return (
+            note.sourceId === sourceId ||
+            (note.sourceMetadata.title === actualMetadata.title &&
+             note.sourceMetadata.author === actualMetadata.author)
+          );
         });
-        
-        setSourceNotes(matchingNotes);
+
+        const validNotes = matchingNotes.filter(isValidNote);
+        setSourceNotes(validNotes);
       } catch (error) {
         console.error('Error loading notes for source:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    
-    if (isOpen) {
-      loadNotes();
-    }
+
+    if (isOpen) loadNotes();
   }, [isOpen, sourceId, getItems, actualMetadata]);
+
 
   // Load background image based on document metadata
   useEffect(() => {

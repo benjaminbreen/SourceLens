@@ -1,6 +1,6 @@
 // components/ui/ImprovedDemoSection.tsx
 // An enhanced demo section with animated feature carousel, hover effects,
-// and interactive demo button with thumbnail animations
+// and interactive demo button with thumbnail animations - now with improved mobile responsiveness
 
 'use client';
 
@@ -33,7 +33,7 @@ interface ImprovedDemoSectionProps {
   demoTexts: DemoTextItem[];
   selectedDemo: number | null;
   loadDemoContent: (index: number) => void;
- handleQuickDemo: (index: number, panel: AppState['activePanel']) => void;
+  handleQuickDemo: (index: number, panel: AppState['activePanel']) => void;
   handleManhattanNarrative: () => void;
   handleHighlightDemo: (index: number, query: string) => void;
   isDarkMode?: boolean;
@@ -53,7 +53,7 @@ const TypewriterEffect = ({ text, isVisible }: { text: string; isVisible: boolea
     setIsFadingOut(false);
     setStartTyping(false);
 
-    // Delay typing start by 2 seconds after component mount/text change
+    // Delay typing start by 1 second after component mount/text change
     const delayTimer = setTimeout(() => {
       setStartTyping(true);
     }, 1000);
@@ -75,7 +75,7 @@ const TypewriterEffect = ({ text, isVisible }: { text: string; isVisible: boolea
     } else if (!isFadingOut) {
       const timer = setTimeout(() => {
         setIsFadingOut(true);
-      }, 9000); // Hold for 10s before fade
+      }, 9000); // Hold for 9s before fade
       return () => clearTimeout(timer);
     }
   }, [currentIndex, isVisible, text, isFadingOut, startTyping]);
@@ -130,13 +130,13 @@ const HoverThumbnails = ({ isHovering, demoTexts }: { isHovering: boolean; demoT
               />
             </motion.div>
             
-            {/* Left thumbnail */}
+            {/* Left thumbnail - hidden on small mobile */}
             <motion.div
               initial={{ opacity: 0, x: 0, y: 0 }}
               animate={{ opacity: 0.85, x: -130, y: -50 }}
               exit={{ opacity: 0, x: 0, y: 0 }}
               transition={{ duration: 0.3, delay: 0.05 }}
-              className="absolute -left-10 w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg"
+              className="absolute -left-10 w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg hidden sm:block"
             >
               <Image
                 src={thumbnails[1]}
@@ -147,13 +147,13 @@ const HoverThumbnails = ({ isHovering, demoTexts }: { isHovering: boolean; demoT
               />
             </motion.div>
             
-            {/* Right thumbnail */}
+            {/* Right thumbnail - hidden on small mobile */}
             <motion.div
               initial={{ opacity: 0, x: 0, y: 0 }}
               animate={{ opacity: 0.85, x: 140, y: -50 }}
               exit={{ opacity: 0, x: 0, y: 0 }}
               transition={{ duration: 0.3, delay: 0.1 }}
-              className="absolute -left-10 w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg"
+              className="absolute -left-10 w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg hidden sm:block"
             >
               <Image
                 src={thumbnails[2]}
@@ -166,6 +166,62 @@ const HoverThumbnails = ({ isHovering, demoTexts }: { isHovering: boolean; demoT
           </>
         )}
       </AnimatePresence>
+    </div>
+  );
+};
+
+// Mobile feature navigation arrows
+const MobileFeatureNavigation = ({ 
+  activeFeature,
+  features,
+  setActiveFeature
+}: { 
+  activeFeature: string;
+  features: Array<{ id: string; title: string; icon: string; color: string }>;
+  setActiveFeature: (id: string) => void;
+}) => {
+  const activeIndex = features.findIndex(f => f.id === activeFeature);
+  
+  const goToPrevious = () => {
+    const prevIndex = activeIndex === 0 ? features.length - 1 : activeIndex - 1;
+    setActiveFeature(features[prevIndex].id);
+  };
+  
+  const goToNext = () => {
+    const nextIndex = activeIndex === features.length - 1 ? 0 : activeIndex + 1;
+    setActiveFeature(features[nextIndex].id);
+  };
+  
+  return (
+    <div className="flex items-center justify-between w-full my-2 md:hidden">
+      <button 
+        onClick={goToPrevious}
+        className="p-2 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+        aria-label="Previous feature"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+      
+      <div className="flex items-center space-x-1 text-sm text-slate-500">
+        {features.map((_, index) => (
+          <span 
+            key={index} 
+            className={`w-2 h-2 rounded-full ${index === activeIndex ? 'bg-indigo-500' : 'bg-slate-300'}`}
+          />
+        ))}
+      </div>
+      
+      <button 
+        onClick={goToNext}
+        className="p-2 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+        aria-label="Next feature"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </button>
     </div>
   );
 };
@@ -185,11 +241,23 @@ export default function ImprovedDemoSection({
   const [activeFeature, setActiveFeature] = useState<string>("contextualize");
   const [currentTypewriterText, setCurrentTypewriterText] = useState<string>("");
   const [visibleButtons, setVisibleButtons] = useState<string[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
   
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const featuresContainerRef = useRef<HTMLDivElement>(null);
   
+  // Detect mobile screens
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Handle clicks outside the demo modal
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -257,15 +325,15 @@ export default function ImprovedDemoSection({
   };
 
   // Update typewriter text when feature changes
-useEffect(() => {
-  const delay = setTimeout(() => {
-    const texts = getTypewriterTexts(activeFeature);
-    const randomIndex = Math.floor(Math.random() * texts.length);
-    setCurrentTypewriterText(texts[randomIndex]);
-  }, 2000); //  2 second delay before setting new text
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      const texts = getTypewriterTexts(activeFeature);
+      const randomIndex = Math.floor(Math.random() * texts.length);
+      setCurrentTypewriterText(texts[randomIndex]);
+    }, 2000); //  2 second delay before setting new text
 
-  return () => clearTimeout(delay); // Cleanup if feature changes quickly
-}, [activeFeature]);
+    return () => clearTimeout(delay); // Cleanup if feature changes quickly
+  }, [activeFeature]);
 
 
   // Core features with enhanced descriptions
@@ -368,12 +436,13 @@ useEffect(() => {
   return (
     <div className="w-full max-w-6xl mx-auto px-2 sm:px-6 relative">
       <div className="mb-0 mt-0">
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-14 items-start">
+        {/* Mobile-first layout with dynamic flex direction */}
+        <div className="flex flex-col gap-6 items-center md:items-start md:flex-row md:gap-14">
           {/* Left side - Main description and feature buttons */}
-          <div className="flex-1">
-            {/* Main headline */}
+          <div className="w-full md:flex-1">
+            {/* Mobile-optimized headline */}
             <motion.h2 
-              className={`${spaceGrotesk.className} text-2xl md:text-3xl  font-bold tracking-tight mb-4 text-slate-600`}
+              className={`${spaceGrotesk.className} text-xl sm:text-2xl md:text-3xl text-center md:text-left font-bold tracking-tight mb-4 text-slate-600`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -381,14 +450,14 @@ useEffect(() => {
               Uncover deeper insights in <span className="text-indigo-700">primary sources</span>
             </motion.h2>
             
-            {/* Animated feature description */}
+            {/* Animated feature description - centered on mobile */}
             <motion.div 
-              className="mb-5"
+              className="mb-3 md:mb-5 text-center md:text-left"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2, delay: 0.2 }}
             >
-              <p className="text-slate-600 text-lg mb-1">
+              <p className="text-slate-600 text-base sm:text-lg mb-1">
                 SourceLens uses AI to help you{' '}
                 <AnimatePresence mode="wait">
                   <motion.span
@@ -409,6 +478,7 @@ useEffect(() => {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
+                    className="inline-block md:inline" // Stack on mobile, inline on desktop
                   >
                     {features.find(f => f.id === activeFeature)?.description}
                   </motion.span>
@@ -416,15 +486,23 @@ useEffect(() => {
               </p>
             </motion.div>
             
-            {/* Feature Button Pills in Horizontal Scrollable Container */}
+            {/* Mobile feature navigation */}
+            <MobileFeatureNavigation 
+              activeFeature={activeFeature}
+              features={features}
+              setActiveFeature={setActiveFeature}
+            />
+            
+            {/* Feature Button Pills in Horizontal Scrollable Container - Hidden on smallest screens */}
             <motion.div 
               ref={featuresContainerRef}
-              className="flex overflow-x-auto overflow-visible gap-2 mb-6 py-0.5 relative w-full max-w-full md:max-w-4xl"
+              className="hidden sm:flex overflow-x-auto scrollbar-hide py-0.5 relative w-full max-w-full md:max-w-4xl"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <div className="flex gap-2 md:flex-wrap transition-transform duration-300 mx-auto md:mx-0">
+              {/* Improved scroll handling for mobile */}
+              <div className="flex gap-2 md:flex-wrap transition-transform duration-300 mx-auto md:mx-0 pb-1 sm:pb-0">
                 {features.map((feature) => (
                   <motion.button
                     key={feature.id}
@@ -450,17 +528,35 @@ useEffect(() => {
               </div>
             </motion.div>
             
-            
+            {/* Mobile detailed feature display */}
+            <motion.div
+              className="sm:hidden mt-2 p-4 bg-slate-50 rounded-xl border border-slate-200"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex items-center mb-2">
+                <span className="text-2xl mr-2">
+                  {features.find(f => f.id === activeFeature)?.icon}
+                </span>
+                <span className={`font-medium text-lg ${features.find(f => f.id === activeFeature)?.color}`}>
+                  {features.find(f => f.id === activeFeature)?.title}
+                </span>
+              </div>
+              <p className="text-slate-600 text-sm">
+                {features.find(f => f.id === activeFeature)?.description}
+              </p>
+            </motion.div>
           </div>
           
-          {/* Right side - Typewriter effect */}
+          {/* Right side - Typewriter effect - Fully responsive with adjustments */}
           <motion.div 
-            className="flex-shrink-0 lg:w-3/10 bg-slate-50 px-7 py-5 mt-4 rounded-xl border border-slate-200 shadow-sm"
+            className="w-full md:w-auto md:flex-shrink-0 md:w-3/10 bg-slate-50 px-4 sm:px-7 py-4 sm:py-5 rounded-xl border border-slate-200 shadow-sm"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.2, delay: 0.2 }}
           >
-            <div className="h-38 overflow-hidden">
+            <div className="h-24 sm:h-38 overflow-hidden">
               <AnimatePresence mode="wait">
                 <TypewriterEffect 
                   key={activeFeature + currentTypewriterText}
@@ -470,41 +566,45 @@ useEffect(() => {
               </AnimatePresence>
             </div>
           </motion.div>
-
         </div>
-        {/* Centered Demo Button with Hover Effect */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-              className="relative flex justify-center w-full mt-22 mb-2"
-            >
-              {/* Hover thumbnails */}
-              <HoverThumbnails isHovering={isHovering} demoTexts={demoTexts} />
-              
-              {/* Demo Button */}
-             <motion.div
-               onMouseEnter={() => setIsHovering(true)}
-               onMouseLeave={() => setIsHovering(false)}
-               onClick={() => setIsHovering(false)} // <- this line ensures thumbnails close on click
-             >
-               <DemoButtons
-                 demoTexts={demoTexts}
-                 selectedDemo={selectedDemo}
-                 loadDemoContent={loadDemoContent}
-                 handleQuickDemo={handleQuickDemo}
-                 handleManhattanNarrative={handleManhattanNarrative}
-                 handleHighlightDemo={handleHighlightDemo}
-                 showDemoOptions={showDemoOptions}
-                 setShowDemoOptions={setShowDemoOptions}
-                 buttonRef={buttonRef}
-                 dropdownRef={dropdownRef}
-                 isDarkMode={isDarkMode}
-               />
-             </motion.div>
-
-            </motion.div>
+        
+        {/* Centered Demo Button with Hover Effect - Responsive adjustments */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+          className="relative flex justify-center w-full mt-8 sm:mt-12 md:mt-16 mb-2"
+        >
+          {/* Hover thumbnails - only shown on non-mobile */}
+          {!isMobile && <HoverThumbnails isHovering={isHovering} demoTexts={demoTexts} />}
+          
+          {/* Demo Button with improved mobile positioning */}
+          <motion.div
+            className="w-full sm:w-auto"
+            onMouseEnter={() => !isMobile && setIsHovering(true)}
+            onMouseLeave={() => !isMobile && setIsHovering(false)}
+            onClick={() => setIsHovering(false)}
+          >
+            <DemoButtons
+              demoTexts={demoTexts}
+              selectedDemo={selectedDemo}
+              loadDemoContent={loadDemoContent}
+              handleQuickDemo={handleQuickDemo}
+              handleManhattanNarrative={handleManhattanNarrative}
+              handleHighlightDemo={handleHighlightDemo}
+              showDemoOptions={showDemoOptions}
+              setShowDemoOptions={setShowDemoOptions}
+              buttonRef={buttonRef}
+              dropdownRef={dropdownRef}
+              isDarkMode={isDarkMode}
+              isMobile={isMobile}
+            />
+          </motion.div>
+        </motion.div>
       </div>
+      
+      {/* Mobile-only CSS for custom scrollbar handling */}
+     
     </div>
   );
 }

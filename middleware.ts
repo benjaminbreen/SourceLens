@@ -1,16 +1,20 @@
 // middleware.ts
 // Next.js middleware for protecting routes that require authentication
 // Works with both Pages Router and App Router, and integrates with Supabase auth
-
+// middleware.ts
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Routes that require authentication
 const PROTECTED_ROUTES = [
-
   '/library',
   '/account',
+];
+
+// Routes that need preloaded data
+const DATA_PRELOAD_ROUTES = [
+  '/analysis',
 ];
 
 export async function middleware(req: NextRequest) {
@@ -44,8 +48,8 @@ export async function middleware(req: NextRequest) {
 // Run middleware on specific paths - this works for both Pages and App Router
 export const config = {
   matcher: [
-
     '/library/:path*',
     '/account/:path*',
+    '/analysis/:path*',
   ],
 };

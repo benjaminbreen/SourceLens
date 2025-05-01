@@ -1116,7 +1116,7 @@ title: Saved Sources
 lastUpdated: '2025-04-28'
 ---
 
-# Saved Sources
+<Screenshot src="savedsources.jpg" alt="The saved sources library panel." />
 
 The Saved Sources feature allows you to build a personal library of primary sources for ongoing research and reference.
 
@@ -1154,7 +1154,7 @@ title: References
 lastUpdated: '2025-04-28'
 ---
 
-# References
+<Screenshot src="references.jpg" alt="The references library panel." />
 
 The References feature helps you manage scholarly sources discovered during your research, creating a comprehensive bibliography for your project.
 
@@ -1192,7 +1192,7 @@ title: Analysis History
 lastUpdated: '2025-04-28'
 ---
 
-# Analysis History
+<Screenshot src="savedanalyses.jpg" alt="The saved analyses library panel." />
 
 Analysis History keeps a record of all analyses you've generated, allowing you to track your research progress and revisit previous insights.
 
@@ -1229,7 +1229,7 @@ title: Research Notes
 lastUpdated: '2025-04-28'
 ---
 
-# Research Notes
+<Screenshot src="researchnotes.jpg" alt="The research notes library panel." />
 
 Research Notes allows you to create, organize, and manage notes about your sources and analyses, building a comprehensive research notebook.
 
@@ -1264,7 +1264,7 @@ title: Research Drafts
 lastUpdated: '2025-04-28'
 ---
 
-# Research Drafts
+<Screenshot src="researchdrafts.jpg" alt="The research drafts library panel." />
 
 Research Drafts helps you develop complete research documents, papers, or essays based on your sources, analyses, and notes.
 

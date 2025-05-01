@@ -46,6 +46,7 @@ interface DemoButtonsProps {
   buttonRef?: RefObject<HTMLButtonElement>;
   dropdownRef?: RefObject<HTMLDivElement>;
   isDarkMode?: boolean;
+  isMobile?: boolean;
 }
 
 // --- Enhanced Detail Panel Component ---

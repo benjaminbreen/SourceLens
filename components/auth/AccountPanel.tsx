@@ -560,7 +560,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 </Link>
                 
                 <Link
-                  href="/library/dashboard"
+                  href="/library?tab=sources"
                   onClick={onClose}
                   className={`flex items-center gap-3 px-4 py-2 text-sm font-medium ${
                     isDarkMode

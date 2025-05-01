@@ -6,7 +6,12 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAppStore, Metadata, Note } from '@/lib/store';  // Added Note to imports
+import { useAppStore, Metadata, Note } from '@/lib/store';
+import {
+  getSourcesList,
+  getSourceWithContent,
+  getNoteCountsBySource,
+} from '@/lib/libraryContext';   // ⬅️ NEW imports
 import { useLibraryStorage } from '@/lib/libraryStorageProvider';
 import { useAuth } from '@/lib/auth/authContext';
 import DocumentPortraitModal from '../ui/DocumentPortraitModal';
@@ -68,21 +73,24 @@ export default function SavedSourcesPanel({ darkMode }: { darkMode: boolean }) {
   });
   
   // Load saved sources from storage provider on mount
-  useEffect(() => {
-    const loadSavedSources = async () => {
-      try {
-        setIsLoading(true);
-        const savedSourcesData = await getItems<SavedSource>('sources');
-        setSources(savedSourcesData);
-        
-        // Also load all notes to map them to sources
-        loadAllNotes();
-      } catch (error) {
-        console.error('Error loading saved sources:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    useEffect(() => {
+   const loadSavedSources = async () => {
+  try {
+    setIsLoading(true);
+    const savedSourcesData = await getItems<SavedSource>('sources');
+    
+    // Use type assertion instead of filtering - this preserves all your data
+    // while satisfying TypeScript
+    setSources(savedSourcesData as SavedSource[]);
+    
+    // Also load all notes to map them to sources
+    loadAllNotes();
+  } catch (error) {
+    console.error('Error loading saved sources:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
     if (!storageLoading) {
       loadSavedSources();
@@ -91,147 +99,121 @@ export default function SavedSourcesPanel({ darkMode }: { darkMode: boolean }) {
 
   // Load all notes and organize them by sourceId
   const loadAllNotes = async () => {
-    try {
-      const allNotes = await getItems<Note>('notes');
-      
-      // Create a map of sourceId -> notes array
-      const notesMap: Record<string, Note[]> = {};
-      
-      allNotes.forEach(note => {
-        if (note.sourceId) {
-          if (!notesMap[note.sourceId]) {
-            notesMap[note.sourceId] = [];
-          }
-          notesMap[note.sourceId].push(note);
+  try {
+    const allNotes = await getItems<Note>('notes');
+    
+    // Make sure we have valid notes with required fields
+    const validNotes = allNotes.filter((note): note is Note => {
+      return !!note.id && !!note.content;
+    });
+    
+    // Create a map of sourceId -> notes array
+    const notesMap: Record<string, Note[]> = {};
+    
+    validNotes.forEach(note => {
+      if (note.sourceId) {
+        if (!notesMap[note.sourceId]) {
+          notesMap[note.sourceId] = [];
         }
-        
-        // Also try to match by metadata if sourceId doesn't match directly
-        if (note.sourceMetadata?.title && note.sourceMetadata?.author) {
-          sources.forEach(source => {
-            if (
-              source.metadata?.title === note.sourceMetadata.title &&
-              source.metadata?.author === note.sourceMetadata.author
-            ) {
-              if (!notesMap[source.id]) {
-                notesMap[source.id] = [];
-              }
-              // Only add if not already added
-              if (!notesMap[source.id].some(n => n.id === note.id)) {
-                notesMap[source.id].push(note);
-              }
+        notesMap[note.sourceId].push(note);
+      }
+      
+      // Also try to match by metadata if sourceId doesn't match directly
+      if (note.sourceMetadata?.title && note.sourceMetadata?.author) {
+        sources.forEach(source => {
+          if (
+            source.metadata?.title === note.sourceMetadata?.title &&
+            source.metadata?.author === note.sourceMetadata?.author
+          ) {
+            if (!notesMap[source.id]) {
+              notesMap[source.id] = [];
             }
-          });
-        }
-      });
-      
-      setSourceNotes(notesMap);
-    } catch (error) {
-      console.error('Error loading notes:', error);
-    }
-  };
+            // Only add if not already added
+            if (!notesMap[source.id].some(n => n.id === note.id)) {
+              notesMap[source.id].push(note);
+            }
+          }
+        });
+      }
+    });
+    
+    setSourceNotes(notesMap);
+  } catch (error) {
+    console.error('Error loading notes:', error);
+  }
+};
 
-  // Get all unique categories
-  const categories = useMemo(() => 
-    ['all', ...new Set(sources.map(source => source.category || 'Uncategorized'))],
-    [sources]
+  const categories = useMemo(
+    () => ['all', ...new Set(sources.map((s) => s.category || 'Uncategorized'))],
+    [sources],
   );
 
-  // Filter sources based on search and category
-  const filteredSources = useMemo(() => sources.filter(source => {
-    // Category filter
-    if (categoryFilter !== 'all' && source.category !== categoryFilter) {
-      return false;
-    }
-    
-    // Search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        (source.metadata?.author || '').toLowerCase().includes(searchLower) ||
-        (source.metadata?.date || '').toLowerCase().includes(searchLower) ||
-        (source.metadata?.title || '').toLowerCase().includes(searchLower) ||
-        (source.content && source.content.substring(0, 500).toLowerCase().includes(searchLower)) ||
-        (Array.isArray(source.tags) && source.tags.some(tag => tag.toLowerCase().includes(searchLower)))
-      );
-    }
-    
-    return true;
-  }), [sources, categoryFilter, searchTerm]);
+  const filteredSources = useMemo(() => {
+    return sources.filter((source) => {
+      // category
+      if (categoryFilter !== 'all' && source.category !== categoryFilter) {
+        return false;
+      }
+      // search
+      if (searchTerm) {
+        const q = searchTerm.toLowerCase();
+        return (
+          (source.metadata?.author || '').toLowerCase().includes(q) ||
+          (source.metadata?.title || '').toLowerCase().includes(q) ||
+          (source.metadata?.date || '').toLowerCase().includes(q) ||
+          (Array.isArray(source.tags) &&
+            source.tags.some((tag) => tag.toLowerCase().includes(q)))
+        );
+      }
+      return true;
+    });
+  }, [sources, categoryFilter, searchTerm]);
 
-  // Sort filtered sources
-  const sortedSources = useMemo(() => 
-    [...filteredSources].sort((a, b) => {
+  const sortedSources = useMemo(() => {
+    const arr = [...filteredSources];
+    return arr.sort((a, b) => {
       switch (sortBy) {
         case 'dateAdded':
           return b.dateAdded - a.dateAdded;
         case 'lastAccessed':
-          const aAccessed = a.lastAccessed || a.dateAdded;
-          const bAccessed = b.lastAccessed || b.dateAdded;
-          return bAccessed - aAccessed;
-        case 'name': 
-          return (a.metadata?.author || '').localeCompare(b.metadata?.author || '');
+          return (b.lastAccessed || 0) - (a.lastAccessed || 0);
+        case 'name':
+          return (a.metadata?.author || '').localeCompare(
+            b.metadata?.author || '',
+          );
         default:
           return 0;
       }
-    }), 
-    [filteredSources, sortBy]
-  );
+    });
+  }, [filteredSources, sortBy]);
+
+  // ────────────────────────────────────────────────────────────
+  //  Helpers
+  // ────────────────────────────────────────────────────────────
+
 
   // Load source into the analysis page
   const handleLoadSource = async (source: SavedSource) => {
     setLoading(true);
-    
     try {
-      // Update the source's last accessed time
-      const updatedSource = { ...source, lastAccessed: Date.now() };
-      
-      // Update in storage
-      await updateItem<SavedSource>('sources', source.id, { lastAccessed: Date.now() });
-      
-      // Update local state
-      setSources(prev => prev.map(s => s.id === source.id ? updatedSource : s));
-      
-      // Set the source content and metadata in the app store
-      setSourceContent(source.content);
-      setMetadata(source.metadata);
-      setSourceType(source.type);
-      
-      // Set thumbnail URL if available
-      if (source.thumbnailUrl) {
-        setSourceThumbnailUrl(source.thumbnailUrl);
-      }
-      
-      // Find associated notes and set the first one as active if it exists
-      try {
-        const sourceNotesArray = sourceNotes[source.id] || [];
-        if (sourceNotesArray.length > 0) {
-          // Set the first note as active
-          setActiveNote(sourceNotesArray[0]);
-        } else {
-          // Clear any active note
-          setActiveNote(null);
-        }
-      } catch (error) {
-        console.error('Error loading notes for source:', error);
-        setActiveNote(null);
-      }
-      
-      setActivePanel('analysis');
-      
-      // Navigate to the analysis page
-      router.push('/analysis');
-    } catch (error) {
-      console.error('Error updating source access time:', error);
-      
-      // Continue with navigation even if the update fails
-      setSourceContent(source.content);
-      setMetadata(source.metadata);
-      setSourceType(source.type);
-      if (source.thumbnailUrl) {
-        setSourceThumbnailUrl(source.thumbnailUrl);
-      }
+      const full = await getSourceWithContent(source.id);
+
+      setSourceContent(full.content);
+      setMetadata(full.metadata);
+      setSourceType(full.type);
+      full.thumbnailUrl && setSourceThumbnailUrl(full.thumbnailUrl);
+
+      setSources((prev) =>
+        prev.map((s) =>
+          s.id === source.id ? { ...s, lastAccessed: Date.now() } : s,
+        ),
+      );
+
+      setActiveNote(null);
       setActivePanel('analysis');
       router.push('/analysis');
+    } catch (err) {
+      console.error('Failed to open source', err);
     } finally {
       setLoading(false);
     }

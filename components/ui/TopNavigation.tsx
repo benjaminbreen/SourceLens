@@ -171,7 +171,7 @@ const [showColophonModal, setShowColophonModal] = useState(false);
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           ),
-          href: '/analysis',
+          href: '/docs?slug=features/analysis-tools/basic-analysis',
           screenshot: 'textanalysis.jpg',
           requiresAuth: false
         },
@@ -184,7 +184,7 @@ const [showColophonModal, setShowColophonModal] = useState(false);
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
           ),
-          href: '/analysis?panel=counter',
+          href: '/docs?slug=features/counter-narrative#types-of-counter-narratives',
           screenshot: 'counternarrative.jpg',
           requiresAuth: false
         },
@@ -197,7 +197,7 @@ const [showColophonModal, setShowColophonModal] = useState(false);
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
             </svg>
           ),
-          href: '/analysis?panel=roleplay',
+          href: '/docs?slug=features/simulation-mode#best-practices',
           screenshot: 'simulation.jpg',
           requiresAuth: false
         },
@@ -215,7 +215,7 @@ const [showColophonModal, setShowColophonModal] = useState(false);
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5V3m6 0v2" />
             </svg>
           ),
-          href: '/analysis?panel=extract-info',
+          href: '/docs?slug=features/analysis-tools/information-extraction#extraction-types',
           screenshot: 'extractinfo.jpg',
           requiresAuth: false
         },
@@ -228,7 +228,7 @@ const [showColophonModal, setShowColophonModal] = useState(false);
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
           ),
-          href: '/analysis?panel=highlight',
+          href: '/docs?slug=features/text-highlighting#highlight-criteria-examples',
           screenshot: 'highlight.jpg',
           requiresAuth: false
         },
@@ -241,7 +241,7 @@ const [showColophonModal, setShowColophonModal] = useState(false);
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
             </svg>
           ),
-          href: '/analysis?panel=connections',
+          href: '/docs?slug=advanced-usage/connection-visualization',
           screenshot: 'connections.jpg',
           requiresAuth: false
         },
@@ -263,7 +263,7 @@ const [showColophonModal, setShowColophonModal] = useState(false);
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
           ),
-          href: '/library?tab=sources',
+          href: '/docs?slug=library-management/saved-sources',
           screenshot: 'savedsources.jpg',
           requiresAuth: false
         },
@@ -276,7 +276,7 @@ const [showColophonModal, setShowColophonModal] = useState(false);
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           ),
-          href: '/library?tab=references',
+          href: '/docs?slug=library-management/references',
           screenshot: 'references.jpg',
           requiresAuth: false
         },
@@ -294,7 +294,7 @@ const [showColophonModal, setShowColophonModal] = useState(false);
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           ),
-          href: '/library?tab=notes',
+          href: '/docs?slug=library-management/research-notes',
           screenshot: 'researchnotes.jpg',
           requiresAuth: false
         },
@@ -307,7 +307,7 @@ const [showColophonModal, setShowColophonModal] = useState(false);
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           ),
-          href: '/library?tab=drafts',
+          href: '/docs?slug=library-management/research-drafts',
           screenshot: 'researchdrafts.jpg',
           requiresAuth: false
         },
@@ -320,7 +320,7 @@ const [showColophonModal, setShowColophonModal] = useState(false);
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           ),
-          href: '/library?tab=analysis',
+          href: '/docs?slug=library-management/analysis-history',
           screenshot: 'analysishistory.jpg',
           requiresAuth: false
         },
@@ -478,62 +478,62 @@ const [showColophonModal, setShowColophonModal] = useState(false);
         isDarkMode
           ? scrolled
             ? 'bg-gray-900/90 border-b border-indigo-700/70 backdrop-blur-md shadow-lg py-2.5'
-            : 'bg-gray-900/30 py-7'
+            : 'bg-gray-900/30 py-7 md:py-7 py-3'
           : scrolled
             ? 'bg-white/90 border-b-1 border-indigo-400/70 backdrop-blur-md shadow-lg py-0.5'
-            : 'bg-transparent py-7'
+            : 'bg-transparent py-7 md:py-7 py-3'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="flex items-center justify-between">
-            {/* Logo and Brand */}
-            <Link href="/" className="flex items-center group z-10">
-              <button
-                onClick={() => setShowAboutLogoModal(true)}
-                className={`mr-3 transition-transform duration-300 rounded-full ${
-                  isDarkMode
-                    ? 'border-1 border-indigo-500/100 shadow-lg shadow-indigo-400/20 hover:border-indigo-400 hover:shadow-indigo-500/50'
-                    : 'bg-slate-800  hover:border-indigo-600 hover:shadow-indigo-500/90'
-                } hover:scale-115 hover:rotate-4 transition-all duration-300 focus:outline-none`}
-              >
-                <div className={`relative overflow-hidden m-0 transition-all duration-300 ${
-                  scrolled ? 'w-10 h-10 shadow-sm rounded-full shadow-indigo-300/15' : 'w-22 h-22 shadow-lg shadow-indigo-500/40 border-indigo-500/100 rounded-full hover:border-indigo-300 hover:shadow-indigo-400/90 shadow-xl hover:opacity-120'
-                }`}>
-                  <Image 
-                    src="/sourcelenslogo.png" 
-                    alt="SourceLens Logo"
-                    fill
-                    className="object-contain"
-                    priority
-                  />
-                </div>
-              </button>
+            {/* Logo and Brand - more compact on mobile */}
+                  <Link href="/" className="flex items-center group z-10">
+                    <button
+                      onClick={() => setShowAboutLogoModal(true)}
+                      className={`mr-1 ml-6  md:mr-3 transition-transform duration-300 rounded-full ${
+                        isDarkMode
+                          ? 'border-1 border-indigo-500/100 shadow-lg shadow-indigo-400/20 hover:border-indigo-400 hover:shadow-indigo-500/50'
+                          : 'bg-slate-800  hover:border-indigo-600 hover:shadow-indigo-500/90'
+                      } hover:scale-115 hover:rotate-4 transition-all duration-300 focus:outline-none`}
+                    >
+                      <div className={`relative  overflow-hidden m-0 transition-all duration-300 ${
+                        scrolled ? 'w-8 h-8 md:w-10 md:h-10 shadow-sm rounded-full shadow-indigo-300/15' : 'w-16 h-16 md:w-22 md:h-22 w-14 h-14 shadow-lg shadow-indigo-500/40 border-indigo-500/100 rounded-full hover:border-indigo-300 hover:shadow-indigo-400/90 shadow-xl hover:opacity-120'
+                      }`}>
+                        <Image 
+                          src="/sourcelenslogo.png" 
+                          alt="SourceLens Logo"
+                          fill
+                          className="object-contain"
+                          priority
+                        />
+                      </div>
+                    </button>
 
-              <div className="ml-2 flex flex-col">
-                <h1 className={`${spaceGrotesk.className} text-2xl tracking-tighter font-bold ${
-                  isDarkMode
-                    ? 'text-white text-shadow-lg'
-                    : scrolled ? 'text-slate-800' : 'text-white text-shadow-sm'
-                } transition-all duration-300 leading-none ${
-                  scrolled ? 'text-xl' : 'text-[28px]'
-                }`}>
-                  SourceLens
-                </h1>
-                <motion.p 
-                  initial={false}
-                  animate={{
-                    height: scrolled ? 0 : 'auto',
-                    opacity: scrolled ? 0 : 1,
-                    marginTop: scrolled ? 0 : '0.25rem',
-                  }}
-                  transition={{ duration: 0.3 }}
-                  className={`${spaceGrotesk.className}  font-light flex flex-wrap tracking-tight gap-2 items-center mt-1 text-sm ${
-                    isDarkMode ? 'text-white/90' : 'text-indigo-50'
-                  }`}
-                >
-                  Unique tools for thought
-                </motion.p>
-              </div>
-            </Link>
+                    <div className="ml-2 flex flex-col">
+                      <h1 className={`${spaceGrotesk.className} text-xl md:text-2xl tracking-tighter font-bold ${
+                        isDarkMode
+                          ? 'text-white text-shadow-lg'
+                          : scrolled ? 'text-slate-800' : 'text-white text-shadow-sm'
+                      } transition-all duration-300 leading-none ${
+                        scrolled ? 'text-lg md:text-xl' : 'text-xl md:text-[28px]'
+                      }`}>
+                        SourceLens
+                      </h1>
+                      <motion.p 
+                        initial={false}
+                        animate={{
+                          height: scrolled || window.innerWidth < 768 ? 0 : 'auto', // Hide on mobile or when scrolled
+                          opacity: scrolled || window.innerWidth < 768 ? 0 : 1,
+                          marginTop: scrolled || window.innerWidth < 768 ? 0 : '0.25rem',
+                        }}
+                        transition={{ duration: 0.3 }}
+                        className={`${spaceGrotesk.className} hidden md:flex font-light flex-wrap tracking-tight gap-2 items-center mt-1 text-sm ${
+                          isDarkMode ? 'text-white/90' : 'text-indigo-50'
+                        }`}
+                      >
+                        Unique tools for thought
+                      </motion.p>
+                    </div>
+                  </Link>
 
             {/* Main navigation - desktop only */}
     <nav
@@ -562,23 +562,23 @@ const [showColophonModal, setShowColophonModal] = useState(false);
                 aria-expanded={activeMenu === 'analysis'}
               >
                 Analysis
-                  <svg
-                    className={`ml-1.5 w-4 h-4 transition-transform duration-200 ${
-                      activeMenu === 'analysis'
-                        ? 'rotate-180'
-                        : ''
-                    } ${
-                      isDarkMode
-                        ? activeMenu === 'analysis' ? 'text-indigo-300' : 'text-slate-400 group-hover:text-white'
-                        : activeMenu === 'analysis' ? 'text-slate-900' : 'text-indigo-400 group-hover:text-indigo-600'
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                <svg
+                  className={`ml-1.5 w-4 h-4 transition-transform duration-200 ${
+                    activeMenu === 'analysis'
+                      ? 'rotate-180'
+                      : ''
+                  } ${
+                    isDarkMode
+                      ? activeMenu === 'analysis' ? 'text-indigo-300' : 'text-slate-400 group-hover:text-white'
+                      : activeMenu === 'analysis' ? 'text-slate-900' : 'text-indigo-400 group-hover:text-indigo-600'
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
               </div>
 
               <div 
@@ -586,39 +586,39 @@ const [showColophonModal, setShowColophonModal] = useState(false);
                   scrolled ? 'translate-y-0' : 'translate-y-[13px]'
                 }`}
               >
-                <button
-                  onClick={() => toggleMenu('library')}
-                  className={`${spaceGrotesk.className} text-lg px-4 py-2 rounded-lg font-medium flex items-center transition-all duration-200 group ${
-                    activeMenu === 'library' || isActive('/library')
-                      ? isDarkMode
-                        ? 'text-white bg-indigo-900/40'
-                        : 'text-indigo-900 bg-indigo-50/90'
-                      : isDarkMode
-                        ? 'text-slate-50 hover:text-white hover:bg-indigo-900/30'
-                        : scrolled
-                          ? 'text-indigo-900 hover:text-indigo-900 hover:bg-indigo-50/70'
-                          : 'text-indigo-100 hover:text-indigo-900 hover:bg-indigo-50/70'
-                  }`}
-                  aria-expanded={activeMenu === 'library'}
-                >
-                  Library
-                  <svg
-                    className={`ml-1.5 w-4 h-4 transition-transform duration-200 ${
-                      activeMenu === 'library'
-                        ? 'rotate-180'
-                        : ''
-                    } ${
-                      isDarkMode
-                        ? activeMenu === 'library' ? 'text-indigo-300' : 'text-slate-400 group-hover:text-white'
-                        : activeMenu === 'library' ? 'text-indigo-500' : 'text-indigo-400 group-hover:text-indigo-600'
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+               <button
+                 onClick={() => toggleMenu('library')}
+                 className={`${spaceGrotesk.className} text-lg px-4 py-2 rounded-lg font-medium flex items-center transition-all duration-200 group ${
+                   activeMenu === 'library' || isActive('/library')
+                     ? isDarkMode
+                       ? 'text-white bg-indigo-900/40'
+                       : 'text-indigo-900 bg-indigo-50/90'
+                     : isDarkMode
+                       ? 'text-slate-50 hover:text-white hover:bg-indigo-900/30'
+                       : scrolled
+                         ? 'text-indigo-900 hover:text-indigo-900 hover:bg-indigo-50/70'
+                         : 'text-indigo-100 hover:text-indigo-900 hover:bg-indigo-50/70'
+                 }`}
+                 aria-expanded={activeMenu === 'library'}
+               >
+                 Library
+                 <svg
+                   className={`ml-1.5 w-4 h-4 transition-transform duration-200 ${
+                     activeMenu === 'library'
+                       ? 'rotate-180'
+                       : ''
+                   } ${
+                     isDarkMode
+                       ? activeMenu === 'library' ? 'text-indigo-300' : 'text-slate-400 group-hover:text-white'
+                       : activeMenu === 'library' ? 'text-indigo-500' : 'text-indigo-400 group-hover:text-indigo-600'
+                   }`}
+                   fill="none"
+                   stroke="currentColor"
+                   viewBox="0 0 24 24"
+                 >
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                 </svg>
+               </button>
               </div>
 
               <div 
@@ -671,41 +671,59 @@ const [showColophonModal, setShowColophonModal] = useState(false);
 
             {/* Right side controls */}
             <div className="flex items-center space-x-3">
-              <div className="hidden md:block">
-                {/* User account related elements */}
-              </div>
 
-      <div className="flex items-center space-x-2 mb-3 bg-white/10 backdrop-blur-sm py-1.5 z-1 px-3 rounded-full shadow-sm justify-center ml-4">
- <div className="invert">
-       <AuthStatus /> 
-       </div>
+              {/* AuthStatus + backdrop: visible on md+ only */}
+              <div className="hidden md:flex items-center space-x-2 bg-white/10 backdrop-blur-sm mb-1 py-1 px-1 rounded-full shadow-sm z-10 ml-4">
+                <div className="invert">
+                  <AuthStatus />
+                </div>
                 <AccountButton />
               </div>
+
+              {/* Mobile-only Account Button or Sign Up link */}
+              <div className="md:hidden flex items-center">
+                {user ? (
+                  <AccountButton />
+                ) : (
+                  <Link
+                    href="/auth/signup"
+                    className="text-sm font-medium px-3 py-1 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-md"
+                  >
+                    Sign Up
+                  </Link>
+                )}
+              </div>
+
+       
+
+
               
               {/* Mobile menu button */}
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden rounded-lg p-1.5 text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
-                aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-              >
-                <div className="w-6 h-6 relative flex justify-center items-center">
-                  <span
-                    className={`absolute h-0.5 w-5 bg-current transform transition-all duration-300 ${
-                      mobileMenuOpen ? 'rotate-45' : '-translate-y-1.5'
-                    }`}
-                  ></span>
-                  <span
-                    className={`absolute h-0.5 w-5 bg-current transition-all duration-300 ${
-                      mobileMenuOpen ? 'opacity-0' : 'opacity-100'
-                    }`}
-                  ></span>
-                  <span
-                    className={`absolute h-0.5 w-5 bg-current transform transition-all duration-300 ${
-                      mobileMenuOpen ? '-rotate-45' : 'translate-y-1.5'
-                    }`}
-                  ></span>
-                </div>
-              </button>
+             <div className="md:hidden absolute left-1 top-2 z-30">
+               <button
+                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                 className="rounded-lg p-1.5 text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                 aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+               >
+                 <div className="w-6 h-6 relative flex justify-center items-center">
+                   <span
+                     className={`absolute h-0.5 w-5 bg-current transform transition-all duration-300 ${
+                       mobileMenuOpen ? 'rotate-45' : '-translate-y-1.5'
+                     }`}
+                   ></span>
+                   <span
+                     className={`absolute h-0.5 w-5 bg-current transition-all duration-300 ${
+                       mobileMenuOpen ? 'opacity-0' : 'opacity-100'
+                     }`}
+                   ></span>
+                   <span
+                     className={`absolute h-0.5 w-5 bg-current transform transition-all duration-300 ${
+                       mobileMenuOpen ? '-rotate-45' : 'translate-y-1.5'
+                     }`}
+                   ></span>
+                 </div>
+               </button>
+             </div>
             </div>
           </div>
         </div>
