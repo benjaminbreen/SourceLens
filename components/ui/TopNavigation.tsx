@@ -474,14 +474,14 @@ const [showColophonModal, setShowColophonModal] = useState(false);
   return (
     <>
       {/* Desktop Navigation */}
-      <header className={`fixed top-0 left-0 right-0 z-50000 transition-all duration-300 ${inter.variable} ${mono.variable} font-sans ${
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${inter.variable} ${mono.variable} font-sans ${
         isDarkMode
           ? scrolled
             ? 'bg-gray-900/90 border-b border-indigo-700/70 backdrop-blur-md shadow-lg py-2.5'
-            : 'bg-gray-900/30 py-7 md:py-7 py-3'
+            : 'bg-gray-900/30 py-4 md:py-7'
           : scrolled
             ? 'bg-white/90 border-b-1 border-indigo-400/70 backdrop-blur-md shadow-lg py-0.5'
-            : 'bg-transparent py-7 md:py-7 py-3'
+            : 'bg-transparent py-4 md:py-7'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="flex items-center justify-between">
@@ -489,7 +489,7 @@ const [showColophonModal, setShowColophonModal] = useState(false);
                   <Link href="/" className="flex items-center group z-10">
                     <button
                       onClick={() => setShowAboutLogoModal(true)}
-                      className={`mr-1 ml-6  md:mr-3 transition-transform duration-300 rounded-full ${
+                      className={`mr-1 ml-8  md:mr-3 transition-transform duration-300 rounded-full ${
                         isDarkMode
                           ? 'border-1 border-indigo-500/100 shadow-lg shadow-indigo-400/20 hover:border-indigo-400 hover:shadow-indigo-500/50'
                           : 'bg-slate-800  hover:border-indigo-600 hover:shadow-indigo-500/90'
@@ -681,25 +681,28 @@ const [showColophonModal, setShowColophonModal] = useState(false);
               </div>
 
               {/* Mobile-only Account Button or Sign Up link */}
-              <div className="md:hidden flex items-center">
-                {user ? (
-                  <AccountButton />
-                ) : (
-                  <Link
-                    href="/auth/signup"
-                    className="text-sm font-medium px-3 py-1 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-md"
-                  >
-                    Sign Up
-                  </Link>
-                )}
-              </div>
+             <div className="md:hidden flex items-center">
+               {user ? (
+                 <div className="scale-80">
+                   <AccountButton />
+                 </div>
+               ) : (
+                 <Link
+                   href="/auth/signup"
+                   className="text-sm font-medium px-3 py-1 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-md"
+                 >
+                   Sign Up
+                 </Link>
+               )}
+             </div>
 
        
 
 
               
               {/* Mobile menu button */}
-             <div className="md:hidden absolute left-1 top-2 z-30">
+    <div className="md:hidden absolute left-2 top-0 z-50000">
+
                <button
                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                  className="rounded-lg p-1.5 text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
@@ -1062,11 +1065,11 @@ const [showColophonModal, setShowColophonModal] = useState(false);
             
             {/* Mobile menu content */}
             <motion.div
-              initial={{ x: '100%' }}
+              initial={{ x: '-100%' }}
               animate={{ x: 0 }}
-              exit={{ x: '100%' }}
+              exit={{ x: '-100%' }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className={`absolute top-0 right-0 bottom-0 w-full max-w-lg ${
+              className={`absolute top-0 left-0 bottom-0 w-full max-w-lg ${
                 isDarkMode ? 'bg-slate-900/70' : 'bg-opacity-90'
               } shadow-xl overflow-y-auto`}
             >
@@ -1074,16 +1077,16 @@ const [showColophonModal, setShowColophonModal] = useState(false);
               <div className={`flex px-8 items-center justify-between py-4 border-b-2 ${
                 isDarkMode ? 'bg-slate-900/90 border-indigo-800' : 'bg-white border-2 rounded-br-lg rounded-bl-lg border-indigo-100'
               }`}>
-                <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center">
+                <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex ml-4 items-center">
                   <Image 
                     src="/sourcelenslogo.png" 
                     alt="SourceLens Logo" 
                     width={40} 
                     height={40}
-                    className="bg-indigo-900/90 rounded-full"
+                    className="bg-slate-900/90 rounded-full"
                   />
-                  <span className={`text-lg px-3 font-bold tracking-tight ${
-                    isDarkMode ? 'text-white' : 'text-indigo-900'
+                  <span className={`${spaceGrotesk.className} text-lg px-3 font-bold tracking-tighter ${
+                    isDarkMode ? 'text-white' : 'text-slate-900'
                   }`}>SourceLens</span>
                 </Link>
                 <button
@@ -1139,28 +1142,38 @@ const [showColophonModal, setShowColophonModal] = useState(false);
                     Home
                   </Link>
                   
-                  <button
-                    onClick={() => setMobileSubmenuOpen(mobileSubmenuOpen === 'analysis' ? null : 'analysis')}
-                    className={`flex items-center justify-between w-full px-5 py-5 rounded-lg text-base font-medium ${
-                      mobileSubmenuOpen === 'analysis' || pathname?.startsWith('/analysis')
-                        ? isDarkMode ? 'bg-slate-800 text-white' : 'bg-indigo-50 text-indigo-900'
-                        : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-white' : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-900'
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center justify-between w-full px-5 py-5 rounded-lg text-base font-medium ${
+                    pathname === '/dashboard'
+                      ? isDarkMode
+                        ? 'bg-slate-800 text-white'
+                        : 'bg-indigo-50 text-indigo-900'
+                      : isDarkMode
+                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                        : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-900'
+                  }`}
+                >
+                  <span>Dashboard</span>
+                  <svg
+                    className={`w-5 h-5 ${
+                      pathname === '/dashboard'
+                        ? isDarkMode
+                          ? 'text-indigo-300'
+                          : 'text-indigo-500'
+                        : isDarkMode
+                          ? 'text-slate-400'
+                          : 'text-slate-500'
                     }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <span>Analysis</span>
-                    <svg
-                      className={`w-5 h-5 transition-transform duration-200 ${
-                        mobileSubmenuOpen === 'analysis' ? 'rotate-180' : ''
-                      } ${
-                        isDarkMode ? mobileSubmenuOpen === 'analysis' ? 'text-indigo-300' : 'text-slate-400' : mobileSubmenuOpen === 'analysis' ? 'text-indigo-500' : 'text-slate-500'
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+
                   
                   <AnimatePresence>
                     {mobileSubmenuOpen === 'analysis' && (

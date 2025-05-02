@@ -428,7 +428,7 @@ export default function DashboardPage() {
 
   // Apply theme classes based on dark mode
   const themeClasses = {
-    background: darkMode ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900',
+    background: darkMode ? 'bg-slate-900 text-slate-100' : 'bg-slate-50/10 text-slate-800',
     header: darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200',
     button: {
       primary: darkMode
@@ -450,7 +450,7 @@ export default function DashboardPage() {
   return (
     <div className={`min-h-screen ${themeClasses.background} flex flex-col transition-colors duration-200`}>
       {/* Enhanced header with user info */}
-      <header className={`sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b ${themeClasses.header} transition-colors duration-200 backdrop-blur-sm bg-opacity-90`}>
+      <header className={`sticky top-0 z-30 flex items-center justify-between px-6 py-4 border-b ${themeClasses.header} transition-colors duration-200 backdrop-blur-sm bg-opacity-90`}>
         <div className="flex items-center gap-3">
           <div className="pl-2">
             <HamburgerMenu />
@@ -530,23 +530,18 @@ export default function DashboardPage() {
       {/* Main content with improved grid layout */}
       <main className="flex-1 px-6 py-8 w-full max-w-7xl mx-auto">
         {/* Welcome banner with personalization */}
-        <div className={`mb-8 rounded-xl overflow-hidden relative ${darkMode ? 'bg-indigo-900/30' : 'bg-indigo-50'}`}>
+        <div className={`mb-8 rounded-xl overflow-hidden relative ${darkMode ? 'bg-indigo-900/30' : 'bg-gradient-to-t from-slate-100/10 to-white'}`}>
           <div className="absolute inset-0 overflow-hidden opacity-10">
-            <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="400" viewBox="0 0 1000 400" className="w-full h-full">
-              <path 
-                fill={darkMode ? "#4f46e5" : "#4338ca"} 
-                fillOpacity="0.2"
-                d="M0,192L48,202.7C96,213,192,235,288,245.3C384,256,480,256,576,229.3C672,203,768,149,864,149.3C960,149,1056,203,1152,213.3C1248,224,1344,192,1392,176L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-              ></path>
-            </svg>
+           
           </div>
           
           <div className="p-8 relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
             <div className="max-w-3xl">
-              <h1 className={`text-2xl md:text-3xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-indigo-900'}`}>
-                Welcome back, {user?.user_metadata?.firstName || 'Researcher'}!
+              <h1 className={`text-2xl md:text-3xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+        Welcome back, {user?.user_metadata?.firstName || user?.email?.split('@')[0] || 'Researcher'}
+
               </h1>
-              <p className={`${darkMode ? 'text-indigo-200' : 'text-indigo-800'} text-lg max-w-2xl leading-relaxed`}>
+              <p className={`${darkMode ? 'text-slate-200' : 'text-slate-800'} text-lg max-w-2xl leading-relaxed`}>
                 Your research dashboard helps you quickly access sources, notes, and analyses. 
                 Pick up where you left off or start something new.
               </p>
@@ -590,7 +585,7 @@ export default function DashboardPage() {
               darkMode ? 'bg-slate-800/50' : 'bg-white/50'
             } rounded-xl p-3 border ${themeClasses.border}`}>
               <div className={`px-4 py-3 rounded-lg text-center min-w-[100px] ${
-                darkMode ? 'bg-indigo-900/20 border border-indigo-900/30' : 'bg-indigo-50 border border-indigo-100'
+                darkMode ? 'bg-indigo-900/20 border border-indigo-900/30' : 'bg-slate-50/50 border border-slate-100'
               }`}>
                 <p className={`text-3xl font-bold ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>
                   {statsData.sourcesCount}
@@ -599,7 +594,7 @@ export default function DashboardPage() {
               </div>
               
               <div className={`px-4 py-3 rounded-lg text-center min-w-[100px] ${
-                darkMode ? 'bg-sky-900/20 border border-sky-900/30' : 'bg-sky-50 border border-sky-100'
+                darkMode ? 'bg-sky-900/20 border border-sky-900/30' : 'bg-slate-50/50 border border-slate-100'
               }`}>
                 <p className={`text-3xl font-bold ${darkMode ? 'text-sky-300' : 'text-sky-700'}`}>
                   {statsData.notesCount}
@@ -608,7 +603,7 @@ export default function DashboardPage() {
               </div>
               
               <div className={`px-4 py-3 rounded-lg text-center min-w-[100px] ${
-                darkMode ? 'bg-amber-900/20 border border-amber-900/30' : 'bg-amber-50 border border-amber-100'
+                darkMode ? 'bg-amber-900/20 border border-amber-900/30' : 'bg-slate-50/50 border border-slate-100'
               }`}>
                 <p className={`text-3xl font-bold ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>
                   {statsData.analysesCount}
@@ -620,7 +615,7 @@ export default function DashboardPage() {
         </div>
         
         {/* Main dashboard grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Start analysis card */}
           <Card 
             title="Start a new analysis"
@@ -779,7 +774,7 @@ export default function DashboardPage() {
             }
             actionText={recentSources.length > 0 ? "View all" : undefined}
             onAction={recentSources.length > 0 ? () => router.push('/library?tab=sources') : undefined}
-            className="lg:col-span-2"
+            className="lg:col-span-1"
           >
             {recentSources.length > 0 ? (
               <div className="space-y-3">
@@ -901,7 +896,7 @@ export default function DashboardPage() {
         </div>
         
         {/* Activity and features section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Activity feed */}
           <Card 
             title="Recent activity"
@@ -963,7 +958,7 @@ export default function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
               </svg>
             }
-            className="lg:col-span-2"
+            className="lg:col-span-1"
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className={`p-4 rounded-lg border ${themeClasses.border} transition-all hover:scale-[1.02] duration-200`}>

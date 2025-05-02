@@ -1243,18 +1243,22 @@ description: 'Analyze and organize sources to uncover layers of meaning that mig
           
           {/* Expanded Advanced Options */}
           <div className="p-5 px-3 sm:px-5">
+            {!isMobile && (
             <h3 className={`text-xl font-light mt-30 sm:mt-35 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'} mb-10 sm:mb-12`}>
               Or try out a specific Lens for analyzing your uploaded source:
             </h3>
+            )}
             
             {/* Enhanced Lens Options Grid - Lazy loaded */}
-            <Suspense fallback={<div className="h-80 bg-slate-200/20 animate-pulse rounded-lg grid grid-cols-3 gap-4"></div>}>
-              <LensOptionsGrid
-                onSelectLens={(id) => navigateToAnalysis(id as any)}
-                className="mt-2 mb-20"
-                isDarkMode={isDarkMode}
-              />
-            </Suspense>
+           {!isMobile && (
+  <Suspense fallback={<div className="h-80 bg-slate-200/20 animate-pulse rounded-lg grid grid-cols-3 gap-4"></div>}>
+    <LensOptionsGrid
+      onSelectLens={(id) => navigateToAnalysis(id as any)}
+      className="mt-2 mb-20"
+      isDarkMode={isDarkMode}
+    />
+  </Suspense>
+)}
           </div>
         </div>
       </div>

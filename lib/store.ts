@@ -178,6 +178,22 @@ export interface AppState {
   // data extraction
   extractInfoConfig: ExtractInfoConfig | null;
   setExtractInfoConfig: (config: ExtractInfoConfig | null) => void;
+
+  // Draft editing and assist
+  activeDraftId: string | null;
+  activeDraftSections: {
+    id: string;
+    title: string;
+    summary: string;
+    fullText: string;
+  }[] | null;
+  draftAssistResults: {
+    type: 'relate' | 'critique' | 'segue';
+    suggestions: string[];
+  } | null;
+  draftAssistLoading: boolean;
+  selectedSourceForDraft: string | null;
+  draftAnalyticFramework: string;
   
   // UI state
   isLoading: boolean;
@@ -190,6 +206,23 @@ export interface AppState {
   processingData: Record<string, any>;
   setProcessingStep: (step: string) => void;
   setProcessingData: (data: Record<string, any>) => void;
+
+  //drafts
+
+   setActiveDraftId: (id: string | null) => void;
+  setActiveDraftSections: (sections: {
+    id: string;
+    title: string;
+    summary: string;
+    fullText: string;
+  }[] | null) => void;
+  setDraftAssistResults: (results: {
+    type: 'relate' | 'critique' | 'segue';
+    suggestions: string[];
+  } | null) => void;
+  setDraftAssistLoading: (loading: boolean) => void;
+  setSelectedSourceForDraft: (id: string | null) => void;
+  setDraftAnalyticFramework: (framework: string) => void;
   
   // Actions
   setSourceContent: (content: string) => void;
@@ -266,6 +299,12 @@ const initialState = {
   },
   activeNote: null,
   isNotePanelVisible: false,
+    activeDraftId: null,
+  activeDraftSections: null,
+  draftAssistResults: null,
+  draftAssistLoading: false,
+  selectedSourceForDraft: null,
+  draftAnalyticFramework: '',
 };
 
 export const useAppStore = create<AppState>((set) => ({
@@ -290,6 +329,8 @@ export const useAppStore = create<AppState>((set) => ({
   setPerspective: (perspective) => set({ perspective }),
   
   setInitialAnalysis: (analysis) => set({ initialAnalysis: analysis }),
+
+  
   
   setDetailedAnalysis: (analysis) => set({ detailedAnalysis: analysis }),
 
@@ -357,6 +398,20 @@ export const useAppStore = create<AppState>((set) => ({
   setTranslatedText: (text) => set({ translatedText: text }),
   
   setTranslationOptions: (options) => set({ translationOptions: options }),
+
+  setActiveDraftId: (id) => set({ activeDraftId: id }),
+  
+  setActiveDraftSections: (sections) => set({ activeDraftSections: sections }),
+  
+  setDraftAssistResults: (results) => set({ draftAssistResults: results }),
+  
+  setDraftAssistLoading: (loading) => set({ draftAssistLoading: loading }),
+  
+  setSelectedSourceForDraft: (id) => set({ selectedSourceForDraft: id }),
+  
+  setDraftAnalyticFramework: (framework) => set({ draftAnalyticFramework: framework }),
+
+
 
   clearHighlights: () => set({ 
     highlightedSegments: [], 
