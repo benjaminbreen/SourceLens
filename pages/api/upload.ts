@@ -21,6 +21,7 @@ import sharp from 'sharp';
 import Tesseract from 'tesseract.js';
 import { createClient } from '@supabase/supabase-js';  
 
+export const runtime = 'nodejs';
 
 // Configure API clients
 const googleAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
@@ -50,6 +51,7 @@ export const config = {
   api: {
     bodyParser: false,
     responseLimit: false,
+     sizeLimit: '10mb'
   },
 };
 
@@ -67,10 +69,23 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Enhanced debug logging for Vercel deployment
   console.log("Upload API called with method:", req.method);
+  console.log("Request URL:", req.url);
+  console.log("Request headers:", JSON.stringify(req.headers));
+  console.log("Request content-type:", req.headers['content-type']);
+  console.log("Environment:", process.env.NODE_ENV);
+  console.log("Temp directory path:", os.tmpdir());
   
+  // Explicit method check with detailed logging
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    console.error(`Method ${req.method} not allowed for upload endpoint`);
+    return res.status(405).json({ 
+      message: 'Method not allowed',
+      allowedMethod: 'POST',
+      receivedMethod: req.method,
+      url: req.url
+    });
   }
 
   let tempDir = '';

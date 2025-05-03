@@ -3,7 +3,7 @@
 // Provides an elegant interface for language selection and translation parameters
 
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TranslationOptions as TranslationOptionsType } from '@/lib/store';
 import { SUPPORTED_LANGUAGES } from '@/lib/translation/languages';
@@ -21,24 +21,34 @@ export default function TranslationOptions({
   onSubmit,
   isDarkMode
 }: TranslationOptionsProps) {
-  const [options, setOptions] = useState<TranslationOptionsType>(currentOptions);
+  // Create a deep copy of currentOptions to ensure state changes are detected
+  const [options, setOptions] = useState<TranslationOptionsType>({...currentOptions});
+  
+  // For highlighted language selection
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(currentOptions.targetLanguage);
+  
+  // Update local state when props change
+  useEffect(() => {
+    setOptions({...currentOptions});
+    setSelectedLanguage(currentOptions.targetLanguage);
+  }, [currentOptions]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(options);
+    // Ensure the targetLanguage is set to the selected one
+    const finalOptions = {
+      ...options,
+      targetLanguage: selectedLanguage
+    };
+    onSubmit(finalOptions);
   };
   
-  const handleOptionChange = (key: keyof TranslationOptionsType, value: any) => {
-    console.log(`Setting ${key} to:`, value);
-    
-    // Create a completely new object to ensure React detects the change
-    const newOptions = {
+  const handleLanguageChange = (lang: string) => {
+    setSelectedLanguage(lang);
+    setOptions({
       ...options,
-      [key]: value
-    };
-    
-    console.log("New options object:", newOptions);
-    setOptions(newOptions);
+      targetLanguage: lang
+    });
   };
 
   return (
@@ -79,45 +89,39 @@ export default function TranslationOptions({
           
           <form onSubmit={handleSubmit}>
             <div className="p-6 space-y-6">
-              {/* Target Language Selection */}
-              <div className="space-y-2">
+              {/* Target Language Selection - Improved UI */}
+              <div className="space-y-3">
                 <label className={`block text-sm font-medium ${
                   isDarkMode ? 'text-slate-300' : 'text-slate-700'
                 } transition-colors duration-300`}>
                   Target Language
                 </label>
-               <div className="grid grid-cols-3 gap-2">
-                 {SUPPORTED_LANGUAGES.map(lang => (
-                   <div key={lang.code} className="flex items-center">
-                     <input
-                       type="radio"
-                       id={`lang-${lang.code}`}
-                       name="targetLanguage"
-                       value={lang.code}
-                       checked={options.targetLanguage === lang.code}
-                       onChange={(e) => {
-                         console.log(`Language changed to: ${e.target.value}`);
-                         handleOptionChange('targetLanguage', e.target.value);
-                       }}
-                       className={`h-4 w-4 mr-2 ${
-                         isDarkMode 
-                           ? 'bg-slate-700 border-slate-600 text-cyan-500 focus:ring-cyan-600/50' 
-                           : 'border-slate-300 text-cyan-600 focus:ring-cyan-500/50'
-                       } transition-colors duration-300`}
-                     />
-                     <label 
-                       htmlFor={`lang-${lang.code}`}
-                       className={`text-sm ${
-                         options.targetLanguage === lang.code 
-                           ? (isDarkMode ? 'text-cyan-400 font-medium' : 'text-cyan-700 font-medium')
-                           : (isDarkMode ? 'text-slate-300' : 'text-slate-700')
-                       } cursor-pointer transition-colors duration-300`}
-                     >
-                       {lang.name}
-                     </label>
-                   </div>
-                 ))}
-               </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {SUPPORTED_LANGUAGES.map(lang => (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={() => handleLanguageChange(lang.code)}
+                      className={`flex items-center py-2 px-3 rounded-lg transition-all duration-200 ${
+                        selectedLanguage === lang.code
+                          ? isDarkMode
+                            ? 'bg-cyan-800/70 text-cyan-100 border border-cyan-700 shadow-inner'
+                            : 'bg-cyan-100 text-cyan-800 border border-cyan-300 shadow-inner'
+                          : isDarkMode
+                            ? 'border border-slate-700 hover:border-cyan-800 hover:bg-slate-800'
+                            : 'border border-slate-200 hover:border-cyan-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="text-sm font-medium">{lang.name}</span>
+                      {selectedLanguage === lang.code && (
+                        <svg className={`w-4 h-4 ml-auto ${isDarkMode ? 'text-cyan-300' : 'text-cyan-600'}`} 
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
               
               {/* Translation Style - Literal to Poetic */}
@@ -145,7 +149,10 @@ export default function TranslationOptions({
                         max="1"
                         step="0.05"
                         value={options.literalToPoetic}
-                        onChange={(e) => handleOptionChange('literalToPoetic', parseFloat(e.target.value))}
+                        onChange={(e) => setOptions({
+                          ...options,
+                          literalToPoetic: parseFloat(e.target.value)
+                        })}
                         className="absolute inset-0 opacity-0 w-full cursor-pointer"
                       />
                     </div>
@@ -180,19 +187,19 @@ export default function TranslationOptions({
                 </label>
                 <div className="space-y-3">
                   <div className="flex items-center">
-              <input
-                type="radio"
-                id="explanation-minimal"
-                name="explanationLevel"
-                value="minimal"
-                checked={options.explanationLevel === 'minimal'}
-                onChange={(e) => handleOptionChange('explanationLevel', e.target.value)}
-                className={`h-4 w-4 mr-2 ${
-                  isDarkMode 
-                    ? 'bg-slate-700 border-slate-600 text-cyan-500 focus:ring-cyan-600/50' 
-                    : 'border-slate-300 text-cyan-600 focus:ring-cyan-500/50'
-                } transition-colors duration-300`}
-              />
+                    <input
+                      type="radio"
+                      id="explanation-minimal"
+                      name="explanationLevel"
+                      value="minimal"
+                      checked={options.explanationLevel === 'minimal'}
+                      onChange={() => setOptions({...options, explanationLevel: 'minimal'})}
+                      className={`h-4 w-4 mr-2 ${
+                        isDarkMode 
+                          ? 'bg-slate-700 border-slate-600 text-cyan-500 focus:ring-cyan-600/50' 
+                          : 'border-slate-300 text-cyan-600 focus:ring-cyan-500/50'
+                      } transition-colors duration-300`}
+                    />
                     <label 
                       htmlFor="explanation-minimal"
                       className={`text-sm ${
@@ -210,7 +217,7 @@ export default function TranslationOptions({
                       name="explanationLevel"
                       value="moderate"
                       checked={options.explanationLevel === 'moderate'}
-                      onChange={(e) => handleOptionChange('explanationLevel', e.target.value)}
+                      onChange={() => setOptions({...options, explanationLevel: 'moderate'})}
                       className={`h-4 w-4 mr-2 ${
                         isDarkMode 
                           ? 'bg-slate-700 border-slate-600 text-cyan-500 focus:ring-cyan-600/50' 
@@ -239,7 +246,7 @@ export default function TranslationOptions({
                       name="explanationLevel"
                       value="extensive"
                       checked={options.explanationLevel === 'extensive'}
-                      onChange={(e) => handleOptionChange('explanationLevel', e.target.value)}
+                      onChange={() => setOptions({...options, explanationLevel: 'extensive'})}
                       className={`h-4 w-4 mr-2 ${
                         isDarkMode 
                           ? 'bg-slate-700 border-slate-600 text-cyan-500 focus:ring-cyan-600/50' 
@@ -283,7 +290,7 @@ export default function TranslationOptions({
                 </div>
               </div>
               
-              {/* Additional Options */}
+              {/* Additional Options - Use toggle switches */}
               <div className="space-y-3">
                 <label className={`block text-sm font-medium ${
                   isDarkMode ? 'text-slate-300' : 'text-slate-700'
@@ -291,58 +298,54 @@ export default function TranslationOptions({
                   Additional Options
                 </label>
                 
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="preserve-line-breaks"
-                    checked={options.preserveLineBreaks}
-                    onChange={(e) => handleOptionChange('preserveLineBreaks', e.target.checked)}
-                    className={`rounded h-4 w-4 mr-2 ${
-                      isDarkMode 
-                        ? 'bg-slate-700 border-slate-600 text-cyan-500 focus:ring-cyan-600/50' 
-                        : 'border-slate-300 text-cyan-600 focus:ring-cyan-500/50'
-                    } transition-colors duration-300`}
-                  />
-                  <label 
-                    htmlFor="preserve-line-breaks"
-                    className={`text-sm ${
-                      isDarkMode ? 'text-slate-300' : 'text-slate-700'
-                    } cursor-pointer transition-colors duration-300`}
-                  >
+                <div className="flex items-center justify-between">
+                  <label className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                     Preserve Line Breaks
-                    <span className={`ml-2 text-xs italic ${
-                      isDarkMode ? 'text-slate-400' : 'text-slate-500'
-                    }`}>
+                    <span className={`block text-xs italic ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                       (maintain original paragraph structure)
                     </span>
                   </label>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setOptions({...options, preserveLineBreaks: !options.preserveLineBreaks})}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      options.preserveLineBreaks 
+                        ? (isDarkMode ? 'bg-cyan-600' : 'bg-cyan-500') 
+                        : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')
+                    }`}
+                  >
+                    <span 
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        options.preserveLineBreaks ? 'translate-x-6' : 'translate-x-1'
+                      }`} 
+                    />
+                  </button>
                 </div>
                 
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="include-alternatives"
-                    checked={options.includeAlternatives}
-                    onChange={(e) => handleOptionChange('includeAlternatives', e.target.checked)}
-                    className={`rounded h-4 w-4 mr-2 ${
-                      isDarkMode 
-                        ? 'bg-slate-700 border-slate-600 text-cyan-500 focus:ring-cyan-600/50' 
-                        : 'border-slate-300 text-cyan-600 focus:ring-cyan-500/50'
-                    } transition-colors duration-300`}
-                  />
-                  <label 
-                    htmlFor="include-alternatives"
-                    className={`text-sm ${
-                      isDarkMode ? 'text-slate-300' : 'text-slate-700'
-                    } cursor-pointer transition-colors duration-300`}
-                  >
+                <div className="flex items-center justify-between">
+                  <label className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                     Show Alternative Translations
-                    <span className={`ml-2 text-xs italic ${
-                      isDarkMode ? 'text-slate-400' : 'text-slate-500'
-                    }`}>
+                    <span className={`block text-xs italic ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                       (for ambiguous terms and phrases)
                     </span>
                   </label>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setOptions({...options, includeAlternatives: !options.includeAlternatives})}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      options.includeAlternatives 
+                        ? (isDarkMode ? 'bg-cyan-600' : 'bg-cyan-500') 
+                        : (isDarkMode ? 'bg-slate-700' : 'bg-slate-300')
+                    }`}
+                  >
+                    <span 
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        options.includeAlternatives ? 'translate-x-6' : 'translate-x-1'
+                      }`} 
+                    />
+                  </button>
                 </div>
               </div>
             </div>

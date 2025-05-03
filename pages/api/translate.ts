@@ -72,6 +72,15 @@ export default async function handler(
       return res.status(400).json({ message: 'Missing source text' });
     }
     
+    // Log request details for debugging
+    console.log("Translation request details:", {
+      targetLanguage,
+      modelId,
+      explanationLevel,
+      literalToPoetic,
+      isContinuation
+    });
+    
     // Get model configuration
     let modelConfig;
     try {
@@ -81,19 +90,6 @@ export default async function handler(
       console.warn(`Model ID ${modelId} not found, using ${DEFAULT_TRANSLATION_MODEL}`);
       modelConfig = getModelById(DEFAULT_TRANSLATION_MODEL);
     }
-    
-    // Log request details
-    console.log("Translation request received:", {
-      sourceLength: source?.length,
-      targetLanguage,
-      translationScope,
-      explanationLevel,
-      literalToPoetic,
-      preserveLineBreaks,
-      includeAlternatives,
-      modelId: modelConfig.id,
-      provider: modelConfig.provider
-    });
     
     // Special handling for English-to-English translation
     const isEnglishToEnglish = targetLanguage === 'en' && 
@@ -148,7 +144,7 @@ export default async function handler(
         ? response.content[0].text 
         : '';
       translation = rawResponse;
-    } else if (modelConfig.provider === 'openai' && openai) {
+      } else if (modelConfig.provider === 'openai' && openai) {
       console.log(`Using OpenAI model: ${modelConfig.apiModel}`);
       const response = await openai.chat.completions.create({
         model: modelConfig.apiModel,
@@ -186,6 +182,7 @@ export default async function handler(
       }
     }
     
+    // Add request info to the response for debugging
     return res.status(200).json({
       translation,
       rawPrompt,
@@ -193,7 +190,14 @@ export default async function handler(
       modelUsed: modelConfig.name,
       targetLanguage,
       translationScope,
-      explanationLevel
+      explanationLevel,
+      requestDetails: {
+        sourceLang: metadata?.language || 'auto-detect',
+        targetLang: targetLanguage,
+        literalToPoetic: literalToPoetic,
+        preserveLineBreaks: preserveLineBreaks,
+        includeAlternatives: includeAlternatives
+      }
     });
     
   } catch (error) {
@@ -237,7 +241,6 @@ function buildTranslationPrompt(
   // Build base prompt with continuation context if needed
   let prompt = '';
   
-
   // Special handling for Emoji/ASCII or LLMese
   if (targetLanguage === 'emoji') {
     prompt = `You are an expert at translating text into emoji and ASCII characters only. Your task is to translate ${isContinuation ? 'the continuation of' : ''} the following ${metadata?.documentType || 'text'} from ${metadata?.date || 'unknown date'} ${metadata?.author ? `by ${metadata.author}` : ''} into a sequence of emojis and ASCII characters that represent the core meaning.
@@ -260,7 +263,6 @@ SPECIAL INSTRUCTIONS:
 6. The text should have an internal logic and meaning that you can understand perfectly.`;
   } else if (isEnglishToEnglish) {
     prompt = `You are an expert at modernizing and simplifying historical or complex English text. Your task is to translate ${isContinuation ? 'the continuation of' : ''} the following ${metadata?.documentType || 'text'} from ${metadata?.date || 'unknown date'} ${metadata?.author ? `by ${metadata.author}` : ''} into modern, accessible English.
-
 
 SPECIAL INSTRUCTIONS:
 1. Simplify archaic or complex vocabulary and sentence structure while preserving core meaning.
@@ -290,14 +292,29 @@ TRANSLATION INSTRUCTIONS:`;
 3. ${includeAlternatives ? 'For ambiguous or difficult-to-translate terms, include alternative possible translations in [square brackets].' : 'Do not include alternative translations or notes within the translated text.'}
 `;
 
-    // Add explanation level instructions
-    if (explanationLevel === 'minimal') {
-      prompt += '4. Do not add explanatory notes or commentary.\n';
-    } else if (explanationLevel === 'moderate') {
-      prompt += '4. Add brief explanatory notes in [square brackets] for culturally-specific concepts or historical references that may be unclear to readers of the target language.\n';
-    } else if (explanationLevel === 'extensive') {
-      prompt += '4. Add detailed explanatory notes in [square brackets] for culturally-specific concepts, historical references, and important contextual information. Include brief etymological information for key terms when relevant.\n';
-    }
+    // Add explanation level instructions with enhanced guidance for more detailed annotations
+   if (explanationLevel === 'minimal') {
+     prompt += '4. Do not add explanatory notes or commentary.\n';
+   } else if (explanationLevel === 'moderate') {
+     prompt += `4. Add brief explanatory notes for specific terms and concepts directly in the text where they appear.
+      - Format annotations as [term: brief explanation] where the term is kept in the translation.
+      - Place these annotations directly after the term they explain (not at the end of sentences/paragraphs).
+      - Include approximately one annotation every 2-3 sentences.
+      - Keep explanations concise (5-15 words each).
+      - For example: "The magistrate [magistrate: local government official with judicial powers] ordered..."
+   `;
+   } else if (explanationLevel === 'extensive') {
+     prompt += `4. Add detailed explanatory notes for specific terms directly in the text where they appear:
+      - Format all annotations as [term: detailed explanation] where the term appears in the translation; NEVER use double quotation marks.
+      - Place annotations immediately after the term they're explaining (not grouped at the end). 
+      - Include explanations for:
+        * Culturally-specific concepts and historical references 
+        * Etymology and historical development of key terms
+        * Connotations and nuances of ambiguous phrases
+      - Annotate liberally throughout the text (10+ annotations per paragraph)
+      - For example: "He attended the agora [agora: central public space in ancient Greek cities where assemblies and markets were held] to hear the philosopher speak."
+   `;
+   }
 
     // Add translation scope instructions
     if (translationScope !== 'all' && !isContinuation) {
